@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UsersIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { RoleEditor } from './RoleEditor';
+import { RoleEditor } from './Editor';
 
 interface Member {
   id: string;
