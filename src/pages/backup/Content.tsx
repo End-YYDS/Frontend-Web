@@ -65,7 +65,7 @@ export function BackupContent() {
             className="text-4xl font-bold mb-2" 
             style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
           >
-            Role
+            Backup
           </h1>
         </div>
 
