@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { User } from './types';
 import { GroupSelectionDialog } from './GroupSelectionDialog';
 
@@ -15,6 +15,13 @@ interface EditUserDialogProps {
   onCreateGroup: (name: string) => void;
   existingUsers: User[];
 }
+
+const shellOptions = [
+  { value: '/bin/bash', label: 'bash' },
+  { value: '/bin/zsh', label: 'zsh' },
+  { value: '/usr/bin/fish', label: 'fish' },
+  { value: '/bin/sh', label: 'sh' }
+];
 
 export const EditUserDialog: React.FC<EditUserDialogProps> = ({
   isOpen,
@@ -29,7 +36,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
     username: '',
     groups: [] as string[],
     homeDirectory: '',
-    shell: ''
+    shell: '/bin/bash'
   });
   const [isGroupSelectionDialogOpen, setIsGroupSelectionDialogOpen] = useState(false);
 
@@ -41,6 +48,16 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
       shell: user.shell
     });
   }, [user]);
+
+  // 當 username 改變時自動更新 home directory
+  useEffect(() => {
+    if (editUser.username) {
+      setEditUser(prev => ({
+        ...prev,
+        homeDirectory: `/home/${editUser.username}`
+      }));
+    }
+  }, [editUser.username]);
 
   const isDuplicateName = existingUsers.some(existingUser => 
     existingUser.username === editUser.username && 
@@ -96,18 +113,26 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
             <div>
               <label className="block text-sm font-medium mb-1">Home directory</label>
               <Input
-                placeholder="enter home directory"
                 value={editUser.homeDirectory}
-                onChange={(e) => setEditUser({...editUser, homeDirectory: e.target.value})}
+                readOnly
+                className="bg-gray-100"
+                placeholder="Auto-generated based on username"
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Shell</label>
-              <Input
-                placeholder="enter shell"
-                value={editUser.shell}
-                onChange={(e) => setEditUser({...editUser, shell: e.target.value})}
-              />
+              <Select value={editUser.shell} onValueChange={(value) => setEditUser({...editUser, shell: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select shell" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shellOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-2 pt-4">
               <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">

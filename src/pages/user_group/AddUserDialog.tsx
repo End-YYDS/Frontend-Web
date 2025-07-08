@@ -1,8 +1,8 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { User } from './types';
 import { GroupSelectionDialog } from './GroupSelectionDialog';
 
@@ -15,6 +15,13 @@ interface AddUserDialogProps {
   trigger: React.ReactNode;
   existingUsers: User[];
 }
+
+const shellOptions = [
+  { value: '/bin/bash', label: 'bash' },
+  { value: '/bin/zsh', label: 'zsh' },
+  { value: '/usr/bin/fish', label: 'fish' },
+  { value: '/bin/sh', label: 'sh' }
+];
 
 export const AddUserDialog: React.FC<AddUserDialogProps> = ({
   isOpen,
@@ -29,9 +36,24 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
     username: '',
     groups: [] as string[],
     homeDirectory: '',
-    shell: ''
+    shell: '/bin/bash'
   });
   const [isGroupSelectionDialogOpen, setIsGroupSelectionDialogOpen] = useState(false);
+
+  // 當 username 改變時自動更新 home directory
+  useEffect(() => {
+    if (newUser.username) {
+      setNewUser(prev => ({
+        ...prev,
+        homeDirectory: `/home/${newUser.username}`
+      }));
+    } else {
+      setNewUser(prev => ({
+        ...prev,
+        homeDirectory: ''
+      }));
+    }
+  }, [newUser.username]);
 
   const isDuplicateName = existingUsers.some(user => user.username === newUser.username && newUser.username !== '');
 
@@ -43,7 +65,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
       username: '',
       groups: [],
       homeDirectory: '',
-      shell: ''
+      shell: '/bin/bash'
     });
     onOpenChange(false);
   };
@@ -92,18 +114,26 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
             <div>
               <label className="block text-sm font-medium mb-1">Home directory</label>
               <Input
-                placeholder="enter home directory"
                 value={newUser.homeDirectory}
-                onChange={(e) => setNewUser({...newUser, homeDirectory: e.target.value})}
+                readOnly
+                className="bg-gray-100"
+                placeholder="Auto-generated based on username"
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Shell</label>
-              <Input
-                placeholder="enter shell"
-                value={newUser.shell}
-                onChange={(e) => setNewUser({...newUser, shell: e.target.value})}
-              />
+              <Select value={newUser.shell} onValueChange={(value) => setNewUser({...newUser, shell: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select shell" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shellOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-2 pt-4">
               <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
