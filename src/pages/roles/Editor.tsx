@@ -16,8 +16,9 @@ interface Role {
   id: string;
   name: string;
   color: string;
-  memberCount: number;
+  permissions: number; // bit operation
   members: Member[];
+  memberCount: number;
 }
 
 interface RoleEditorProps {
@@ -29,17 +30,17 @@ interface RoleEditorProps {
   onRoleSelect: (role: Role) => void;
 }
 
-const permissions = [
-  { id: 'view', name: '檢視', enabled: true },
-  { id: 'manage_groups', name: '管理身份組', enabled: false },
-  { id: 'edit', name: '編輯', enabled: false },
-  { id: 'manage', name: '管理..', enabled: false },
+const permissionsList = [
+  { id: 0, name: '檢視', bit: 1 << 0 },
+  { id: 1, name: '管理身份組', bit: 1 << 1 },
+  { id: 2, name: '編輯', bit: 1 << 2 },
+  { id: 3, name: '管理', bit: 1 << 3 },
 ];
 
 export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSelect }: RoleEditorProps) {
   const [roleName, setRoleName] = useState(role.name);
   const [selectedColor, setSelectedColor] = useState(role.color);
-  const [rolePermissions, setRolePermissions] = useState(permissions);
+  const [rolePermissions, setRolePermissions] = useState(role.permissions);
   const [members, setMembers] = useState<Member[]>(role.members);
   const [searchMember, setSearchMember] = useState('');
 
@@ -49,6 +50,7 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
   useEffect(() => {
     setRoleName(role.name);
     setSelectedColor(role.color);
+    setRolePermissions(role.permissions);
     setMembers(role.members);
     setSearchMember('');
   }, [role]);
@@ -58,15 +60,22 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
       ...role,
       name: roleName,
       color: selectedColor,
+      permissions: rolePermissions,
       members: members,
       memberCount: members.length,
     });
   };
 
-  const togglePermission = (permissionId: string) => {
-    setRolePermissions(rolePermissions.map(perm => 
-      perm.id === permissionId ? { ...perm, enabled: !perm.enabled } : perm
-    ));
+  const togglePermission = (bit: number) => {
+    if (isEveryoneRole) return;
+    
+    setRolePermissions(prev => {
+      if (prev & bit) {
+        return prev & ~bit; // Remove permission
+      } else {
+        return prev | bit; // Add permission
+      }
+    });
   };
 
   const addMember = (user: Member) => {
@@ -81,13 +90,14 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
 
   return (
     <div className="min-h-screen bg-gradient-to-br">
+
       <div className="max-w-6xl mx-auto py-8 px-6">
         <div className="text-center mb-8">
           <h1 
             className="text-4xl font-bold mb-2" 
             style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
           >
-            Role
+            Roles
           </h1>
         </div>
 
@@ -124,7 +134,13 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
                 
                 <TabsContent value="permissions">
                   <PermissionsTab 
-                    permissions={rolePermissions}
+                    permissions={permissionsList.map(perm => ({
+                      id: perm.id.toString(),
+                      name: perm.name,
+                      enabled: (rolePermissions & perm.bit) !== 0,
+                      bit: perm.bit
+                    }))}
+                    isEveryoneRole={isEveryoneRole}
                     onPermissionToggle={togglePermission}
                   />
                 </TabsContent>
@@ -150,7 +166,7 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
                   onClick={handleSave} 
                   style={{ backgroundColor: '#7B86AA' }}
                   className="hover:opacity-90 text-white"
-                  // disabled={isEveryoneRole}
+                  disabled={isEveryoneRole}
                 >
                   儲存
                 </Button>

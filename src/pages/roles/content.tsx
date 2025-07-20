@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UsersIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { Users, Search, Trash2 } from 'lucide-react';
 import { RoleEditor } from './Editor';
+import { toast } from 'sonner';
 
 interface Member {
   id: string;
@@ -14,8 +15,9 @@ interface Role {
   id: string;
   name: string;
   color: string;
-  memberCount: number;
+  permissions: number; // bit operation
   members: Member[];
+  memberCount: number;
 }
 
 const allUsers: Member[] = [
@@ -31,40 +33,44 @@ const everyoneRole: Role = {
   id: 'everyone',
   name: '@everyone',
   color: '#6B7280',
-  memberCount: allUsers.length,
-  members: allUsers
+  permissions: 1, // 基本檢視權限
+  members: allUsers,
+  memberCount: allUsers.length
 };
 
 const defaultRoles: Role[] = [
   { 
     id: 'identity1', 
     name: '身份1', 
-    color: '#E5E7EB', 
-    memberCount: 2,
+    color: '#E5E7EB',
+    permissions: 3, // 檢視 + 管理身份組
     members: [
       { id: '1', name: 'Helena', avatar: '/placeholder.svg' },
       { id: '2', name: 'Oscar', avatar: '/placeholder.svg' },
-    ]
+    ],
+    memberCount: 2
   },
   { 
     id: 'identity2', 
     name: '身份2', 
-    color: '#F59E0B', 
-    memberCount: 1,
+    color: '#F59E0B',
+    permissions: 7, // 檢視 + 管理身份組 + 編輯
     members: [
       { id: '3', name: 'Daniel', avatar: '/placeholder.svg' },
-    ]
+    ],
+    memberCount: 1
   },
   { 
     id: 'identity3', 
     name: '身份3', 
-    color: '#3B82F6', 
-    memberCount: 3,
+    color: '#3B82F6',
+    permissions: 15, // 所有權限
     members: [
       { id: '4', name: 'Alice', avatar: '/placeholder.svg' },
       { id: '5', name: 'Bob', avatar: '/placeholder.svg' },
       { id: '6', name: 'Charlie', avatar: '/placeholder.svg' },
-    ]
+    ],
+    memberCount: 3
   },
 ];
 
@@ -80,14 +86,25 @@ export function RolesContent() {
       id: 'new-role',
       name: 'new role',
       color: '#E5E7EB',
-      memberCount: 0,
+      permissions: 1, // 預設只有檢視權限
       members: [],
+      memberCount: 0,
     };
     setEditingRole(newRole);
   };
 
   const handleEditRole = (role: Role) => {
     setEditingRole(role);
+  };
+
+  const handleDeleteRole = (roleId: string, roleName: string) => {
+    if (roleId === 'everyone') {
+      toast.error('無法刪除 @everyone 身份組');
+      return;
+    }
+
+    setRoles(roles.filter(role => role.id !== roleId));
+    toast.success(`已刪除身份組 "${roleName}"`);
   };
 
   const handleBackToList = () => {
@@ -106,10 +123,12 @@ export function RolesContent() {
       const newId = `identity${roles.length + 1}`;
       const newRole = { ...updatedRole, id: newId, memberCount: updatedRole.members.length };
       setRoles([...roles, newRole]);
+      toast.success(`已建立身份組 "${updatedRole.name}"`);
     } else {
       // 更新現有角色
       const updatedRoleWithCount = { ...updatedRole, memberCount: updatedRole.members.length };
       setRoles(roles.map(role => role.id === updatedRole.id ? updatedRoleWithCount : role));
+      toast.success(`已更新身份組 "${updatedRole.name}"`);
     }
     setEditingRole(null);
   };
@@ -136,7 +155,7 @@ export function RolesContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br">   
+    <div className="min-h-screen bg-gradient-to-br">
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto py-8 px-6">
@@ -155,7 +174,7 @@ export function RolesContent() {
           onClick={handleEveryoneClick}
         >
           <div className="flex items-center">
-            <UsersIcon className="w-6 h-6 text-gray-600 mr-3" />
+            <Users className="w-6 h-6 text-gray-600 mr-3" />
             <div>
               <h3 className="font-semibold text-lg">預設權限</h3>
               <p className="text-gray-600">@everyone</p>
@@ -166,7 +185,7 @@ export function RolesContent() {
         {/* Search and Create Section */}
         <div className="flex justify-between items-center mb-6">
           <div className="relative flex-1 max-w-md">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="搜尋身份組"
               value={searchTerm}
@@ -186,9 +205,10 @@ export function RolesContent() {
         {/* Roles Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b bg-gray-50">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div className="font-semibold text-gray-700">身份組 - {roles.length}</div>
               <div className="font-semibold text-gray-700">成員</div>
+              <div className="font-semibold text-gray-700">權限</div>
               <div></div>
             </div>
           </div>
@@ -199,18 +219,43 @@ export function RolesContent() {
               .map((role) => (
                 <div 
                   key={role.id} 
-                  className="px-6 py-4 hover:bg-gray-50 cursor-pointer grid grid-cols-3 gap-4 items-center"
-                  onClick={() => handleEditRole(role)}
+                  className="px-6 py-4 hover:bg-gray-50 cursor-pointer grid grid-cols-4 gap-4 items-center"
                 >
-                  <div className="flex items-center">
+                  <div 
+                    className="flex items-center"
+                    onClick={() => handleEditRole(role)}
+                  >
                     <div 
                       className="w-4 h-4 rounded-full mr-3"
                       style={{ backgroundColor: role.color }}
                     ></div>
                     <span className="font-medium">{role.name}</span>
                   </div>
-                  <div className="text-gray-600">{role.memberCount}</div>
-                  <div></div>
+                  <div 
+                    className="text-gray-600"
+                    onClick={() => handleEditRole(role)}
+                  >
+                    {role.memberCount}
+                  </div>
+                  <div 
+                    className="text-gray-600"
+                    onClick={() => handleEditRole(role)}
+                  >
+                    {role.permissions}
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteRole(role.id, role.name);
+                      }}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
           </div>
