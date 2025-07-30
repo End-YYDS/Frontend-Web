@@ -293,7 +293,7 @@ export const ProcessManager = () => {
                     <TableRow>
                       <TableHead>程序名稱</TableHead>
                       <TableHead>狀態</TableHead>
-                      <TableHead>開機啟動</TableHead>
+                      <TableHead>開機時自動啟動</TableHead>
                       <TableHead className="text-right">操作</TableHead>
                     </TableRow>
                   </TableHeader>
