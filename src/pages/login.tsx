@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const meta = { requiresAuth: false };
 
 export default function Login() {
@@ -12,6 +13,7 @@ export default function Login() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const from = (location.state as any)?.from?.pathname || '/dashboard';
 
   // 已登录直接跳转
@@ -30,20 +32,21 @@ export default function Login() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      if (!res.ok) throw new Error('账号或密码错误');
+      if (!res.ok) throw new Error('帳號或密碼錯誤');
       navigate(from, { replace: true });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message);
     }
   };
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-gray-100 p-4'>
+    <div className='min-h-screen flex items-center justify-center bg-darkBlue p-4'>
       <div className='w-full max-w-md bg-white rounded-lg shadow-lg p-6'>
-        <h2 className='text-2xl font-semibold text-center mb-6'>登录</h2>
+        <h2 className='text-2xl font-semibold text-center mb-6'>登錄</h2>
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>用户名</label>
+            <label className='block text-sm font-bold text-gray-700 mb-1'>使用者</label>
             <input
               className='w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               value={username}
@@ -52,7 +55,7 @@ export default function Login() {
             />
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>密码</label>
+            <label className='block text-sm font-bold text-gray-700 mb-1'>密碼</label>
             <input
               type='password'
               className='w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
@@ -64,9 +67,9 @@ export default function Login() {
           {error && <p className='text-sm text-red-600 text-center'>{error}</p>}
           <button
             type='submit'
-            className='w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition'
+            className='w-full py-2 bg-buttonColor hover:bg-blue-500 text-white font-extrabold rounded-md transition'
           >
-            登录
+            登錄
           </button>
         </form>
       </div>

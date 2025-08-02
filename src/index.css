@@ -41,6 +41,11 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+@theme {
+  --color-darkBlue: #0E1726;
+  --color-buttonColor: #7B86AA;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
