@@ -9,12 +9,12 @@ import { Cog, Shield, AlertTriangle, Save } from 'lucide-react';
 // import { useIsMobile } from "@/hooks/use-mobile";
 import AlertsTab from "./AlertsTab";
 import IpAccessTab from "./IpAccessTab";
-import ModuleManagementTab from "./ModuleManagementTab";
+// import ModuleManagementTab from "./ModuleManagementTab";
 import BackupConfigTab from "./BackupConfigTab";
 
 const SettingsPage = () => {
   // const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState("modules");
+  const [activeTab, setActiveTab] = useState("ip-access");
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -26,10 +26,10 @@ const SettingsPage = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="w-full bg-[#F7F8FA] border-b rounded-b-lg">
-          <TabsTrigger value="modules" className="flex items-center font-bold gap-2 data-[state=active]:bg-[#A8AEBD] data-[state=active]:text-white text-gray-700">
+          {/* <TabsTrigger value="modules" className="flex items-center font-bold gap-2 data-[state=active]:bg-[#A8AEBD] data-[state=active]:text-white text-gray-700">
             <Cog className="h-4 w-4" />
             <span>模組管理</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="ip-access" className="flex items-center font-bold gap-2 data-[state=active]:bg-[#A8AEBD] data-[state=active]:text-white text-gray-700">
             <Shield className="h-4 w-4" />
             <span>IP存取控制</span>
@@ -44,9 +44,9 @@ const SettingsPage = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="modules" className="space-y-4">
+        {/* <TabsContent value="modules" className="space-y-4">
           <ModuleManagementTab />
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="ip-access" className="space-y-4">
           <IpAccessTab />

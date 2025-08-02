@@ -1,3 +1,5 @@
+//TODO: 選擇電腦請依照後端
+
 import { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import { 
@@ -364,16 +366,16 @@ const NetworkConfigurationPage = () => {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle>網路介面管理</CardTitle>
+                    <CardTitle>虛擬介面管理</CardTitle>
                     <CardDescription>
-                      管理 {selectedComputerData?.name} 的網路介面設定
+                      管理 {selectedComputerData?.name} 的虛擬介面設定
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <Table>
-                  <TableCaption>實體網路介面清單</TableCaption>
+                  {/* <TableCaption>實體網路介面清單</TableCaption> */}
                   <TableHeader>
                     <TableRow>
                       <TableHead>名稱</TableHead>
@@ -455,14 +457,14 @@ const NetworkConfigurationPage = () => {
               </CardHeader>
               <CardContent>
                 <Table>
-                  <TableCaption>系統路由表</TableCaption>
+                  {/* <TableCaption>系統路由表</TableCaption> */}
                   <TableHeader>
                     <TableRow>
                       <TableHead>目的網段</TableHead>
                       <TableHead>下一跳</TableHead>
                       <TableHead>介面</TableHead>
                       <TableHead>優先度</TableHead>
-                      <TableHead>來源IP</TableHead>
+                      <TableHead>來源IP(可選)</TableHead>
                       <TableHead className="text-right">操作</TableHead>
                     </TableRow>
                   </TableHeader>

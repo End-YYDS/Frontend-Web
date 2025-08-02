@@ -1,3 +1,5 @@
+//TODO: 序號API、更改憑證有效時間，要從後端拿
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
