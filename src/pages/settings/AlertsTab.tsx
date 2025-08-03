@@ -16,6 +16,8 @@ import {
 import { toast } from "sonner";
 import { alertSettingsSchema } from "./settings";
 import type { z } from "zod";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+
 
 type AlertSettings = z.infer<typeof alertSettingsSchema>;
 
@@ -88,110 +90,110 @@ const AlertsTab = () => {
               )}
             />
 
-            {/* CPU使用率警告 */}
-            <FormField
-              control={form.control}
-              name="cpuUsage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CPU使用率警告閾值 (%)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      {...field}
-                      onChange={e => field.onChange(Number(e.target.value))}
-                      min={1}
-                      max={100}
-                      disabled={!isNotificationsEnabled}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    當CPU使用率超過此百分比時發送警告（1-100%）
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* 磁碟使用率警告 */}
-            <FormField
-              control={form.control}
-              name="diskUsage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>磁碟使用率警告閾值 (%)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      {...field}
-                      onChange={e => field.onChange(Number(e.target.value))}
-                      min={1}
-                      max={100}
-                      disabled={!isNotificationsEnabled}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    當磁碟使用率超過此百分比時發送警告（1-100%）
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* 記憶體使用率警告 */}
-            <FormField
-              control={form.control}
-              name="memory"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>記憶體使用率警告閾值 (%)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      {...field}
-                      onChange={e => field.onChange(Number(e.target.value))}
-                      min={1}
-                      max={100}
-                      disabled={!isNotificationsEnabled}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    當記憶體使用率超過此百分比時發送警告（1-100%）
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* 網路使用率警告 */}
-            <FormField
-              control={form.control}
-              name="network"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>網路使用率警告閾值 (%)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      {...field}
-                      onChange={e => field.onChange(Number(e.target.value))}
-                      min={1}
-                      max={100}
-                      disabled={!isNotificationsEnabled}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    當網路使用率超過此百分比時發送警告（1-100%）
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+             {/* 只有在啟用通知時才顯示警告設定 */}
+            {isNotificationsEnabled && (
+              <Collapsible open={isNotificationsEnabled}>
+                <CollapsibleContent className="space-y-4">
+                  {/* CPU使用率警告 */}
+                  <FormField
+                    control={form.control}
+                    name="cpuUsage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CPU使用率警告閾值 (%)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field}
+                            onChange={e => field.onChange(Number(e.target.value))}
+                            min={1}
+                            max={100}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          當CPU使用率超過此百分比時發送警告（1-100%）
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* 磁碟使用率警告 */}
+                  <FormField
+                    control={form.control}
+                    name="diskUsage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>磁碟使用率警告閾值 (%)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field}
+                            onChange={e => field.onChange(Number(e.target.value))}
+                            min={1}
+                            max={100}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          當磁碟使用率超過此百分比時發送警告（1-100%）
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* 記憶體使用率警告 */}
+                  <FormField
+                    control={form.control}
+                    name="memory"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>記憶體使用率警告閾值 (%)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field}
+                            onChange={e => field.onChange(Number(e.target.value))}
+                            min={1}
+                            max={100}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          當記憶體使用率超過此百分比時發送警告（1-100%）
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* 網路使用率警告 */}
+                  <FormField
+                    control={form.control}
+                    name="network"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>網路使用率警告閾值 (%)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field}
+                            onChange={e => field.onChange(Number(e.target.value))}
+                            min={1}
+                            max={100}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          當網路使用率超過此百分比時發送警告（1-100%）
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
+            )}
             
             <div className="flex space-x-2">
-              <Button type="submit" disabled={!isNotificationsEnabled}>
-                儲存設定
-              </Button>
               <Button 
                 type="button" 
                 variant="outline" 

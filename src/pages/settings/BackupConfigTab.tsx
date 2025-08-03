@@ -23,6 +23,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Database } from 'lucide-react';
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 
 const backupConfigSchema = z.object({
   enableAutoBackup: z.boolean().default(true),
@@ -41,6 +42,8 @@ const BackupConfigTab = () => {
       retentionCount: 10,
     },
   });
+
+  const isAutoBackupEnabled = backupConfigForm.watch("enableAutoBackup");
 
   const handleBackupConfigSubmit = (values: z.infer<typeof backupConfigSchema>) => {
     console.log("備份配置:", values);
@@ -101,86 +104,91 @@ const BackupConfigTab = () => {
                 </FormItem>
               )}
             />
-            
-            {/* 備份位置改為下拉式選單 */}
-            <FormField
-              control={backupConfigForm.control}
-              name="backupLocation"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>備份位置</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="選擇備份位置" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="local">本地儲存</SelectItem>
-                      <SelectItem value="cloud">雲端儲存</SelectItem>
-                      <SelectItem value="network">網路磁碟</SelectItem>
-                      <SelectItem value="external">外部儲存</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    選擇備份檔案的儲存位置
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={backupConfigForm.control}
-              name="backupFrequency"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>備份頻率</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="選擇備份頻率" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="daily">每日</SelectItem>
-                      <SelectItem value="weekly">每週</SelectItem>
-                      <SelectItem value="monthly">每月</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    選擇系統自動備份的頻率
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* 保留天數改為保留份數 */}
-            <FormField
-              control={backupConfigForm.control}
-              name="retentionCount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>保留份數</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      placeholder="10" 
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    指定備份檔案保留的份數
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* 只有在啟用自動備份時才顯示設定選項 */}
+            {isAutoBackupEnabled && (
+              <Collapsible open={isAutoBackupEnabled}>
+                <CollapsibleContent className="space-y-4">
+                  {/* 備份位置改為下拉式選單 */}
+                  <FormField
+                    control={backupConfigForm.control}
+                    name="backupLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>備份位置</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="選擇備份位置" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="local">本地儲存</SelectItem>
+                            <SelectItem value="cloud">雲端儲存</SelectItem>
+                            <SelectItem value="network">網路磁碟</SelectItem>
+                            <SelectItem value="external">外部儲存</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          選擇備份檔案的儲存位置
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={backupConfigForm.control}
+                    name="backupFrequency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>備份頻率</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="選擇備份頻率" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="daily">每日</SelectItem>
+                            <SelectItem value="weekly">每週</SelectItem>
+                            <SelectItem value="monthly">每月</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          選擇系統自動備份的頻率
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* 保留天數改為保留份數 */}
+                  <FormField
+                    control={backupConfigForm.control}
+                    name="retentionCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>保留份數</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="10" 
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          指定備份檔案保留的份數
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
+            )}
             
             <div className="flex gap-2">
-              <Button type="submit">保存設定</Button>
               <Button 
                 type="button" 
                 variant="outline" 

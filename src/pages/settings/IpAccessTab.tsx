@@ -196,8 +196,8 @@ const IpAccessTab = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="blacklist">黑名單（拒絕列表中的IP）(預設)</SelectItem>
                             <SelectItem value="whitelist">白名單（只允許列表中的IP）</SelectItem>
+                            <SelectItem value="blacklist">黑名單（拒絕列表中的IP）(預設)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription>
@@ -300,9 +300,6 @@ const IpAccessTab = () => {
                 </div>
               )}
 
-              <Button type="submit">
-                儲存設定
-              </Button>
             </form>
           </Form>
         </CardContent>
