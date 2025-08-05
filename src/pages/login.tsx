@@ -16,7 +16,7 @@ export default function Login() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const from = (location.state as any)?.from?.pathname || '/dashboard';
 
-  // 已登录直接跳转
+  // 已登錄直接跳轉
   if (!loading && user) {
     navigate(from, { replace: true });
     return null;
@@ -43,7 +43,8 @@ export default function Login() {
   return (
     <div className='min-h-screen flex items-center justify-center bg-darkBlue p-4'>
       <div className='w-full max-w-md bg-white rounded-lg shadow-lg p-6'>
-        <h2 className='text-2xl font-semibold text-center mb-6'>登錄</h2>
+        <h2 className='text-2xl font-semibold text-center mb-1'>Login</h2>
+        <p className="text-gray-600 text-sm text-center mb-6">Enter your email to log in for this app</p>
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div>
             <label className='block text-sm font-bold text-gray-700 mb-1'>使用者</label>
@@ -69,9 +70,16 @@ export default function Login() {
             type='submit'
             className='w-full py-2 bg-buttonColor hover:bg-blue-500 text-white font-extrabold rounded-md transition'
           >
-            登錄
+            login
           </button>
         </form>
+{/* 可刪 */}
+        <div className="mt-4 text-center text-xs text-gray-500">
+            By clicking continue, you agree to our{' '}
+            <span className="underline cursor-pointer">Terms of Service</span>
+            {' '}and{' '}
+            <span className="underline cursor-pointer">Privacy Policy</span>
+        </div>
       </div>
     </div>
   );
