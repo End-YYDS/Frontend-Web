@@ -59,12 +59,13 @@ const CronManagement = () => {
     command: '',
     schedule: '',
     status: 'active' as 'active' | 'inactive',
+    scheduleType: 'quick' as 'quick' | 'custom',
     quickSchedule: '',
-    minute: '*',
-    hour: '*',
-    date: '*',
-    month: '*',
-    week: '*'
+    minute: '',
+    hour: '',
+    date: '',
+    month: '',
+    week: ''
   });
 
   const itemsPerPage = 10;
@@ -102,36 +103,52 @@ const CronManagement = () => {
       command: '',
       schedule: '',
       status: 'active',
+      scheduleType: 'quick',
       quickSchedule: '',
-      minute: '*',
-      hour: '*',
-      date: '*',
-      month: '*',
-      week: '*'
+      minute: '',
+      hour: '',
+      date: '',
+      month: '',
+      week: ''
     });
   };
 
-  const buildScheduleFromQuick = (quickSchedule: string) => {
-    switch (quickSchedule) {
-      case 'Startup':
-        return '@startup';
-      case 'Hourly':
-        return '@hourly';
-      case 'Daily':
-        return '@daily';
-      case 'Weekly':
-        return '@weekly';
-      case 'Monthly':
-        return '@monthly';
-      case 'Yearly':
-        return '@yearly';
-      default:
-        return `${newJob.minute} ${newJob.hour} ${newJob.date} ${newJob.month} ${newJob.week}`;
+  const buildScheduleFromCustom = () => {
+    const parts = [];
+    if (newJob.minute && newJob.minute !== 'none') parts.push(`每${newJob.minute}分鐘`);
+    if (newJob.hour && newJob.hour !== 'none') parts.push(`每${newJob.hour}小時`);
+    if (newJob.date && newJob.date !== 'none') parts.push(`每月第${newJob.date}日`);
+    if (newJob.month && newJob.month !== 'none') parts.push(`每年第${newJob.month}月`);
+    if (newJob.week && newJob.week !== 'none') parts.push(`每週第${newJob.week}天`);
+    return parts.join(', ') || '自訂排程';
+  };
+
+  const buildScheduleString = () => {
+    if (newJob.scheduleType === 'quick' && newJob.quickSchedule) {
+      switch (newJob.quickSchedule) {
+        case 'Startup':
+          return '@startup';
+        case 'Hourly':
+          return '@hourly';
+        case 'Daily':
+          return '@daily';
+        case 'Weekly':
+          return '@weekly';
+        case 'Monthly':
+          return '@monthly';
+        case 'Yearly':
+          return '@yearly';
+        default:
+          return newJob.quickSchedule;
+      }
+    } else if (newJob.scheduleType === 'custom') {
+      return buildScheduleFromCustom();
     }
+    return '';
   };
 
   const handleAddJob = () => {
-    const schedule = newJob.quickSchedule ? buildScheduleFromQuick(newJob.quickSchedule) : buildScheduleFromQuick('');
+    const schedule = buildScheduleString();
     
     const job: CronJob = {
       id: Date.now(),
@@ -158,18 +175,19 @@ const CronManagement = () => {
       command: job.command,
       schedule: job.schedule,
       status: job.status,
+      scheduleType: 'quick',
       quickSchedule: '',
-      minute: '*',
-      hour: '*',
-      date: '*',
-      month: '*',
-      week: '*'
+      minute: '',
+      hour: '',
+      date: '',
+      month: '',
+      week: ''
     });
   };
 
   const handleUpdateJob = () => {
     if (editingJob) {
-      const schedule = newJob.quickSchedule ? buildScheduleFromQuick(newJob.quickSchedule) : buildScheduleFromQuick('');
+      const schedule = buildScheduleString();
       
       setJobs(prev => prev.map(job => 
         job.id === editingJob.id 
@@ -229,17 +247,74 @@ const CronManagement = () => {
   };
 
   const handleExport = () => {
+    const selectedJobsToExport = selectedJobs.length > 0 ? selectedJobs : jobs.map(job => job.id);
+    const exportData = jobs.filter(job => selectedJobsToExport.includes(job.id));
+    
+    console.log('Export - 使用者選擇匯出的任務:', {
+      selectedJobIds: selectedJobsToExport,
+      exportedJobs: exportData,
+      totalCount: exportData.length
+    });
+    
+    // 建立 JSON 檔案並下載
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `cron-jobs-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
     toast({
-      title: "匯出",
-      description: "Cron 任務匯出功能"
+      title: "匯出成功",
+      description: `已匯出 ${exportData.length} 個 Cron 任務`
     });
   };
 
   const handleImport = () => {
-    toast({
-      title: "匯入",
-      description: "Cron 任務匯入功能"
-    });
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,.txt,.cron';
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const content = e.target?.result as string;
+            const importedJobs = JSON.parse(content);
+            
+            if (Array.isArray(importedJobs)) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const newJobs = importedJobs.map((job: any) => ({
+                ...job,
+                id: Date.now() + Math.random() // 確保 ID 唯一
+              }));
+              
+              setJobs(prev => [...prev, ...newJobs]);
+              toast({
+                title: "匯入成功",
+                description: `已匯入 ${newJobs.length} 個 Cron 任務`
+              });
+            } else {
+              throw new Error('檔案格式不正確');
+            }
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (error) {
+            toast({
+              title: "匯入失敗",
+              description: "檔案格式不正確或無法讀取",
+              variant: "destructive"
+            });
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
   };
 
   const handleDeleteJob = (jobId: number) => {
@@ -260,12 +335,12 @@ const CronManagement = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 px-4">
+      <div className="container mx-auto py-6 px-4">
         <div className="bg-[#A8AEBD] py-3 mb-3">
         <h1 className="text-2xl font-extrabold text-center text-[#E6E6E6]">
-            Cron Management
+          Cron Management
         </h1>
-        </div>
+      </div>
       <Card>
         <CardContent>
           <div className="flex flex-wrap gap-2 mb-4">
@@ -315,100 +390,137 @@ const CronManagement = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Quick Schedule</label>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {['Startup', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly'].map((schedule) => (
-                        <Button
-                          key={schedule}
-                          variant={newJob.quickSchedule === schedule ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setNewJob({...newJob, quickSchedule: schedule})}
-                          className="text-xs"
-                        >
-                          {schedule}
-                        </Button>
-                      ))}
+                    <label className="text-sm font-medium mb-2 block">排程方式</label>
+                    <div className="flex gap-4 mb-3">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="scheduleType"
+                          value="quick"
+                          checked={newJob.scheduleType === 'quick'}
+                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                          onChange={(e) => setNewJob({...newJob, scheduleType: 'quick', quickSchedule: '', minute: '', hour: '', date: '', month: '', week: ''})}
+                          className="mr-2"
+                        />
+                        快速排程
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="scheduleType"
+                          value="custom"
+                          checked={newJob.scheduleType === 'custom'}
+                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                          onChange={(e) => setNewJob({...newJob, scheduleType: 'custom', quickSchedule: ''})}
+                          className="mr-2"
+                        />
+                        自訂排程
+                      </label>
                     </div>
                   </div>
+
+                  {newJob.scheduleType === 'quick' && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Quick Schedule</label>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {['Startup', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly'].map((schedule) => (
+                          <Button
+                            key={schedule}
+                            variant={newJob.quickSchedule === schedule ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setNewJob({...newJob, quickSchedule: schedule})}
+                            className="text-xs"
+                          >
+                            {schedule}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
-                  <div className="grid grid-cols-5 gap-2">
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">Minute</label>
-                      <Select value={newJob.minute} onValueChange={(value) => setNewJob({...newJob, minute: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="*">*</SelectItem>
-                          <SelectItem value="0">0</SelectItem>
-                          <SelectItem value="15">15</SelectItem>
-                          <SelectItem value="30">30</SelectItem>
-                          <SelectItem value="45">45</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  {newJob.scheduleType === 'custom' && (
+                    <div className="grid grid-cols-5 gap-2">
+                      <div>
+                        <label className="text-xs text-gray-600 mb-1 block">Minute</label>
+                        <Select value={newJob.minute} onValueChange={(value) => setNewJob({...newJob, minute: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="選擇" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">不設定</SelectItem>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="15">15</SelectItem>
+                            <SelectItem value="30">30</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs text-gray-600 mb-1 block">Hour</label>
+                        <Select value={newJob.hour} onValueChange={(value) => setNewJob({...newJob, hour: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="選擇" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">不設定</SelectItem>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="2">2</SelectItem>
+                            <SelectItem value="6">6</SelectItem>
+                            <SelectItem value="12">12</SelectItem>
+                            <SelectItem value="24">24</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs text-gray-600 mb-1 block">Date</label>
+                        <Select value={newJob.date} onValueChange={(value) => setNewJob({...newJob, date: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="選擇" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">不設定</SelectItem>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="15">15</SelectItem>
+                            <SelectItem value="28">28</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs text-gray-600 mb-1 block">Month</label>
+                        <Select value={newJob.month} onValueChange={(value) => setNewJob({...newJob, month: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="選擇" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">不設定</SelectItem>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="3">3</SelectItem>
+                            <SelectItem value="6">6</SelectItem>
+                            <SelectItem value="12">12</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs text-gray-600 mb-1 block">Week</label>
+                        <Select value={newJob.week} onValueChange={(value) => setNewJob({...newJob, week: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="選擇" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">不設定</SelectItem>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="2">2</SelectItem>
+                            <SelectItem value="4">4</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">Hour</label>
-                      <Select value={newJob.hour} onValueChange={(value) => setNewJob({...newJob, hour: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="*">*</SelectItem>
-                          <SelectItem value="0">0</SelectItem>
-                          <SelectItem value="6">6</SelectItem>
-                          <SelectItem value="12">12</SelectItem>
-                          <SelectItem value="18">18</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">Date</label>
-                      <Select value={newJob.date} onValueChange={(value) => setNewJob({...newJob, date: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="*">*</SelectItem>
-                          <SelectItem value="1">1</SelectItem>
-                          <SelectItem value="15">15</SelectItem>
-                          <SelectItem value="28">28</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">Month</label>
-                      <Select value={newJob.month} onValueChange={(value) => setNewJob({...newJob, month: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="*">*</SelectItem>
-                          <SelectItem value="1">1</SelectItem>
-                          <SelectItem value="6">6</SelectItem>
-                          <SelectItem value="12">12</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <label className="text-xs text-gray-600 mb-1 block">Week</label>
-                      <Select value={newJob.week} onValueChange={(value) => setNewJob({...newJob, week: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="*">*</SelectItem>
-                          <SelectItem value="0">0</SelectItem>
-                          <SelectItem value="1">1</SelectItem>
-                          <SelectItem value="6">6</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                  )}
 
                   <div className="flex justify-end gap-2 pt-2">
                     <Button 
