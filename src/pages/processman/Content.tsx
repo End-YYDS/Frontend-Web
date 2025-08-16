@@ -12,7 +12,8 @@ import {
   Activity,
   Search,
   ArrowLeft,
-  ChevronRight
+  ChevronRight,
+  Pin
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ export const ProcessManager = () => {
   const [selectedComputer, setSelectedComputer] = useState<Computer | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pinnedProcesses, setPinnedProcesses] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Mock data for demonstration
@@ -129,11 +131,11 @@ export const ProcessManager = () => {
       }
       
       // Mock API call
-      const response = await fetch(`/api/process/action/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Uuid: uuid, Process: processName })
-      });
+      // const response = await fetch(`/api/process/action/${action}`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ Uuid: uuid, Process: processName })
+      // });
 
       toast({
         title: "操作完成",
@@ -148,7 +150,7 @@ export const ProcessManager = () => {
     }
   };
 
-  const filteredComputers = processData ? Object.entries(processData.pcs).filter(([uuid, computer]) =>
+  const filteredComputers = processData ? Object.entries(processData.pcs).filter(([, computer]) =>
     computer.hostname.toLowerCase().includes(searchTerm.toLowerCase())
   ) : [];
 
@@ -159,10 +161,34 @@ export const ProcessManager = () => {
     return { total, running, stopped };
   };
 
+  const handleTogglePin = (processName: string) => {
+    const newPinnedProcesses = new Set(pinnedProcesses);
+    if (newPinnedProcesses.has(processName)) {
+      newPinnedProcesses.delete(processName);
+    } else {
+      newPinnedProcesses.add(processName);
+    }
+    setPinnedProcesses(newPinnedProcesses);
+  };
+
   const filteredProcesses = selectedComputer ? 
-    Object.entries(selectedComputer.processes).filter(([processName]) =>
-      processName.toLowerCase().includes(searchTerm.toLowerCase())
-    ) : [];
+    Object.entries(selectedComputer.processes).filter(([processName]) => {
+      const matchesSearch = searchTerm.trim() ? 
+        processName.toLowerCase().includes(searchTerm.toLowerCase()) : true;
+      
+      // 搜尋時所有程序都要符合搜尋條件，包括釘選的程序
+      return matchesSearch;
+    }).sort(([processNameA], [processNameB]) => {
+      // 釘選的程序排在最前面
+      const aPinned = pinnedProcesses.has(processNameA);
+      const bPinned = pinnedProcesses.has(processNameB);
+      
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return processNameA.localeCompare(processNameB);
+    }) : [];
+
+  const displayProcesses = selectedComputer ? filteredProcesses : [];
 
   if (loading) {
     return (
@@ -202,7 +228,10 @@ export const ProcessManager = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedComputer(null)}
+                    onClick={() => {
+                      setSelectedComputer(null);
+                      setSearchTerm('');
+                    }}
                     className="flex items-center space-x-1"
                   >
                     <ArrowLeft className="w-4 h-4" />
@@ -288,80 +317,116 @@ export const ProcessManager = () => {
                   </Card>
                 </div>
 
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>程序名稱</TableHead>
-                      <TableHead>狀態</TableHead>
-                      <TableHead>開機時自動啟動</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredProcesses.map(([processName, process]) => (
-                      <TableRow key={processName}>
-                        <TableCell className="font-medium">{processName}</TableCell>
-                        <TableCell>
-                          <Badge variant={process.status ? "default" : "secondary"}>
-                            {process.status ? "運行中" : "已停止"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {process.boot ? (
-                            <Badge variant="outline" className="text-green-600">已啟用</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-gray-500">未啟用</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end space-x-1">
-                            {!process.status ? (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleProcessAction('start', selectedComputer.uuid, processName)}
-                                  className="h-8 px-3"
-                                >
-                                  <Play className="w-3 h-3 mr-1" />
-                                  啟動
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleProcessAction('start_enable', selectedComputer.uuid, processName)}
-                                  className="h-8 px-3"
-                                >
-                                  <PlayCircle className="w-3 h-3 mr-1" />
-                                  啟動並開機啟動
-                                </Button>
-                              </>
-                            ) : (
+                 {displayProcesses.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>篩選</TableHead>
+                          <TableHead>程序名稱</TableHead>
+                          <TableHead>狀態</TableHead>
+                          <TableHead>開機啟動</TableHead>
+                          <TableHead className="text-right">操作</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {displayProcesses.map(([processName, process]) => (
+                          <TableRow key={processName}>
+                            <TableCell>
                               <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => handleProcessAction('stop', selectedComputer.uuid, processName)}
-                                className="h-8 px-3"
+                                variant={pinnedProcesses.has(processName) ? "default" : "outline"}
+                                onClick={() => handleTogglePin(processName)}
+                                className="h-8 w-8 p-0"
                               >
-                                <Square className="w-3 h-3 mr-1" />
-                                停止
+                                <Pin className={`w-3 h-3 ${pinnedProcesses.has(processName) ? 'fill-current' : ''}`} />
                               </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleProcessAction('restart', selectedComputer.uuid, processName)}
-                              className="h-8 px-3"
-                            >
-                              <RotateCcw className="w-3 h-3 mr-1" />
-                              重啟
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center space-x-2">
+                                <span>{processName}</span>
+                                {pinnedProcesses.has(processName) && (
+                                  <Badge variant="outline" className="text-xs">已釘選</Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={process.status ? "default" : "secondary"}>
+                                {process.status ? "運行中" : "已停止"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {process.boot ? (
+                                <Badge variant="outline" className="text-green-600">已啟用</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-gray-500">未啟用</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end space-x-1">
+                                {!process.status ? (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleProcessAction('start', selectedComputer.uuid, processName)}
+                                      className="h-8 px-3"
+                                    >
+                                      <Play className="w-3 h-3 mr-1" />
+                                      啟動
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleProcessAction('start_enable', selectedComputer.uuid, processName)}
+                                      className="h-8 px-3"
+                                    >
+                                      <PlayCircle className="w-3 h-3 mr-1" />
+                                      啟動並開機啟動
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleProcessAction('stop', selectedComputer.uuid, processName)}
+                                    className="h-8 px-3"
+                                  >
+                                    <Square className="w-3 h-3 mr-1" />
+                                    停止
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleProcessAction('restart', selectedComputer.uuid, processName)}
+                                  className="h-8 px-3"
+                                >
+                                  <RotateCcw className="w-3 h-3 mr-1" />
+                                  重啟
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                 ) : (
+                   <div className="text-center py-8 text-gray-500">
+                     {!searchTerm.trim() ? (
+                       <div>
+                         <Search className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                         <p className="text-lg font-medium">請輸入程序名稱進行搜尋</p>
+                         <p className="text-sm">只有輸入搜尋關鍵字時才會顯示程序</p>
+                       </div>
+                     ) : (
+                       <div>
+                         <Activity className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                         <p className="text-lg font-medium">未找到匹配的程序</p>
+                         <p className="text-sm">沒有找到包含 "{searchTerm}" 的程序</p>
+                       </div>
+                     )}
+                   </div>
+                 )}
               </div>
             )}
           </ScrollArea>
