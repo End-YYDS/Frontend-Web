@@ -27,7 +27,7 @@ const CronManagement = () => {
       username: 'user1',
       jobName: 'cache cleaner',
       command: 'rm -rf /var/cache',
-      schedule: '@Startup',
+      schedule: 'Startup',
       status: 'active'
     },
     {
@@ -118,8 +118,8 @@ const CronManagement = () => {
     if (newJob.minute && newJob.minute !== 'none') parts.push(`每${newJob.minute}分鐘`);
     if (newJob.hour && newJob.hour !== 'none') parts.push(`每${newJob.hour}小時`);
     if (newJob.date && newJob.date !== 'none') parts.push(`每月第${newJob.date}日`);
-    if (newJob.month && newJob.month !== 'none') parts.push(`每年第${newJob.month}月`);
-    if (newJob.week && newJob.week !== 'none') parts.push(`每週第${newJob.week}天`);
+    if (newJob.month && newJob.month !== 'none') parts.push(`每${newJob.month}個月`);
+    if (newJob.week && newJob.week !== 'none') parts.push(`每個禮拜${newJob.week}`);
     return parts.join(', ') || '自訂排程';
   };
 
@@ -127,17 +127,17 @@ const CronManagement = () => {
     if (newJob.scheduleType === 'quick' && newJob.quickSchedule) {
       switch (newJob.quickSchedule) {
         case 'Startup':
-          return '@startup';
+          return 'Startup';
         case 'Hourly':
-          return '@hourly';
+          return 'Hourly';
         case 'Daily':
-          return '@daily';
+          return 'Daily';
         case 'Weekly':
-          return '@weekly';
+          return 'Weekly';
         case 'Monthly':
-          return '@monthly';
+          return 'Monthly';
         case 'Yearly':
-          return '@yearly';
+          return 'Yearly';
         default:
           return newJob.quickSchedule;
       }
@@ -513,9 +513,13 @@ const CronManagement = () => {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">不設定</SelectItem>
-                            <SelectItem value="1">1</SelectItem>
-                            <SelectItem value="2">2</SelectItem>
-                            <SelectItem value="4">4</SelectItem>
+                            <SelectItem value="1">一</SelectItem>
+                            <SelectItem value="2">二</SelectItem>
+                            <SelectItem value="1">三</SelectItem>
+                            <SelectItem value="4">四</SelectItem>
+                            <SelectItem value="1">五</SelectItem>
+                            <SelectItem value="1">六</SelectItem>
+                            <SelectItem value="1">日</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

@@ -33,5 +33,5 @@ const routes: RouteObject[] = Object.entries(modules).map(([filePath, module]) =
 routes.sort((a, b) => (a.path === '/' ? -1 : b.path === '/' ? 1 : 0));
 routes.push({ path: '*', element: <Navigate to='/' replace /> });
 export default function Router() {
-  return <Suspense fallback={<div>加载中…</div>}>{useRoutes(routes)}</Suspense>;
+  return <Suspense fallback={<div>加載中…</div>}>{useRoutes(routes)}</Suspense>;
 }
