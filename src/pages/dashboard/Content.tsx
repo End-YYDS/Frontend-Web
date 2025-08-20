@@ -19,27 +19,29 @@ import {
   CartesianGrid, 
   ResponsiveContainer 
 } from "recharts";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { Check, AlertTriangle, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 
-// Mock data for charts
-const cpuData = [
-  { time: '00:00', value: 25 },
-  { time: '04:00', value: 35 },
-  { time: '08:00', value: 45 },
-  { time: '12:00', value: 55 },
-  { time: '16:00', value: 40 },
-  { time: '20:00', value: 30 },
-];
-
-const memoryData = [
-  { time: '00:00', value: 60 },
-  { time: '04:00', value: 45 },
-  { time: '08:00', value: 55 },
-  { time: '12:00', value: 70 },
-  { time: '16:00', value: 65 },
-  { time: '20:00', value: 50 },
-];
+// Function to fetch system metrics from backend
+const fetchSystemMetrics = async () => {
+  try {
+    // Mock backend API call - replace with actual Supabase API call
+    return {
+      cpu: Math.floor(Math.random() * 80) + 20,
+      memory: Math.floor(Math.random() * 80) + 20,
+      disk: Math.floor(Math.random() * 80) + 20,
+      timestamp: new Date().toLocaleTimeString('zh-TW', { 
+        hour12: false, 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit'
+      })
+    };
+  } catch (error) {
+    console.error('Error fetching system metrics:', error);
+    return null;
+  }
+};
 
 // Mock data for computer list with status
 const computers = [
@@ -72,6 +74,71 @@ const ITEMS_PER_PAGE = 5;
 export function DashboardContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<'safe' | 'warning' | 'danger' | null>(null);
+  
+  // Real-time data state (store last 6 data points)
+  const [cpuData, setCpuData] = useState([
+    { time: '00:00', value: 25 },
+    { time: '04:00', value: 35 },
+    { time: '08:00', value: 45 },
+    { time: '12:00', value: 55 },
+    { time: '16:00', value: 40 },
+    { time: '20:00', value: 30 },
+  ]);
+  
+  const [memoryData, setMemoryData] = useState([
+    { time: '00:00', value: 60 },
+    { time: '04:00', value: 45 },
+    { time: '08:00', value: 55 },
+    { time: '12:00', value: 70 },
+    { time: '16:00', value: 65 },
+    { time: '20:00', value: 50 },
+  ]);
+  
+  const [, setDiskData] = useState([
+    { time: '00:00', value: 80 },
+    { time: '04:00', value: 82 },
+    { time: '08:00', value: 85 },
+    { time: '12:00', value: 88 },
+    { time: '16:00', value: 86 },
+    { time: '20:00', value: 84 },
+  ]);
+  
+  const statusIconMap: Record<
+    string,
+    { icon: React.ElementType; color: string }
+  > = {
+    safe: { icon: Check, color: "text-green-600" },
+    warning: { icon: AlertTriangle, color: "text-yellow-500" },
+    danger: { icon: X, color: "text-red-500" },
+  };
+
+  // Fetch data every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const metrics = await fetchSystemMetrics();
+      if (metrics) {
+        // Update CPU data (shift left and add new data point)
+        setCpuData(prev => {
+          const newData = [...prev.slice(1), { time: metrics.timestamp, value: metrics.cpu }];
+          return newData;
+        });
+        
+        // Update Memory data (shift left and add new data point)
+        setMemoryData(prev => {
+          const newData = [...prev.slice(1), { time: metrics.timestamp, value: metrics.memory }];
+          return newData;
+        });
+        
+        // Update Disk data (shift left and add new data point)
+        setDiskData(prev => {
+          const newData = [...prev.slice(1), { time: metrics.timestamp, value: metrics.disk }];
+          return newData;
+        });
+      }
+    }, 5000); // Fetch every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Filter computers based on selected status
   const filteredComputers = selectedStatus 
@@ -107,9 +174,14 @@ export function DashboardContent() {
             <ChevronLeft className="w-4 h-4" />
             Back to Dashboard
           </Button>
-          <h2 className="text-2xl font-bold text-slate-700 capitalize">
-            {selectedStatus} Computers ({filteredComputers.length})
-          </h2>
+          <h2 className="text-2xl font-bold text-slate-700 capitalize flex items-center gap-2">
+          {(() => {
+            const { icon: Icon, color } =
+              statusIconMap[selectedStatus] || { icon: Check, color: "text-slate-400" };
+            return <Icon className={`w-6 h-6 ${color}`} />;
+          })()}
+          {selectedStatus} Computers ({filteredComputers.length})
+        </h2>
         </div>
 
         {/* Computer List */}
@@ -268,7 +340,7 @@ export function DashboardContent() {
                     dataKey="value" 
                     stroke="#3b82f6" 
                     strokeWidth={2}
-                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#3b82f6' }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -300,7 +372,7 @@ export function DashboardContent() {
                     dataKey="value" 
                     stroke="#10b981" 
                     strokeWidth={2}
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#10b981'}}
                   />
                 </LineChart>
               </ResponsiveContainer>
