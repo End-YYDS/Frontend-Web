@@ -13,7 +13,7 @@ const index = () => {
           className="text-4xl font-bold mb-2" 
           style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
           >
-            Servers - Apache Webserver
+            Servers - ProFTPD Server
           </h1>
       </div>
       <ServerContent 

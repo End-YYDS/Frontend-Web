@@ -186,101 +186,76 @@ export function DashboardContent() {
 
         {/* Computer List */}
         <Card>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Name</TableHead>
-                    <TableHead className="text-xs">CPU</TableHead>
-                    <TableHead className="text-xs">Memory</TableHead>
-                    <TableHead className="text-xs">Disk</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentComputers.map((computer, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="text-xs font-medium">
-                        {computer.name}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            parseInt(computer.cpu) > 70 
-                              ? 'border-red-300 text-red-700' 
-                              : parseInt(computer.cpu) > 50 
-                                ? 'border-yellow-300 text-yellow-700'
-                                : 'border-green-300 text-green-700'
-                          }`}
-                        >
-                          {computer.cpu}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            parseInt(computer.memory) > 70 
-                              ? 'border-red-300 text-red-700' 
-                              : parseInt(computer.memory) > 50 
-                                ? 'border-yellow-300 text-yellow-700'
-                                : 'border-green-300 text-green-700'
-                          }`}
-                        >
-                          {computer.memory}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            parseInt(computer.disk) > 70 
-                              ? 'border-red-300 text-red-700' 
-                              : parseInt(computer.disk) > 50 
-                                ? 'border-yellow-300 text-yellow-700'
-                                : 'border-green-300 text-green-700'
-                          }`}
-                        >
-                          {computer.disk}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-slate-500">
-                    Showing {startIndex + 1} to {Math.min(endIndex, filteredComputers.length)} of {filteredComputers.length} computers
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <span className="text-xs text-slate-600">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
+        <CardContent className="p-6 relative">
+        {/* Header */}
+        <div className="relative w-full h-8 border-b border-slate-200">
+          <div className="absolute left-0 w-[40%] overflow-hidden whitespace-nowrap text-ellipsis text-xs font-medium text-slate-600">
+            Name
+          </div>
+          <div className="absolute left-[50%] w-[15%] text-right text-xs font-medium text-slate-600">
+            CPU
+          </div>
+          <div className="absolute left-[65%] w-[15%] text-right text-xs font-medium text-slate-600">
+            Memory
+          </div>
+          <div className="absolute left-[80%] w-[15%] text-right text-xs font-medium text-slate-600">
+            Disk
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="mt-2 space-y-1">
+          {currentComputers.map((computer, index) => (
+            <div key={index} className="relative w-full h-8 border-b border-slate-100">
+              <div className="max-w-[300px] overflow-hidden whitespace-nowrap text-ellipsis">
+                {computer.name}
+              </div>
+              <div className="w-[100px] text-right flex-none">
+              <Badge
+                  variant="outline"
+                  className={`${
+                    parseInt(computer.cpu) > 70
+                      ? "border-red-300 text-red-700"
+                      : parseInt(computer.cpu) > 50
+                      ? "border-yellow-300 text-yellow-700"
+                      : "border-green-300 text-green-700"
+                  }`}
+                >
+                  {computer.cpu}
+                </Badge>
+              </div>
+              <div className="absolute left-[65%] w-[15%] text-right text-xs">
+                <Badge
+                  variant="outline"
+                  className={`${
+                    parseInt(computer.memory) > 70
+                      ? "border-red-300 text-red-700"
+                      : parseInt(computer.memory) > 50
+                      ? "border-yellow-300 text-yellow-700"
+                      : "border-green-300 text-green-700"
+                  }`}
+                >
+                  {computer.memory}
+                </Badge>
+              </div>
+              <div className="absolute left-[80%] w-[15%] text-right text-xs">
+                <Badge
+                  variant="outline"
+                  className={`${
+                    parseInt(computer.disk) > 70
+                      ? "border-red-300 text-red-700"
+                      : parseInt(computer.disk) > 50
+                      ? "border-yellow-300 text-yellow-700"
+                      : "border-green-300 text-green-700"
+                  }`}
+                >
+                  {computer.disk}
+                </Badge>
+              </div>
             </div>
-          </CardContent>
+          ))}
+        </div>
+      </CardContent>
         </Card>
       </div>
     );
@@ -288,6 +263,14 @@ export function DashboardContent() {
 
   return (
     <div className="space-y-6">
+      <div className="text-center mb-8">
+          <h1 
+          className="text-4xl font-bold mb-2" 
+          style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
+          >
+              Dashboard
+          </h1>
+      </div>
       {/* Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Button
