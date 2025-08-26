@@ -12,7 +12,7 @@ import CertificateManagementPage from "./pages/certificate_management";
 import UserGroupPage from "./pages/user_group";
 import CronManagementPage from "./pages/cron_management";
 import NotFound from "./pages/not_found";
-import { SidebarLayout } from "./components/SidebarLayout";
+// import { Layout } from "./components/Layout";
 
 const queryClient = new QueryClient();
 
@@ -78,7 +78,7 @@ const App = () => {
       <BrowserRouter>
         <TooltipProvider>
           <Routes>
-            <Route element={<SidebarLayout onLogout={handleLogout} />}>
+            <Route element={<Layout onLogout={handleLogout} />}>
               <Route path="/" element={<Index />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/software-packages" element={<SoftwarePackagesPage />} />

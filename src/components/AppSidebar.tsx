@@ -1,200 +1,205 @@
-// import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+// components/AppSidebar.tsx
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import { 
-  Settings, 
-  Package, 
-  Network, 
-  Shield, 
-  Users,
-  Clock,
   Home,
-  UserCheck,
+  Users,
+  Shield,
+  Settings,
   Archive,
   FileText,
-  Server,
-  UploadCloud,
+  Monitor,
   Power,
-} from 'lucide-react';
-
-const userItems = [
-  { title: "CHM - User & Group", url: "/user-group", icon: Users },
-  { title: "CHM - Roles", url: "/roles", icon: UserCheck },
-];
-
-const systemItems = [
-  { title: "CHM - Backup", url: "/backup", icon: Archive },
-  { title: "CHM - Settings", url: "/settings", icon: Settings },
-  { title: "CHM - mCA", url: "/certificate-management", icon: Shield },
-  { title: "System & Host Logs", url: "/system-logs", icon: FileText },
-];
-
-const hostManagementItems = [
-  { title: "CHM - PC Manager", url: "/network-configuration", icon: Network },
-  { title: "Process Manager & System Shutdown", url: "/process-manager", icon: Power },
-  { title: "Cron Management", url: "/cron-management", icon: Clock },
-];
-
-const resourcesItems = [
-  { title: "Servers", url: "/servers", icon: Server },
-  { title: "Software Package", url: "/software-packages", icon: Package },
-  { title: "File Upload & Download", url: "/file-manager", icon: UploadCloud },
-];
-
-const networkItems = [
-  { title: "Firewall", url: "/firewall", icon: Shield },
-  { title: "Network Configuration", url: "/network-configuration", icon: Network },
-];
+  Clock,
+  Server,
+  Package,
+  Download,
+  Wifi,
+  Globe,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import Logo from "@/assets/CHM.png";
 
 interface AppSidebarProps {
   selectedServer: string | null;
-  onServerSelect: (serverId: string) => void;
+  onServerSelect: (server: string) => void;
 }
 
-export function AppSidebar({ selectedServer, onServerSelect }: AppSidebarProps) {
-  const { state } = useSidebar();
+const servers = [
+  { id: "apache", name: "Apache", installed: true },
+  { id: "nginx", name: "Nginx", installed: false },
+  { id: "bind", name: "BIND DNS", installed: true },
+  { id: "dhcp", name: "DHCP", installed: false },
+  { id: "ldap", name: "LDAP", installed: true },
+  { id: "mysql", name: "MySQL Database", installed: true },
+  { id: "postgresql", name: "PostgreSQL Database", installed: false },
+  { id: "proftpd", name: "ProFTPD", installed: true },
+  { id: "samba", name: "Samba", installed: false },
+  { id: "squid", name: "Squid Proxy", installed: true },
+  { id: "ssh", name: "SSH", installed: true },
+];
+
+const sidebarItems = [
+  { name: "Dashboard", icon: Home, path: "/dashboard" },
+  {
+    category: "User",
+    items: [
+      { name: "CHM - User & Group", icon: Users, path: "/user_group" },
+      { name: "CHM - Roles", icon: Shield, path: "/roles" },
+    ],
+  },
+  {
+    category: "System",
+    items: [
+      { name: "CHM - Backup", icon: Archive, path: "/backup" },
+      { name: "CHM - Settings", icon: Settings, path: "/settings" },
+      { name: "System & Host Logs", icon: FileText, path: "/s&h-logs" },
+    ],
+  },
+  {
+    category: "Host Management",
+    items: [
+      { name: "CHM - PC Manager", icon: Monitor, path: "/pc-manager" },
+      {
+        name: "Process Manager",
+        icon: Power,
+        path: "/process-manager",
+      },
+      { name: "Cron Management", icon: Clock, path: "/cron_management" },
+    ],
+  },
+  {
+    category: "Resources & Services",
+    items: [
+      { name: "Servers", icon: Server, path: "/servers" },
+      { name: "Software Package", icon: Package, path: "/software_packages" },
+      { name: "File Manager", icon: Download, path: "/file-manager" },
+    ],
+  },
+  {
+    category: "Network",
+    items: [
+      { name: "Firewall", icon: Wifi, path: "/firewall" },
+      { name: "Network Configuration", icon: Globe, path: "/network_configuration" },
+    ],
+  },
+];
+
+export function AppSidebar({ onServerSelect }: AppSidebarProps) {
   const location = useLocation();
-  const currentPath = location.pathname;
+  const [showServers, setShowServers] = useState(false);
 
-  const isActive = (path: string) => currentPath === path;
-  const isCollapsed = state === "collapsed";
-
-  const getNavClass = (path: string) => 
-    isActive(path) 
-      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
-      : "hover:bg-sidebar-accent/50";
-
-  const MenuItem = ({ item }: { item: typeof userItems[0] }) => (
-    <SidebarMenuItem>
-      <SidebarMenuButton asChild>
-        <NavLink to={item.url} className={getNavClass(item.url)}>
-          <item.icon className="h-4 w-4" />
-          {!isCollapsed && <span className="text-sm">{item.title}</span>}
-        </NavLink>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
+  // 自動展開當前是 /servers 頁面
+  useEffect(() => {
+    if (location.pathname.startsWith("/servers")) {
+      setShowServers(true);
+    }
+  }, [location.pathname]);
 
   return (
-    <Sidebar className="border-r border-sidebar-border">
-      <SidebarContent className="px-2">
-        {/* Dashboard */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/" className={getNavClass("/")}>
-                    <Home className="h-4 w-4" />
-                    {!isCollapsed && <span className="text-sm">Dashboard</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+    <div className="fixed left-0 top-0 w-64 bg-slate-800 text-white h-screen flex flex-col overflow-hidden z-40">
+      {/* Logo */}
+      <div className="bg-[#1e232e] p-6 border-b border-slate-700 flex-shrink-0">
+        <div className="flex items-center justify-center space-x-6">
+          <img src={Logo} alt="CHM Logo" className="w-15 h-15 object-contain" />
+          <span className="text-4xl font-bold">CHM</span>
+        </div>
+      </div>
 
-        {/* User */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs text-sidebar-foreground/70">
-            User
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {userItems.map((item) => (
-                <MenuItem key={item.url} item={item} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
-        {/* System */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs text-sidebar-foreground/70">
-            System
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {systemItems.map((item) => (
-                <MenuItem key={item.url} item={item} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4">
+        {sidebarItems.map((section, index) => (
+          <div key={index} className="mb-6">
+            {section.category ? (
+              <>
+                <div className="px-6 mb-2">
+                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    {section.category}
+                  </h3>
+                </div>
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    const isServers = item.path === "/servers";
 
-        {/* Host Management */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs text-sidebar-foreground/70">
-            Host Management
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {hostManagementItems.map((item) => (
-                <MenuItem key={item.url} item={item} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Resources & Services */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs text-sidebar-foreground/70">
-            Resources & Services
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {resourcesItems.map((item) => {
-                if (item.title === "Servers") {
-                  return (
-                    <SidebarMenuItem key={item.url}>
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to={item.url}
-                          className={getNavClass(item.url)}
-                          onClick={() => onServerSelect("server-1")}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          {!isCollapsed && (
-                            <span className="text-sm">
-                              {item.title}
-                              {selectedServer && ` (${selectedServer})`}
-                            </span>
+                    return (
+                      <div key={item.name}>
+                        <Link
+                          to={item.path}
+                          onClick={(e) => {
+                            if (isServers) {
+                              e.preventDefault();
+                              setShowServers((prev) => !prev);
+                            }
+                          }}
+                          className={cn(
+                            "flex items-center justify-between px-6 py-2 text-sm hover:bg-slate-700 transition-colors",
+                            location.pathname === item.path &&
+                              "bg-slate-700 border-r-2 border-purple-500"
                           )}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                }
-                return <MenuItem key={item.url} item={item} />;
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                        >
+                          <div className="flex items-center">
+                            <Icon className="w-4 h-4 mr-3 text-slate-400" />
+                            <span>{item.name}</span>
+                          </div>
+                          {isServers && (
+                            <div className="ml-2">
+                              {showServers ? (
+                                <ChevronDown className="w-4 h-4 text-slate-400" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-slate-400" />
+                              )}
+                            </div>
+                          )}
+                        </Link>
 
-        {/* Network */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs text-sidebar-foreground/70">
-            Network
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {networkItems.map((item) => (
-                <MenuItem key={item.url} item={item} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+                        {/* Server list */}
+                        {isServers && showServers && (
+                          <div className="ml-6 mt-1 space-y-1">
+                            {servers.map((server) => (
+                              <Link
+                                key={server.id}
+                                to={`/servers/${server.id}`}
+                                onClick={() => onServerSelect(server.id)}
+                                className={cn(
+                                  "block px-4 py-2 text-sm rounded transition-colors",
+                                  location.pathname === `/servers/${server.id}`
+                                    ? "bg-purple-600 text-white"
+                                    : "hover:bg-slate-600 text-slate-300"
+                                )}
+                              >
+                                {server.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              // 沒有 category 的單項
+              <Link
+                to={section.path!}
+                className={cn(
+                  "flex items-center px-6 py-3 text-sm hover:bg-slate-700 transition-colors",
+                  location.pathname === section.path &&
+                    "bg-slate-700 border-r-2 border-purple-500"
+                )}
+              >
+                {section.icon && (
+                  <section.icon className="w-4 h-4 mr-3 text-slate-400" />
+                )}
+                <span>{section.name}</span>
+              </Link>
+            )}
+          </div>
+        ))}
+      </nav>
+    </div>
   );
 }
