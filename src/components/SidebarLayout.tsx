@@ -1,6 +1,5 @@
-import { type FC } from "react";
-import { Outlet } from "react-router-dom";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 
@@ -8,21 +7,50 @@ interface SidebarLayoutProps {
   onLogout?: () => void;
 }
 
-export const SidebarLayout: FC<SidebarLayoutProps> = ({ onLogout }) => {
-  return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        {/* 左側 Sidebar */}
-        <AppSidebar />
+export default function SidebarLayout({ onLogout }: SidebarLayoutProps) {
+  // 狀態放在 Layout，讓 Sidebar & Main 共用
+  const [selectedServer, setSelectedServer] = useState<string | null>(null);
+  const location = useLocation();
 
-        {/* 右側主畫面 */}
-        <SidebarInset className="flex flex-col flex-1">
-          <AppHeader onLogout={onLogout} />
-          <main className="flex-1 overflow-auto p-4">
-            <Outlet /> {/* 子頁面會渲染在這 */}
-          </main>
-        </SidebarInset>
+  // 只有 /servers 或 /servers/:id 顯示 selectedServer
+  const showSelectedServer = location.pathname.startsWith("/servers");
+
+  return (
+    <div className="flex h-screen">
+      {/* Sidebar */}
+      <AppSidebar
+        selectedServer={selectedServer}
+        onServerSelect={(serverId) => setSelectedServer(serverId)}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 ml-64 bg-gray-50">
+        {/* Header */}
+        <header className="h-14 border-b border-gray-200 flex items-center justify-between px-4 bg-white shadow-sm">
+          {/* 左邊 Title */}
+          <h1 className="text-lg font-semibold">CHM System</h1>
+
+          {/* 右邊區塊：登入/登出 & Active Server */}
+          <div className="flex items-center gap-4">
+            {showSelectedServer && selectedServer && (
+              <div className="text-sm text-gray-600">
+                Active Server:{" "}
+                <span className="font-medium text-purple-600">
+                  {selectedServer}
+                </span>
+              </div>
+            )}
+
+            {/* AppHeader：放右上角登出按鈕 */}
+            <AppHeader onLogout={onLogout} />
+          </div>
+        </header>
+
+        {/* 主內容區塊 */}
+        <main className="p-6 overflow-y-auto h-[calc(100%-3.5rem)]">
+          <Outlet />
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
-};
+}

@@ -23,11 +23,8 @@ import {
   Archive,
   FileText,
   Server,
-  Upload,
-  Download,
   UploadCloud,
   Power,
-  Activity
 } from 'lucide-react';
 
 const userItems = [
@@ -59,7 +56,12 @@ const networkItems = [
   { title: "Network Configuration", url: "/network-configuration", icon: Network },
 ];
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  selectedServer: string | null;
+  onServerSelect: (serverId: string) => void;
+}
+
+export function AppSidebar({ selectedServer, onServerSelect }: AppSidebarProps) {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -151,9 +153,30 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {resourcesItems.map((item) => (
-                <MenuItem key={item.url} item={item} />
-              ))}
+              {resourcesItems.map((item) => {
+                if (item.title === "Servers") {
+                  return (
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          className={getNavClass(item.url)}
+                          onClick={() => onServerSelect("server-1")}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {!isCollapsed && (
+                            <span className="text-sm">
+                              {item.title}
+                              {selectedServer && ` (${selectedServer})`}
+                            </span>
+                          )}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+                return <MenuItem key={item.url} item={item} />;
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

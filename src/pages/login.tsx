@@ -26,6 +26,7 @@ export default function Login({ onSuccess }: LoginProps) {
         body: JSON.stringify({ username, password }),
       });
 
+      // 測試用
       if (!res.ok) throw new Error("帳號或密碼錯誤");
 
       // ✅ 通知 App 登入成功

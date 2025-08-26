@@ -4,15 +4,12 @@ import './index.css';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './auth.tsx';
 import Router from './router.tsx';
-// import App from './App.tsx'
-
-// createRoot(document.getElementById("root")!).render(<App />);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <Router />
+        <Router />   {/* Router 內部會掛 SidebarLayout */}
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
