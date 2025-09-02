@@ -20,6 +20,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Logo from "@/assets/CHM.png";
 
 interface AppSidebarProps {
   selectedServer: string | null;
@@ -45,7 +46,7 @@ const sidebarItems = [
   {
     category: "User",
     items: [
-      { name: "CHM - User & Group", icon: Users, path: "/user-group" },
+      { name: "CHM - User & Group", icon: Users, path: "/user_group" },
       { name: "CHM - Roles", icon: Shield, path: "/roles" },
     ],
   },
@@ -53,7 +54,7 @@ const sidebarItems = [
     category: "System",
     items: [
       { name: "CHM - Backup", icon: Archive, path: "/backup" },
-      { name: "CHM - Settings", icon: Settings, path: "/system-settings" },
+      { name: "CHM - Settings", icon: Settings, path: "/settings" },
       { name: "System & Host Logs", icon: FileText, path: "/s&h-logs" },
     ],
   },
@@ -66,14 +67,14 @@ const sidebarItems = [
         icon: Power,
         path: "/process-manager",
       },
-      { name: "Cron Management", icon: Clock, path: "/cron-management" },
+      { name: "Cron Management", icon: Clock, path: "/cron_management" },
     ],
   },
   {
     category: "Resources & Services",
     items: [
       { name: "Servers", icon: Server, path: "/servers" },
-      { name: "Software Package", icon: Package, path: "/software-package" },
+      { name: "Software Package", icon: Package, path: "/software_packages" },
       { name: "File Manager", icon: Download, path: "/file-manager" },
     ],
   },
@@ -81,7 +82,7 @@ const sidebarItems = [
     category: "Network",
     items: [
       { name: "Firewall", icon: Wifi, path: "/firewall" },
-      { name: "Network Configuration", icon: Globe, path: "/network-config" },
+      { name: "Network Configuration", icon: Globe, path: "/network_configuration" },
     ],
   },
 ];
@@ -100,14 +101,13 @@ export function AppSidebar({ onServerSelect }: AppSidebarProps) {
   return (
     <div className="fixed left-0 top-0 w-64 bg-slate-800 text-white h-screen flex flex-col overflow-hidden z-40">
       {/* Logo */}
-      <div className="p-6 border-b border-slate-700 flex-shrink-0">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center">
-            <div className="w-4 h-4 border-2 border-white transform rotate-45"></div>
-          </div>
-          <span className="text-xl font-bold">CHM</span>
+      <div className="bg-[#1e232e] p-6 border-b border-slate-700 flex-shrink-0">
+        <div className="flex items-center justify-center space-x-6">
+          <img src={Logo} alt="CHM Logo" className="w-15 h-15 object-contain" />
+          <span className="text-4xl font-bold">CHM</span>
         </div>
       </div>
+
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4">
