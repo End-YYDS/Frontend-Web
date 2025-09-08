@@ -14,7 +14,7 @@ import {
   Server,
   Package,
   Download,
-  Wifi,
+  BrickWallFire ,
   Globe,
   ChevronDown,
   ChevronRight,
@@ -81,7 +81,7 @@ const sidebarItems = [
   {
     category: "Network",
     items: [
-      { name: "Firewall", icon: Wifi, path: "/firewall" },
+      { name: "Firewall", icon: BrickWallFire, path: "/firewall" },
       { name: "Network Configuration", icon: Globe, path: "/network_configuration" },
     ],
   },

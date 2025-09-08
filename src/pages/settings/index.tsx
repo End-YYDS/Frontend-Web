@@ -18,8 +18,8 @@ const SettingsPage = () => {
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <div className="bg-[#A8AEBD] py-3 mb-3">
-        <h1 className="text-2xl font-extrabold text-center text-[#E6E6E6]">
+      <div className="bg-[rgb(168,174,189)] py-3 mb-3">
+        <h1 className="text-4xl font-extrabold text-center text-[#E6E6E6]">
           Settings
         </h1>
       </div>
