@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 
 import Test from './Test';
-export const meta = { requiresAuth: false };
+export const meta = { requiresAuth: false, layout: false };
 const index = () => {
   return (
     <div>

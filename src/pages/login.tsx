@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { type PageMeta } from './types';
+export const meta: PageMeta = { requiresAuth: false, layout: false };
 
 type LoginProps = {
   onSuccess: () => void; // ✅ 登入成功時通知 App
@@ -9,10 +11,8 @@ export default function Login({ onSuccess }: LoginProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-
   const navigate = useNavigate();
   const location = useLocation();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const from = (location.state as any)?.from?.pathname || "/";
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,10 +26,8 @@ export default function Login({ onSuccess }: LoginProps) {
         body: JSON.stringify({ username, password }),
       });
 
-      // 測試用
       if (!res.ok) throw new Error("帳號或密碼錯誤");
 
-      // ✅ 通知 App 登入成功
       onSuccess();
       localStorage.setItem("isLoggedIn", "true");
 
