@@ -12,7 +12,7 @@ import CertificateManagementPage from "./pages/certificate_management";
 import UserGroupPage from "./pages/user_group";
 import CronManagementPage from "./pages/cron_management";
 import NotFound from "./pages/not_found";
-// import { Layout } from "./components/Layout";
+import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
 

@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, Edit, Table } from 'lucide-react';
 import type { Group } from './types';
 import { AddGroupDialog } from './AddGroupDialog';
 import { EditGroupDialog } from './EditGroupDialog';
@@ -80,7 +80,6 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" onClick={() => handleEditGroup(group)} className="gap-1">
                     <Edit className="h-3 w-3" />
-                    Edit
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -112,7 +111,7 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
               {group.users.map((user) => (
                 <div key={user} className="flex items-center gap-2 text-sm">
                   <input type="checkbox" />
-                  <span>{user}</span>
+                  <Table>{user}</Table>
                 </div>
               ))}
             </div>

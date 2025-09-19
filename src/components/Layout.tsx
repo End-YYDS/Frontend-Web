@@ -1,40 +1,36 @@
-import React, { useState } from 'react';
-import { AppSidebar } from './AppSidebar';
-// import { useLocation } from 'react-router-dom';
-import Topbar from './Topbar';
+import { useState } from "react";
+import { Outlet } from "react-router-dom";
+import { AppSidebar } from "./AppSidebar";
+import Topbar from "./Topbar";
+import { SidebarProvider } from "./ui/sidebar";
 
 interface LayoutProps {
-  children: React.ReactNode;
+  onLogout: () => void;
 }
 
-export default function Layout({ children }: LayoutProps) {
-  // 狀態放在 Layout，讓 Sidebar & Main 共用
+export default function Layout({ onLogout }: LayoutProps) {
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
-  // const location = useLocation();
-
-  // 只有 /servers 或 /servers/:id 顯示 selectedServer
-  // const showSelectedServer = location.pathname.startsWith('/servers');
 
   return (
-    <div className="flex h-screen">
+    <SidebarProvider>
       {/* Sidebar */}
-      <AppSidebar 
-        selectedServer={selectedServer} 
-        onServerSelect={(serverId) => setSelectedServer(serverId)} 
+      <AppSidebar
+        selectedServer={selectedServer}
+        onServerSelect={(serverId) => setSelectedServer(serverId)}
       />
 
       {/* Main Content */}
-      <div className="flex-1 ml-64 bg-gray-50">
-        {/* 頂部 Header */}
-        <header>
-          <Topbar />
+      <div className="flex flex-col flex-1 bg-gray-50">
+        {/* Header */}
+        <header className="h-14 border-b border-gray-200">
+          <Topbar onLogout={onLogout} />
         </header>
 
-        {/* 主要內容區塊 */}
-        <main className="p-6 overflow-y-auto h-[calc(100%-3.5rem)]">
-          {children}
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          <Outlet />
         </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

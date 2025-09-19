@@ -1,4 +1,3 @@
-// components/Topbar.tsx
 import { useState, useEffect, useRef } from "react";
 import { Search, Bell, ChevronDown, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +9,10 @@ interface Notification {
   time: string;
   dateGroup: string;
   read: boolean;
+}
+
+interface TopbarProps {
+  onLogout: () => void;
 }
 
 const mockNotifications: Notification[] = [
@@ -55,7 +58,7 @@ const mockNotifications: Notification[] = [
   },
 ];
 
-export default function Topbar() {
+export default function Topbar({ onLogout }: TopbarProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
@@ -72,16 +75,15 @@ export default function Topbar() {
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       const target = e.target as Node;
-  
+
       // 如果詳細內容存在
       if (selectedNotification) {
-        // 點擊詳細內容外 → 關閉詳細內容，但通知列表保持開啟
         if (modalRef.current && !modalRef.current.contains(target)) {
           setSelectedNotification(null);
         }
-        return; // 直接 return，避免關閉通知列表
+        return;
       }
-  
+
       // 沒有詳細內容時 → 點擊通知列表或使用者菜單外才關閉
       if (
         notifRef.current &&
@@ -93,11 +95,10 @@ export default function Topbar() {
         setShowUserMenu(false);
       }
     }
-  
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [selectedNotification]);
-  
 
   const todaysNotifications = notifications.filter((n) => n.dateGroup.startsWith(todayStr));
   const unreadCount = todaysNotifications.filter((n) => !n.read).length;
@@ -186,8 +187,8 @@ export default function Topbar() {
               <div
                 className="p-2 border-t rounded-b-lg text-center text-xs text-purple-600 cursor-pointer hover:bg-gray-100"
                 onClick={() => {
-                    navigate("/notifications");
-                setShowNotifications(false); // 點擊後關閉通知列表
+                  navigate("/notifications");
+                  setShowNotifications(false);
                 }}
               >
                 View all notifications
@@ -216,7 +217,7 @@ export default function Topbar() {
                 <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Settings</li>
                 <li
                   className="px-4 py-2 text-red-600 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => alert("Logging out...")}
+                  onClick={onLogout}
                 >
                   Logout
                 </li>
