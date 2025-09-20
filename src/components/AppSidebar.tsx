@@ -1,3 +1,5 @@
+import { Link, useLocation } from 'react-router-dom';
+import * as React from 'react';
 import {
   Home,
   Users,
@@ -13,6 +15,7 @@ import {
   Download,
   BrickWallFire,
   Globe,
+  type LucideIcon,
 } from 'lucide-react';
 
 import {
@@ -25,13 +28,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
-import { Link } from 'react-router-dom';
 
 import Logo from '@/assets/CHM.png';
 
-// Menu items (保持扁平結構)
-const items = [
+// Menu items（保持扁平結構）
+type Item = { title: string; url: string; icon: LucideIcon };
+const items: Item[] = [
   { title: 'Dashboard', url: '/', icon: Home },
 
   { title: 'CHM - User & Group', url: '/user_group', icon: Users },
@@ -53,8 +59,8 @@ const items = [
   { title: 'Network Configuration', url: '/network_configuration', icon: Globe },
 ];
 
-// 分類配置
-const categories = {
+// 分類配置：父層是分類名稱，子層是要顯示的 item 標題
+const categories: Record<string, string[]> = {
   User: ['CHM - User & Group', 'CHM - Roles'],
   System: ['CHM - Backup', 'CHM - Settings', 'System & Host Logs'],
   'Host Management': ['CHM - PC Manager', 'Process Manager', 'Cron Management'],
@@ -63,27 +69,37 @@ const categories = {
 };
 
 export function AppSidebar() {
-  const dashboard = items[0]; // 取 Dashboard
-  const DashboardIcon = dashboard.icon; // 先存成變數
+  const location = useLocation();
+  const dashboard = items[0];
+  const DashboardIcon = dashboard.icon;
+  const byTitle = React.useMemo(() => {
+    const m = new Map<string, Item>();
+    for (const it of items) m.set(it.title, it);
+    return m;
+  }, []);
+
+  const isActive = (url: string) =>
+    url === '/'
+      ? location.pathname === '/'
+      : location.pathname === url || location.pathname.startsWith(url + '/');
 
   return (
     <Sidebar>
       {/* Header */}
-      <SidebarHeader className='flex space-x-4 p-3 bg-[#1E232E]/75 w-full'>
-        <div className='flex items-center space-x-4 p-2'>
-          <img src={Logo} alt='CHM Logo' className='w-10 h-10 object-contain' />
-          <span className='text-3xl font-bold'>CHM</span>
+      <SidebarHeader className='flex items-center p-3 bg-[#1E232E]/75 w-full whitespace-nowrap'>
+        <div className='flex items-center gap-3 flex-shrink-0 scale-90 sm:scale-100'>
+          <img src={Logo} alt='CHM Logo' className='w-12 h-12 object-contain' />
+          <span className='text-3xl font-bold leading-none relative top-[2px]'>CHM</span>
         </div>
       </SidebarHeader>
 
-      {/* 分組內容 */}
       <SidebarContent>
-        {/* Dashboard 獨立顯示，不要 category */}
+        {/* Dashboard：獨立顯示 */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={isActive(dashboard.url)} /* ⭐ NEW */>
                   <Link to={dashboard.url}>
                     <DashboardIcon />
                     <span>{dashboard.title}</span>
@@ -93,32 +109,40 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {/* 其他分類 */}
-        {Object.entries(categories).map(([category, titles]) => (
-          <SidebarGroup key={category}>
-            <SidebarGroupLabel>{category}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {items
-                  .filter((item) => titles.includes(item.title))
-                  .map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild>
-                          <Link to={item.url}>
-                            <Icon />
-                            <span>{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {Object.entries(categories).map(([category, titles]) => {
+          return (
+            <SidebarGroup key={category}>
+              <SidebarGroupLabel>{category}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuSub>
+                      {titles
+                        .map((t) => byTitle.get(t))
+                        .filter(Boolean)
+                        .map((subItem) => {
+                          const Icon = subItem!.icon;
+                          return (
+                            <SidebarMenuSubItem key={subItem!.title}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={isActive(subItem!.url)} // ⭐ NEW
+                              >
+                                <Link to={subItem!.url}>
+                                  <Icon className='size-4' />
+                                  <span>{subItem!.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                    </SidebarMenuSub>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
     </Sidebar>
   );

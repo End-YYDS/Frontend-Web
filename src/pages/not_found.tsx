@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import { type PageMeta } from './types';
+import { type PageMeta } from '../types';
 export const meta: PageMeta = { requiresAuth: false, layout: false };
 
 const NotFound = () => {

@@ -1,9 +1,13 @@
-import { type PageMeta } from './types';
-export const meta: PageMeta = { requiresAuth: false, layout: true };
-export default function Home() {
-  return null;
+import { type PageMeta } from '../types';
+function Home() {
+  return <div>Home</div>;
 }
-
+(Home as any).meta = {
+  requiresAuth: false,
+  layout: true,
+  // allowedRoles: ['admin']
+} satisfies PageMeta;
+export default Home;
 // import { useEffect, useState } from 'react';
 // import { TooltipProvider } from '@/components/ui/tooltip';
 // import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -16,27 +20,27 @@ export default function Home() {
 //   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 //   const [loading, setLoading] = useState(true);
 
-//   useEffect(() => {
-//     (async () => {
-//       try {
-//         const localStatus = localStorage.getItem('isLoggedIn');
-//         if (localStatus === 'true') {
-//           const res = await fetch('/api/me', { credentials: 'include' });
-//           if (res.ok) {
-//             setIsLoggedIn(true);
-//           } else {
-//             setIsLoggedIn(false);
-//             localStorage.removeItem('isLoggedIn');
-//           }
+// useEffect(() => {
+//   (async () => {
+//     try {
+//       const localStatus = localStorage.getItem('isLoggedIn');
+//       if (localStatus === 'true') {
+//         const res = await fetch('/api/me', { credentials: 'include' });
+//         if (res.ok) {
+//           setIsLoggedIn(true);
+//         } else {
+//           setIsLoggedIn(false);
+//           localStorage.removeItem('isLoggedIn');
 //         }
-//       } catch (e) {
-//         console.error('檢查登入狀態失敗:', e);
-//         setIsLoggedIn(false);
-//       } finally {
-//         setLoading(false);
 //       }
-//     })();
-//   }, []);
+//     } catch (e) {
+//       console.error('檢查登入狀態失敗:', e);
+//       setIsLoggedIn(false);
+//     } finally {
+//       setLoading(false);
+//     }
+//   })();
+// }, []);
 
 //   if (loading) {
 //     return (

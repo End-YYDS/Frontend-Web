@@ -1,4 +1,4 @@
-import { type PageMeta } from './types';
+import { type PageMeta } from '../types';
 export const meta: PageMeta = { requiresAuth: false, layout: false };
 export default function Unauthorized() {
   return (

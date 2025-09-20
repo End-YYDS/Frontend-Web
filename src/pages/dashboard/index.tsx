@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
-
+import { type PageMeta } from '@/types';
 import Test from './Test';
-export const meta = { requiresAuth: false, layout: false };
+export const meta: PageMeta = { requiresAuth: true, layout: false };
 const index = () => {
   return (
     <div>

@@ -2,7 +2,6 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Bell, LogOut } from 'lucide-react';
-import { ModeToggle } from './mode-toggle';
 
 interface AppHeaderProps {
   onLogout?: () => void;
@@ -30,7 +29,6 @@ export function AppHeader({ onLogout }: AppHeaderProps) {
       </div>
 
       <div className='flex items-center gap-2'>
-        <ModeToggle />
         <Button variant='ghost' size='icon'>
           <Bell className='h-4 w-4' />
         </Button>

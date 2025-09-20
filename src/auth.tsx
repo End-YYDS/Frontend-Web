@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 export interface User {
@@ -30,7 +30,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const refresh = async () => {
     try {
       const res = await axios.get<User>('/api/me', { withCredentials: true });
-      setUser(res.data);
+      res.data = { id: '1', role: 'user' }; // 確保有 role 屬性
+      console.log('Fetched current user:', res.data);
+      // setUser(res.data);
+      setUser(null);
     } catch {
       setUser(null);
     }
@@ -67,7 +70,6 @@ export function useAuth() {
 
 interface RequireAuthProps {
   allowedRoles?: string[];
-  children: React.ReactNode;
 }
 
 /**
@@ -77,15 +79,16 @@ interface RequireAuthProps {
  * - 無角色權限：導向 /unauthorized
  * - 通過：渲染 children
  */
-export function RequireAuth({ allowedRoles, children }: RequireAuthProps) {
+export function RequireAuth({ allowedRoles }: RequireAuthProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return <div>驗證中…</div>;
+  console.log('Current User:', user);
   if (!user) return <Navigate to='/login' state={{ from: location }} replace />;
 
   if (allowedRoles?.length && !allowedRoles.includes(user.role)) {
     return <Navigate to='/unauthorized' replace />;
   }
-  return <>{children}</>;
+  return <Outlet />;
 }
