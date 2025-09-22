@@ -89,18 +89,7 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br">
-
-      <div className="max-w-6xl mx-auto py-8 px-6">
-        <div className="text-center mb-8">
-          <h1 
-            className="text-4xl font-bold mb-2" 
-            style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
-          >
-            Roles
-          </h1>
-        </div>
-
+    <div className="min-h-screen bg-gradient-to-br">      
         <div className="grid grid-cols-12 gap-6">
           <RoleEditorSidebar 
             roleName={roleName}
@@ -175,6 +164,5 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
           </div>
         </div>
       </div>
-    </div>
   );
 }

@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Computer, Users, User, Power } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Computer, Users, LogOut, Edit2, UserPlus } from "lucide-react";
+import { DataTable } from "./data-table";
+import type { ColumnDef } from "@tanstack/react-table";
 
 interface Computer {
   id: string;
@@ -38,10 +40,13 @@ export function PCManagerContent() {
 
   const [isAddComputerOpen, setIsAddComputerOpen] = useState(false);
   const [isAddGroupOpen, setIsAddGroupOpen] = useState(false);
-  const [isAssignGroupOpen, setIsAssignGroupOpen] = useState(false);
-  const [selectedComputers, setSelectedComputers] = useState<string[]>([]);
+  // const [selectedComputers, setSelectedComputers] = useState<string[]>([]);
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
-  const [assignTargetGroup, setAssignTargetGroup] = useState<string>('');
+  // const [assignTargetGroup, setAssignTargetGroup] = useState<string>('');
+  const [editingGroup, setEditingGroup] = useState<string | null>(null);
+  const [groupSelectedComputers, setGroupSelectedComputers] = useState<{[key: string]: string[]}>({});
+
+  const defaultGroupComputers = computers.filter(computer => !computer.group);
 
   const [newComputer, setNewComputer] = useState({
     ip: '',
@@ -54,14 +59,10 @@ export function PCManagerContent() {
     description: '',
   });
 
-  const defaultGroupComputers = computers.filter(computer => !computer.group);
-
-  const handleShutdown = (computerId: string, computerName: string) => {
-    console.log(`Shutting down computer: ${computerName} (ID: ${computerId})`);
-    // Update computer status to offline
-    setComputers(computers.map(computer => 
-      computer.id === computerId 
-        ? { ...computer, status: 'Offline' as const }
+  const handleAddToGroup = (computerId: string, groupName: string) => {
+    setComputers(computers.map(computer =>
+      computer.id === computerId
+        ? { ...computer, group: groupName }
         : computer
     ));
   };
@@ -96,93 +97,252 @@ export function PCManagerContent() {
     }
   };
 
-  const handleAssignToGroup = () => {
-    if (selectedComputers.length > 0 && assignTargetGroup) {
-      setComputers(computers.map(computer => {
-        if (selectedComputers.includes(computer.id)) {
-          return {
-            ...computer,
-            group: assignTargetGroup === 'default' ? undefined : assignTargetGroup
-          };
-        }
-        return computer;
-      }));
-      
-      // Update group computer counts
-      setGroups(groups.map(group => ({
-        ...group,
-        computerCount: computers.filter(c => 
-          selectedComputers.includes(c.id) ? 
-          (assignTargetGroup === group.name) : 
-          (c.group === group.name)
-        ).length
-      })));
+  const handleDeleteGroup = (groupId: string) => {
+    const groupToDelete = groups.find(g => g.id === groupId);
+    if (groupToDelete) {
+      setComputers(computers.map(computer =>
+        computer.group === groupToDelete.name
+          ? { ...computer, group: undefined }
+          : computer
+      ));
     }
-    
-    setIsAssignGroupOpen(false);
-    setSelectedComputers([]);
-    setAssignTargetGroup('');
+    setGroups(groups.filter(g => g.id !== groupId));
   };
 
-  // Filter groups based on selection - always show default group when not filtering by specific group
-  const getFilteredGroups = () => {
-    if (selectedGroupFilter === 'all') {
-      return groups;
-    } else if (selectedGroupFilter === 'default') {
-      return [];
+  const handleRemoveFromGroup = (computerId: string, groupName: string) => {
+    setComputers(computers.map(computer =>
+      computer.id === computerId && computer.group === groupName
+        ? { ...computer, group: undefined }
+        : computer
+    ));
+  };
+
+  const handleBulkRemoveFromGroup = (computerIds: string[], groupName: string) => {
+    setComputers(computers.map(computer =>
+      computerIds.includes(computer.id) && computer.group === groupName
+        ? { ...computer, group: undefined }
+        : computer
+    ));
+  };
+
+  const toggleComputerSelection = (computerId: string, groupName: string) => {
+    const currentSelected = groupSelectedComputers[groupName] || [];
+    if (currentSelected.includes(computerId)) {
+      setGroupSelectedComputers({
+        ...groupSelectedComputers,
+        [groupName]: currentSelected.filter(id => id !== computerId)
+      });
     } else {
-      return groups.filter(group => group.name === selectedGroupFilter);
+      setGroupSelectedComputers({
+        ...groupSelectedComputers,
+        [groupName]: [...currentSelected, computerId]
+      });
     }
   };
 
-  const shouldShowDefaultGroup = () => {
-    return selectedGroupFilter === 'all' || selectedGroupFilter === 'default' || 
-           groups.some(group => group.name === selectedGroupFilter);
+  const toggleAllComputers = (groupName: string, allComputerIds: string[]) => {
+    const currentSelected = groupSelectedComputers[groupName] || [];
+    if (currentSelected.length === allComputerIds.length) {
+      setGroupSelectedComputers({
+        ...groupSelectedComputers,
+        [groupName]: []
+      });
+    } else {
+      setGroupSelectedComputers({
+        ...groupSelectedComputers,
+        [groupName]: allComputerIds
+      });
+    }
   };
 
-  const ShutdownButton = ({ computer }: { computer: Computer }) => (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-          disabled={computer.status === 'Offline'}
-        >
-          <Power className="w-3 h-3" />
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>確認關機</AlertDialogTitle>
-          <AlertDialogDescription>
-            您確定要關閉 {computer.name} ({computer.ip}) 嗎？此操作將會關閉電腦。
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>取消</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={() => handleShutdown(computer.id, computer.name)}
-            className="bg-red-600 hover:bg-red-700"
+  const shouldShowDefaultGroup = () => selectedGroupFilter === 'all' || selectedGroupFilter === 'default';
+
+  const getFilteredGroups = () => {
+    if (selectedGroupFilter === 'all') return groups;
+    if (selectedGroupFilter === 'default') return [];
+    return groups.filter(group => group.name === selectedGroupFilter);
+  };
+
+  // Default group columns
+  const defaultGroupColumns: ColumnDef<Computer>[] = [
+    {
+      accessorKey: "name",
+      header: "Computer Name",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Computer className="w-4 h-4" />
+          {row.getValue("name")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "ip",
+      header: "IP Address",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        return (
+          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+            status === 'Online'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-gray-100 text-gray-800'
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${
+              status === 'Online' ? 'bg-green-500' : 'bg-gray-500'
+            }`} />
+            {status}
+          </span>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const [selectedGroup, setSelectedGroup] = useState<string>("");
+
+        const handleConfirm = () => {
+          if (selectedGroup) {
+            handleAddToGroup(row.original.id, selectedGroup);
+            setSelectedGroup("");
+          }
+        };
+
+        return (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <UserPlus className="w-4 h-4" />
+                Add to Group
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="w-[350px] max-w-full">
+              <DialogHeader>
+                <DialogTitle>Add {row.getValue("name")} to Group</DialogTitle>
+              </DialogHeader>
+
+              <div className="flex items-center gap-2 mt-4">
+                <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Choose a group" />
+                  </SelectTrigger>
+                  <SelectContent className="whitespace-nowrap">
+                    {groups.map(group => (
+                      <SelectItem key={group.id} value={group.name}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  onClick={handleConfirm}
+                  disabled={!selectedGroup}
+                  className="bg-slate-800 hover:bg-slate-700"
+                >
+                  Confirm
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      },
+    },
+  ];
+
+  const createGroupColumns = (groupName: string, isEditing: boolean): ColumnDef<Computer>[] => [
+  ...(isEditing ? [{
+    id: "select",
+    header: () => (
+      <Checkbox
+        checked={(groupSelectedComputers[groupName]?.length ?? 0) === computers.filter(c => c.group === groupName).length}
+        onCheckedChange={() => toggleAllComputers(groupName, computers.filter(c => c.group === groupName).map(c => c.id))}
+      />
+    ),
+    cell: ({ row }: any) => (
+      <Checkbox
+        checked={groupSelectedComputers[groupName]?.includes(row.original.id) || false}
+        onCheckedChange={() => toggleComputerSelection(row.original.id, groupName)}
+      />
+    ),
+  }] : []),
+  {
+    accessorKey: "name",
+    header: "Computer Name",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <Computer className="w-4 h-4" />
+        {row.getValue("name")}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "ip",
+    header: "IP Address",
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string;
+      return (
+        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+          status === 'Online'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-gray-100 text-gray-800'
+        }`}>
+          <div className={`w-2 h-2 rounded-full ${
+            status === 'Online' ? 'bg-green-500' : 'bg-gray-500'
+          }`} />
+          {status}
+        </span>
+      );
+    },
+  },
+  ...(isEditing ? [{
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }: any) => (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0"
           >
-            確定關機
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
+            <LogOut className="w-3 h-3" />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Computer</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {row.getValue("name")} from group "{groupName}"? The computer will be moved back to Default Group.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleRemoveFromGroup(row.original.id, groupName)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    ),
+  }] : []),
+];
+
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-6 space-y-6">
-        <div className="text-center mb-8">
-          <h1 
-            className="text-4xl font-bold mb-2" 
-            style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
-          >
-            PC Manager
-          </h1>
-        </div>
-      {/* System Management Section */}
+    <div className="space-y-6">
+      {/* 系統管理區塊 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -191,7 +351,9 @@ export function PCManagerContent() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* 新增電腦、新增群組按鈕區 */}
           <div className="flex flex-wrap gap-4 mb-4">
+            {/* 新增電腦 */}
             <Dialog open={isAddComputerOpen} onOpenChange={setIsAddComputerOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-slate-800 hover:bg-slate-700">
@@ -246,6 +408,7 @@ export function PCManagerContent() {
               </DialogContent>
             </Dialog>
 
+            {/* 新增群組 */}
             <Dialog open={isAddGroupOpen} onOpenChange={setIsAddGroupOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline">
@@ -286,87 +449,7 @@ export function PCManagerContent() {
               </DialogContent>
             </Dialog>
 
-            <Dialog open={isAssignGroupOpen} onOpenChange={setIsAssignGroupOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <User className="w-4 h-4 mr-2" />
-                  Assign to Group
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl">
-                <DialogHeader>
-                  <DialogTitle>將PC加入群組</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">選擇目標群組</label>
-                    <Select value={assignTargetGroup} onValueChange={setAssignTargetGroup}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="選擇群組" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">Default Group</SelectItem>
-                        {groups.map(group => (
-                          <SelectItem key={group.id} value={group.name}>{group.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">選擇要加入的PC</label>
-                    <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-12">選擇</TableHead>
-                            <TableHead>名稱</TableHead>
-                            <TableHead>IP地址</TableHead>
-                            <TableHead>目前群組</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {computers.map(computer => (
-                            <TableRow key={computer.id}>
-                              <TableCell>
-                                <input 
-                                  type="checkbox" 
-                                  className="rounded"
-                                  checked={selectedComputers.includes(computer.id)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedComputers([...selectedComputers, computer.id]);
-                                    } else {
-                                      setSelectedComputers(selectedComputers.filter(id => id !== computer.id));
-                                    }
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell>{computer.name}</TableCell>
-                              <TableCell>{computer.ip}</TableCell>
-                              <TableCell>{computer.group || 'Default Group'}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsAssignGroupOpen(false)}>
-                      取消
-                    </Button>
-                    <Button 
-                      onClick={handleAssignToGroup} 
-                      className="bg-slate-800 hover:bg-slate-700"
-                      disabled={selectedComputers.length === 0 || !assignTargetGroup}
-                    >
-                      加入群組 ({selectedComputers.length})
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            {/* Group Filter Selection */}
+            {/* 群組篩選 */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Display Group:</label>
               <Select value={selectedGroupFilter} onValueChange={setSelectedGroupFilter}>
@@ -383,11 +466,12 @@ export function PCManagerContent() {
               </Select>
             </div>
           </div>
-          <p className="text-sm text-slate-600">{defaultGroupComputers.length} computer(s) in default group</p>
+
+          {/* <p className="text-sm text-slate-600">{defaultGroupComputers.length} computer(s) in default group</p> */}
         </CardContent>
       </Card>
 
-      {/* Show Default Group when conditions are met */}
+      {/* Default Group Table */}
       {shouldShowDefaultGroup() && (
         <Card>
           <CardHeader>
@@ -397,47 +481,12 @@ export function PCManagerContent() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Computer Name</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-16">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {defaultGroupComputers.map(computer => (
-                  <TableRow key={computer.id}>
-                    <TableCell className="flex items-center gap-2">
-                      <Computer className="w-4 h-4" />
-                      {computer.name}
-                    </TableCell>
-                    <TableCell>{computer.ip}</TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                        computer.status === 'Online' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        <div className={`w-2 h-2 rounded-full ${
-                          computer.status === 'Online' ? 'bg-green-500' : 'bg-gray-500'
-                        }`} />
-                        {computer.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <ShutdownButton computer={computer} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable columns={defaultGroupColumns} data={defaultGroupComputers} />
           </CardContent>
         </Card>
       )}
 
-      {/* Computer Groups - filtered based on selection */}
+      {/* Computer Groups */}
       {getFilteredGroups().length > 0 && (
         <Card>
           <CardHeader>
@@ -448,66 +497,149 @@ export function PCManagerContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             {getFilteredGroups().map(group => {
-              const groupComputers = computers.filter(computer => computer.group === group.name);
-              return (
-                <div key={group.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-slate-800 text-white rounded px-2 py-1 text-sm font-mono">
-                        {groupComputers.length}
-                      </div>
-                      <div>
-                        <h3 className="font-medium">{group.name}</h3>
-                        <p className="text-sm text-slate-600">{group.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {groupComputers.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Computer Name</TableHead>
-                          <TableHead>IP Address</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="w-16">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {groupComputers.map(computer => (
-                          <TableRow key={computer.id}>
-                            <TableCell className="flex items-center gap-2">
-                              <Computer className="w-4 h-4" />
-                              {computer.name}
-                            </TableCell>
-                            <TableCell>{computer.ip}</TableCell>
-                            <TableCell>
-                              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                                computer.status === 'Online' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                <div className={`w-2 h-2 rounded-full ${
-                                  computer.status === 'Online' ? 'bg-green-500' : 'bg-gray-500'
-                                }`} />
-                                {computer.status}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <ShutdownButton computer={computer} />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8 text-slate-500">
-                      No computers in this group
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+  const groupComputers = computers.filter(computer => computer.group === group.name);
+  const isEditing = editingGroup === group.name;
+  const selectedInGroup = groupSelectedComputers[group.name] || [];
+
+  return (
+    <div key={group.id} className="border rounded-lg p-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-800 text-white rounded px-2 py-1 text-sm font-mono">
+            {groupComputers.length}
+          </div>
+          <div>
+            <h3 className="font-medium">{group.name}</h3>
+            <p className="text-sm text-slate-600">{group.description}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 mb-2">
+  {isEditing ? (
+    <div className="flex items-center gap-2 mb-2">
+  {/* Remove All 按鈕 + 確認框 */}
+  {selectedInGroup.length > 0 && (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <LogOut className="w-4 h-4 mr-1" />
+          Remove All ({selectedInGroup.length})
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remove Selected Computers</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to remove {selectedInGroup.length} selected computer(s) from "{group.name}"?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              handleBulkRemoveFromGroup(selectedInGroup, group.name);
+              setGroupSelectedComputers({
+                ...groupSelectedComputers,
+                [group.name]: [],
+              });
+            }}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Remove
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )}
+
+  {/* Delete Group 按鈕 */}
+  <AlertDialog>
+    <AlertDialogTrigger asChild>
+      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+        Delete Group
+      </Button>
+    </AlertDialogTrigger>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Delete Group "{group.name}"</AlertDialogTitle>
+        <AlertDialogDescription>
+          Are you sure you want to delete this group? All computers will be moved back to Default Group.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogAction
+          className="bg-red-600 hover:bg-red-700"
+          onClick={() => {
+            handleDeleteGroup(group.id);
+            setGroupSelectedComputers({
+              ...groupSelectedComputers,
+              [group.name]: [],
+            });
+            if (editingGroup === group.name) setEditingGroup(null);
+          }}
+        >
+          Confirm
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+
+
+  {/* Edit / Done 按鈕 */}
+  {isEditing ? (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => {
+        setEditingGroup(null);
+        setGroupSelectedComputers({ ...groupSelectedComputers, [group.name]: [] });
+      }}
+    >
+      Done
+    </Button>
+  ) : (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setEditingGroup(group.name)}
+    >
+      <Edit2 className="w-4 h-4 mr-1" />
+      Edit
+    </Button>
+  )}
+  </div>
+
+  
+
+  ) : (
+    // 未編輯模式才顯示 Edit 按鈕
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setEditingGroup(group.name)}
+    >
+      <Edit2 className="w-4 h-4 mr-1" />
+      Edit
+    </Button>
+  )}
+</div>
+
+      </div>
+
+      {groupComputers.length > 0 ? (
+        <DataTable
+          columns={createGroupColumns(group.name, isEditing)}
+          data={groupComputers}
+        />
+      ) : (
+        <div className="text-center py-8 text-slate-500">
+          No computers in this group
+        </div>
+      )}
+    </div>
+  );
+})}
+
           </CardContent>
         </Card>
       )}

@@ -141,7 +141,7 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
             <h2 className="text-xl font-bold text-slate-800">
               {getServerDisplayName(selectedServer || "")}
             </h2>
-            <p className="text-slate-600">Manage processes and system operations across all computers</p>
+            {/* <p className="text-slate-600">Manage processes and system operations across all computers</p> */}
           </div>
           <div className="flex items-center gap-2">
             <Dialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
@@ -160,25 +160,28 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
                     選擇要安裝 {selectedServerData?.name} 的主機：
                   </p>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {computers.map((computer) => (
-                      <div key={computer.id} className="flex items-center space-x-2 p-2 border rounded">
-                        <Checkbox
-                          id={computer.id}
-                          checked={selectedComputersForInstall.includes(computer.id)}
-                          onCheckedChange={() => handleComputerToggle(computer.id)}
-                        />
-                        <label htmlFor={computer.id} className="flex-1 cursor-pointer">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{computer.name}</span>
-                            <Badge variant={computer.status === 'online' ? 'default' : 'secondary'}>
-                              {computer.status}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-slate-500">{computer.uuid}</p>
-                        </label>
-                      </div>
-                    ))}
+                    {computers
+                      .filter(computer => computer.status === 'online') // 只保留 online
+                      .map((computer) => (
+                        <div key={computer.id} className="flex items-center space-x-2 p-2 border rounded">
+                          <Checkbox
+                            id={computer.id}
+                            checked={selectedComputersForInstall.includes(computer.id)}
+                            onCheckedChange={() => handleComputerToggle(computer.id)}
+                          />
+                          <label htmlFor={computer.id} className="flex-1 cursor-pointer">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{computer.name}</span>
+                              {/* <Badge variant={computer.status === 'online' ? 'default' : 'secondary'}>
+                                {computer.status}
+                              </Badge> */}
+                            </div>
+                            <p className="text-xs text-slate-500">{computer.uuid}</p>
+                          </label>
+                        </div>
+                      ))}
                   </div>
+
                   <div className="flex justify-end gap-2">
                     <Button 
                       variant="outline" 

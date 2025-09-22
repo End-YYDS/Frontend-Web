@@ -4,6 +4,17 @@ import { Input } from '@/components/ui/input';
 import { Users, Search, Trash2 } from 'lucide-react';
 import { RoleEditor } from './Editor';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction
+} from "@/components/ui/alert-dialog";
 
 interface Member {
   id: string;
@@ -73,6 +84,8 @@ const defaultRoles: Role[] = [
     memberCount: 3
   },
 ];
+
+
 
 export function RolesContent() {
   const [roles, setRoles] = useState<Role[]>(defaultRoles);
@@ -158,15 +171,6 @@ export function RolesContent() {
     <div className="min-h-screen bg-gradient-to-br">
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto py-8 px-6">
-        <div className="text-center mb-8">
-          <h1 
-            className="text-4xl font-bold mb-2" 
-            style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
-          >
-            Roles
-          </h1>
-        </div>
 
         {/* Default Role Card */}
         <div 
@@ -244,23 +248,46 @@ export function RolesContent() {
                     {role.permissions}
                   </div>
                   <div className="flex justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteRole(role.id, role.name);
-                      }}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <AlertDialog>
+                    {/* Trigger 按鈕 */}
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+
+                    {/* 對話框內容 */}
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>確認刪除角色</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          你確定要刪除角色 "{role.name}" 嗎？此操作無法復原。
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-red-500 text-white hover:bg-red-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteRole(role.id, role.name);
+                          }}
+                        >
+                          刪除
+                        </AlertDialogAction>
+
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                   </div>
                 </div>
               ))}
           </div>
         </div>
       </div>
-    </div>
   );
 }

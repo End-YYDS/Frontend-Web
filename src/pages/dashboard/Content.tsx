@@ -192,26 +192,28 @@ export function DashboardContent() {
           <div className="absolute left-0 w-[40%] overflow-hidden whitespace-nowrap text-ellipsis text-xs font-medium text-slate-600">
             Name
           </div>
-          <div className="absolute left-[50%] w-[15%] text-right text-xs font-medium text-slate-600">
+          <div className="absolute left-[48%] w-[15%] text-right text-xs font-medium text-slate-600">
             CPU
           </div>
           <div className="absolute left-[65%] w-[15%] text-right text-xs font-medium text-slate-600">
             Memory
           </div>
-          <div className="absolute left-[80%] w-[15%] text-right text-xs font-medium text-slate-600">
+          <div className="absolute left-[78%] w-[15%] text-right text-xs font-medium text-slate-600">
             Disk
           </div>
         </div>
-
-        {/* Body */}
+        {/* Rows */}
         <div className="mt-2 space-y-1">
           {currentComputers.map((computer, index) => (
             <div key={index} className="relative w-full h-8 border-b border-slate-100">
-              <div className="max-w-[300px] overflow-hidden whitespace-nowrap text-ellipsis">
+              {/* Name */}
+              <div className="absolute left-0 w-[40%] overflow-hidden whitespace-nowrap text-md">
                 {computer.name}
               </div>
-              <div className="w-[100px] text-right flex-none">
-              <Badge
+
+              {/* CPU */}
+              <div className="absolute left-[50%] w-[15%] text-right text-xs">
+                <Badge
                   variant="outline"
                   className={`${
                     parseInt(computer.cpu) > 70
@@ -224,6 +226,8 @@ export function DashboardContent() {
                   {computer.cpu}
                 </Badge>
               </div>
+
+              {/* Memory */}
               <div className="absolute left-[65%] w-[15%] text-right text-xs">
                 <Badge
                   variant="outline"
@@ -238,6 +242,8 @@ export function DashboardContent() {
                   {computer.memory}
                 </Badge>
               </div>
+
+              {/* Disk */}
               <div className="absolute left-[80%] w-[15%] text-right text-xs">
                 <Badge
                   variant="outline"

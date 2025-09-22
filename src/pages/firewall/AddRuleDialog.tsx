@@ -1,3 +1,4 @@
+"use client"
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -6,13 +7,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface AddRuleDialogProps {
   isOpen: boolean;
   onClose: () => void;
   selectedHost: string;
   selectedChain: string;
-  onRuleAdded: () => void;
+  onAddRule: (rule: FirewallRule) => void; // 新增 callback
+}
+
+export interface FirewallRule {
+  Target: string;
+  Protocol: string;
+  In: string;
+  Out: string;
+  Source: string;
+  Destination: string;
+  Options: string;
 }
 
 export const AddRuleDialog = ({ 
@@ -20,7 +40,7 @@ export const AddRuleDialog = ({
   onClose, 
   selectedHost, 
   selectedChain, 
-  onRuleAdded 
+  onAddRule 
 }: AddRuleDialogProps) => {
   const [formData, setFormData] = useState({
     target: 'ACCEPT',
@@ -31,8 +51,13 @@ export const AddRuleDialog = ({
     destination: '0.0.0.0/0',
     options: ''
   });
+  const [port, setPort] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,20 +65,23 @@ export const AddRuleDialog = ({
 
     setIsLoading(true);
     try {
-      console.log('正在新增防火牆規則:', {
-        Uuid: selectedHost,
-        Chain: selectedChain,
+      const newRule: FirewallRule = {
         Target: formData.target,
         Protocol: formData.protocol,
-        In: formData.inInterface,
-        Out: formData.outInterface,
-        Source: formData.source,
-        Destination: formData.destination,
-        Options: formData.options
-      });
+        In: formData.inInterface || '*',
+        Out: formData.outInterface || '*',
+        Source: formData.source || '0.0.0.0/0',
+        Destination: formData.destination || '0.0.0.0/0',
+        Options: port || ''
+      };
+
+      console.log('新增防火牆規則:', { Uuid: selectedHost, Chain: selectedChain, ...newRule });
 
       // 模擬 API 呼叫
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // 呼叫父元件 callback 真正新增規則
+      onAddRule(newRule);
 
       toast({
         title: "成功",
@@ -70,8 +98,11 @@ export const AddRuleDialog = ({
         destination: '0.0.0.0/0',
         options: ''
       });
+      setPort('');
+      setCustomPort('');
+      setOpenPortPopover(false);
 
-      onRuleAdded();
+      onClose();
     } catch (error) {
       toast({
         title: "錯誤",
@@ -83,8 +114,17 @@ export const AddRuleDialog = ({
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const portOptions = ["22", "80", "443", "53", "Other"];
+  const [openPortPopover, setOpenPortPopover] = useState(false);
+  const [customPort, setCustomPort] = useState("");
+
+  const handleSelectPort = (value: string) => {
+    if (value === "Other") {
+      setPort(customPort);
+    } else {
+      setPort(value);
+      setOpenPortPopover(false);
+    }
   };
 
   return (
@@ -93,7 +133,7 @@ export const AddRuleDialog = ({
         <DialogHeader>
           <DialogTitle>新增 {selectedChain} 鏈規則</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -160,7 +200,7 @@ export const AddRuleDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="destination">目標 IP</Label>
+              <Label htmlFor="destination">目的 IP</Label>
               <Input
                 id="destination"
                 value={formData.destination}
@@ -171,13 +211,43 @@ export const AddRuleDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="options">選項</Label>
-            <Input
-              id="options"
-              value={formData.options}
-              onChange={(e) => handleInputChange('options', e.target.value)}
-              placeholder="例如: tcp dpt:22, udp dpt:53"
-            />
+            <Label htmlFor="options">目標埠</Label>
+            <Popover open={openPortPopover} onOpenChange={setOpenPortPopover}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[200px] justify-start">
+                  {port || "選擇目標埠"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0" side="right" align="start">
+                <Command>
+                  <CommandInput placeholder="搜尋或輸入自訂..." />
+                  <CommandList>
+                    <CommandEmpty>沒有找到結果</CommandEmpty>
+                    <CommandGroup>
+                      {portOptions.map((p) => (
+                        <CommandItem
+                          key={p}
+                          value={p}
+                          onSelect={() => handleSelectPort(p)}
+                        >
+                          {p === "Other" ? (
+                            <input
+                              type="text"
+                              placeholder="自訂目標埠"
+                              value={customPort}
+                              onChange={(e) => setCustomPort(e.target.value)}
+                              className="w-full border-none outline-none"
+                            />
+                          ) : (
+                            p
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             <p className="text-xs text-gray-500">
               常用選項: tcp dpt:22 (SSH), tcp dpt:80 (HTTP), tcp dpt:443 (HTTPS), udp dpt:53 (DNS)
             </p>

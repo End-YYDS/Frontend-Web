@@ -118,7 +118,7 @@ export function BackupContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-16">ID</TableHead>
+                  {/* <TableHead className="w-16">ID</TableHead> */}
                   <TableHead>Filename</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Time</TableHead>
@@ -126,75 +126,78 @@ export function BackupContent() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {backupHistory.map((backup) => (
-                  <TableRow key={backup.id}>
-                    <TableCell>{backup.id}.</TableCell>
-                    <TableCell>{backup.filename}</TableCell>
-                    <TableCell>{backup.date}</TableCell>
-                    <TableCell>{backup.time}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              style={{ backgroundColor: '#7B86AA', borderColor: '#7B86AA' }}
-                              className="text-white hover:opacity-80"
-                            >
+              {backupHistory.slice(0, 5).map((backup) => (
+                <TableRow key={backup.id}>
+                  {/* <TableCell>{backup.id}.</TableCell> */}
+                  <TableCell>{backup.filename}</TableCell>
+                  <TableCell>{backup.date}</TableCell>
+                  <TableCell>{backup.time}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      {/* Restore Dialog */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            style={{ backgroundColor: '#7B86AA', borderColor: '#7B86AA' }}
+                            className="text-white hover:opacity-80"
+                          >
+                            Restore
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirm Restore</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to restore from "{backup.filename}"? This will replace all current settings.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleRestore(backup)}>
                               Restore
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirm Restore</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to restore from "{backup.filename}"? This will replace all current settings.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleRestore(backup)}>
-                                Restore
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
 
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              style={{ backgroundColor: '#7B86AA', borderColor: '#7B86AA' }}
-                              className="text-white hover:bg-red-500 hover:border-red-500 transition-all duration-200"
+                      {/* Delete Dialog */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            style={{ backgroundColor: '#7B86AA', borderColor: '#7B86AA' }}
+                            className="text-white hover:bg-red-500 hover:border-red-500 transition-all duration-200"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Backup</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{backup.filename}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDelete(backup.id)}
+                              className="bg-red-500 hover:bg-red-600"
                             >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Backup</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{backup.filename}"? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleDelete(backup.id)}
-                                className="bg-red-500 hover:bg-red-600"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+
             </Table>
           </div>
         </div>

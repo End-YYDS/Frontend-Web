@@ -14,7 +14,7 @@ import {
   Server,
   Package,
   Download,
-  Wifi,
+  BrickWallFire,
   Globe,
   ChevronDown,
   ChevronRight,
@@ -55,7 +55,7 @@ const sidebarItems = [
     items: [
       { name: "CHM - Backup", icon: Archive, path: "/backup" },
       { name: "CHM - Settings", icon: Settings, path: "/settings" },
-      { name: "System & Host Logs", icon: FileText, path: "/s&h-logs" },
+      { name: "System & Host Logs", icon: FileText, path: "/logs" },
     ],
   },
   {
@@ -81,7 +81,7 @@ const sidebarItems = [
   {
     category: "Network",
     items: [
-      { name: "Firewall", icon: Wifi, path: "/firewall" },
+      { name: "Firewall", icon: BrickWallFire, path: "/firewall" },
       { name: "Network Configuration", icon: Globe, path: "/network_configuration" },
     ],
   },

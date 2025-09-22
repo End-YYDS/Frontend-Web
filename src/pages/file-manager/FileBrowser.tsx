@@ -1,25 +1,24 @@
-
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Card, CardContent, CardHeader, CardTitle 
+} from '@/components/ui/card';
+import { 
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { 
-  Folder, 
-  File, 
-  HardDrive, 
-  ChevronLeft, 
-  ChevronRight, 
-  Copy,
-  Trash2,
-  Download,
-  Upload,
-  RefreshCcw
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+} from '@/components/ui/table';
+import { 
+  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger 
+} from '@/components/ui/context-menu';
+import { 
+  Folder, File, HardDrive, Copy, Trash2, Download, Upload, Edit2 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Breadcrumb } from './Breadcrumb';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface FileItem {
   name: string;
@@ -47,26 +46,21 @@ export const FileBrowser = () => {
   const [selectedHost, setSelectedHost] = useState<string>('');
   const [currentPath, setCurrentPath] = useState('/');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([
     { name: 'Applications', type: 'folder', owner: 'root:root', mode: '0775', modified: '2025/05/23 - 14:38:38' },
     { name: 'bin', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22 - 21:08:03' },
-    { name: 'bin.usr-is-merged', type: 'folder', owner: 'root:root', mode: '0755', modified: '2024/02/26 - 20:58:31' },
     { name: 'boot', type: 'folder', owner: 'root:root', mode: '0755', modified: '2024/04/22 - 21:08:03' },
-    { name: 'dev', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/26 - 00:45:46' },
-    { name: 'etc', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21 - 14:46:51' },
     { name: 'home', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21 - 14:26:57' },
-    { name: 'lib', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22 - 21:08:03' },
-    { name: 'lib.usr-is-merged', type: 'folder', owner: 'root:root', mode: '0755', modified: '2024/04/08 - 22:37:57' },
-    { name: 'Library', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/10 - 13:53:16' },
-    { name: 'media', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/18 - 15:44:00' },
+    { name: 'example.txt', type: 'file', size: '1.2 KB', owner: 'root:root', mode: '0644', modified: '2025/05/23 - 14:38:38' },
   ]);
 
   const { toast } = useToast();
 
   const handleItemSelect = (itemName: string, isCtrlClick: boolean = false) => {
     if (isCtrlClick) {
-      setSelectedItems(prev => 
-        prev.includes(itemName) 
+      setSelectedItems(prev =>
+        prev.includes(itemName)
           ? prev.filter(name => name !== itemName)
           : [...prev, itemName]
       );
@@ -76,35 +70,34 @@ export const FileBrowser = () => {
   };
 
   const handleCheckboxChange = (itemName: string) => {
-    setSelectedItems(prev => 
-      prev.includes(itemName) 
+    setSelectedItems(prev =>
+      prev.includes(itemName)
         ? prev.filter(name => name !== itemName)
         : [...prev, itemName]
     );
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(files.map(file => file.name));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
   const handleDoubleClick = (item: FileItem) => {
     if (item.type === 'folder') {
-      // 處理回到上級目錄
       if (item.name === '..') {
         navigateUp();
         return;
       }
-      
-      // 構建新路徑，避免重複
       const newPath = currentPath === '/' ? `/${item.name}` : `${currentPath}/${item.name}`;
-      
-      // 檢查是否已經在該路徑中，避免重複點擊造成路徑累加
-      if (newPath === currentPath) {
-        return;
-      }
-      
+      if (newPath === currentPath) return;
       setCurrentPath(newPath);
-      // 模擬載入新目錄內容
       setFiles([
-        { name: '..', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23 - 14:38:38' },
-        { name: 'subdirectory', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23 - 14:38:38' },
-        { name: 'example.txt', type: 'file', size: '1.2 KB', owner: 'root:root', mode: '0644', modified: '2025/05/23 - 14:38:38' },
+        { name: '..', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23' },
+        { name: 'longlonglonglongsubdir', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23' },
+        { name: 'readme.md', type: 'file', size: '512 B', owner: 'root:root', mode: '0644', modified: '2025/05/23' },
       ]);
     }
   };
@@ -113,20 +106,11 @@ export const FileBrowser = () => {
     if (currentPath !== '/') {
       const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
       setCurrentPath(parentPath);
-      // 重新載入根目錄內容
       if (parentPath === '/') {
         setFiles([
-          { name: 'Applications', type: 'folder', owner: 'root:root', mode: '0775', modified: '2025/05/23 - 14:38:38' },
-          { name: 'bin', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22 - 21:08:03' },
-          { name: 'bin.usr-is-merged', type: 'folder', owner: 'root:root', mode: '0755', modified: '2024/02/26 - 20:58:31' },
-          { name: 'boot', type: 'folder', owner: 'root:root', mode: '0755', modified: '2024/04/22 - 21:08:03' },
-          { name: 'dev', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/26 - 00:45:46' },
-          { name: 'etc', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21 - 14:46:51' },
-          { name: 'home', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21 - 14:26:57' },
-          { name: 'lib', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22 - 21:08:03' },
-          { name: 'lib.usr-is-merged', type: 'folder', owner: 'root:root', mode: '0755', modified: '2024/04/08 - 22:37:57' },
-          { name: 'Library', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/10 - 13:53:16' },
-          { name: 'media', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/18 - 15:44:00' },
+          { name: 'Applications', type: 'folder', owner: 'root:root', mode: '0775', modified: '2025/05/23' },
+          { name: 'bin', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22' },
+          { name: 'home', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21' },
         ]);
       }
     }
@@ -134,27 +118,16 @@ export const FileBrowser = () => {
 
   const navigateToPath = (path: string) => {
     setCurrentPath(path);
-    // 根據路徑載入對應的內容
     if (path === '/') {
       setFiles([
-        { name: 'Applications', type: 'folder', owner: 'root:root', mode: '0775', modified: '2025/05/23 - 14:38:38' },
-        { name: 'bin', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22 - 21:08:03' },
-        { name: 'bin.usr-is-merged', type: 'folder', owner: 'root:root', mode: '0755', modified: '2024/02/26 - 20:58:31' },
-        { name: 'boot', type: 'folder', owner: 'root:root', mode: '0755', modified: '2024/04/22 - 21:08:03' },
-        { name: 'dev', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/26 - 00:45:46' },
-        { name: 'etc', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21 - 14:46:51' },
-        { name: 'home', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21 - 14:26:57' },
-        { name: 'lib', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22 - 21:08:03' },
-        { name: 'lib.usr-is-merged', type: 'folder', owner: 'root:root', mode: '0755', modified: '2024/04/08 - 22:37:57' },
-        { name: 'Library', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/10 - 13:53:16' },
-        { name: 'media', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/18 - 15:44:00' },
+        { name: 'Applications', type: 'folder', owner: 'root:root', mode: '0775', modified: '2025/05/23' },
+        { name: 'bin', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22' },
+        { name: 'home', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21' },
       ]);
     } else {
-      // 模擬載入其他目錄內容
       setFiles([
-        { name: '..', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23 - 14:38:38' },
-        { name: 'subdirectory', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23 - 14:38:38' },
-        { name: 'example.txt', type: 'file', size: '1.2 KB', owner: 'root:root', mode: '0644', modified: '2025/05/23 - 14:38:38' },
+        { name: '..', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23' },
+        { name: 'nested', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23' },
       ]);
     }
   };
@@ -162,41 +135,27 @@ export const FileBrowser = () => {
   const handleContextAction = (action: string, itemName: string) => {
     switch (action) {
       case 'copy':
-        toast({
-          title: "複製",
-          description: `已複製 ${itemName}`,
-        });
+        toast({ title: "複製", description: `已複製 ${itemName}` });
         break;
       case 'delete':
         setFiles(prev => prev.filter(file => file.name !== itemName));
-        toast({
-          title: "刪除",
-          description: `已刪除 ${itemName}`,
-        });
+        toast({ title: "刪除", description: `已刪除 ${itemName}` });
         break;
       case 'download':
-        toast({
-          title: "下載",
-          description: `正在下載 ${itemName}`,
-        });
+        toast({ title: "下載", description: `正在下載 ${itemName}` });
         break;
       case 'rename':
-        toast({
-          title: "重新命名",
-          description: `重新命名 ${itemName}`,
-        });
+        toast({ title: "重新命名", description: `重新命名 ${itemName}` });
         break;
     }
   };
+  const [selectedUploadHosts, setSelectedUploadHosts] = useState<string[]>([]);
 
-  const selectAll = () => {
-    setSelectedItems(files.map(file => file.name));
-  };
-
-  const invertSelection = () => {
-    setSelectedItems(prev => 
-      files.map(file => file.name).filter(name => !prev.includes(name))
-    );
+ const handleUploadToSelectedHosts = (hostUUIDs: string[]) => {
+    console.log('上傳到主機:', hostUUIDs);
+    // 在這裡加入上傳邏輯
+    setShowUploadDialog(false);
+    setSelectedUploadHosts([]);
   };
 
   return (
@@ -204,42 +163,23 @@ export const FileBrowser = () => {
       {/* 主機選擇 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <HardDrive className="w-5 h-5" />
-            主機選擇
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
           <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <Select value={selectedHost} onValueChange={setSelectedHost}>
-                <SelectTrigger>
-                  <SelectValue placeholder="選擇主機" />
-                </SelectTrigger>
-                <SelectContent>
-                  {hosts.map((host) => (
-                    <SelectItem key={host.uuid} value={host.uuid}>
-                      <div className="flex items-center gap-2">
-                        <span>{host.hostname}</span>
-                        <Badge variant={host.status === 'online' ? 'default' : 'secondary'}>
-                          {host.status}
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button 
-              onClick={() => window.location.reload()}
-              disabled={!selectedHost}
-              variant="outline"
-            >
-              <RefreshCcw className="w-4 h-4 mr-2" />
-              重新載入
-            </Button>
+            <CardTitle className="flex items-center gap-2">
+              <HardDrive className="w-5 h-5" />
+              主機選擇
+            </CardTitle>
+            <Select value={selectedHost} onValueChange={setSelectedHost}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="選擇主機" />
+              </SelectTrigger>
+              <SelectContent>
+                {hosts.filter(h => h.status === "online").map(h => (
+                  <SelectItem key={h.uuid} value={h.uuid}>{h.hostname}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
+        </CardHeader>
       </Card>
 
       {/* 文件瀏覽器 */}
@@ -251,46 +191,32 @@ export const FileBrowser = () => {
           <CardContent className="p-0">
             {/* 工具列 */}
             <div className="flex items-center justify-between p-4 border-b bg-gray-50">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={navigateUp} disabled={currentPath === '/'}>
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button variant="outline" size="sm" disabled>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-                <div className="ml-2">
-                  <Breadcrumb 
-                    path={currentPath} 
-                    onNavigate={navigateToPath}
-                    rootPath="/"
-                  />
-                </div>
+              <div className="flex items-center gap-2 overflow-x-auto">
+                <Breadcrumb path={currentPath} onNavigate={navigateToPath} rootPath="/" />
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={selectAll}>
-                  全選
-                </Button>
-                <Button variant="outline" size="sm" onClick={invertSelection}>
-                  反選
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Upload className="w-4 h-4 mr-1" />
-                  上傳
-                </Button>
-              </div>
+              <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
+                <Upload className="w-4 h-4 mr-1" /> 上傳
+              </Button>
             </div>
 
             {/* 狀態列 */}
             <div className="px-4 py-2 text-sm text-gray-600 border-b">
-              Total: {files.filter(f => f.type === 'file').length} files and {files.filter(f => f.type === 'folder').length} directories. Selected: {selectedItems.length} items
+              Total: {files.filter(f => f.type === 'file').length} files,{" "}
+              {files.filter(f => f.type === 'folder').length} folders. Selected: {selectedItems.length}
             </div>
 
             {/* 文件列表 */}
             <div className="overflow-auto max-h-96">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-8"></TableHead>
+                  <TableRow className="sticky top-0 bg-white z-10">
+                    <TableHead className="w-8">
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.length === files.length && files.length > 0}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                      />
+                    </TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Size</TableHead>
                     <TableHead>Owner</TableHead>
@@ -302,14 +228,14 @@ export const FileBrowser = () => {
                   {files.map((file, index) => (
                     <ContextMenu key={index}>
                       <ContextMenuTrigger asChild>
-                        <TableRow 
+                        <TableRow
                           className={`cursor-pointer ${selectedItems.includes(file.name) ? 'bg-blue-50' : ''}`}
                           onClick={(e) => handleItemSelect(file.name, e.ctrlKey)}
                           onDoubleClick={() => handleDoubleClick(file)}
                         >
                           <TableCell>
-                            <input 
-                              type="checkbox" 
+                            <input
+                              type="checkbox"
                               checked={selectedItems.includes(file.name)}
                               onChange={() => handleCheckboxChange(file.name)}
                               onClick={(e) => e.stopPropagation()}
@@ -330,31 +256,17 @@ export const FileBrowser = () => {
                         </TableRow>
                       </ContextMenuTrigger>
                       <ContextMenuContent>
-                        <ContextMenuItem onClick={() => handleDoubleClick(file)}>
-                          Open in new tab
-                        </ContextMenuItem>
-                        <ContextMenuSeparator />
-                        <ContextMenuItem onClick={selectAll}>
-                          Select All
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={invertSelection}>
-                          Invert Selection
-                        </ContextMenuItem>
-                        <ContextMenuSeparator />
                         <ContextMenuItem onClick={() => handleContextAction('copy', file.name)}>
-                          <Copy className="w-4 h-4 mr-2" />
-                          Copy
+                          <Copy className="w-4 h-4 mr-2" /> Copy
                         </ContextMenuItem>
                         <ContextMenuItem onClick={() => handleContextAction('delete', file.name)}>
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
+                          <Trash2 className="w-4 h-4 mr-2" /> Delete
                         </ContextMenuItem>
                         <ContextMenuItem onClick={() => handleContextAction('rename', file.name)}>
-                          Rename
+                          <Edit2 className="w-4 h-4 mr-2" /> Rename
                         </ContextMenuItem>
                         <ContextMenuItem onClick={() => handleContextAction('download', file.name)}>
-                          <Download className="w-4 h-4 mr-2" />
-                          Download
+                          <Download className="w-4 h-4 mr-2" /> Download
                         </ContextMenuItem>
                       </ContextMenuContent>
                     </ContextMenu>
@@ -362,17 +274,62 @@ export const FileBrowser = () => {
                 </TableBody>
               </Table>
             </div>
-
-            {/* 分頁 */}
-            <div className="flex items-center justify-between p-4 border-t">
-              <span className="text-sm text-gray-600">Showing 1 to {files.length} of {files.length} items</span>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled>1</Button>
-                <Button variant="outline" size="sm" disabled>2</Button>
-                <Button variant="outline" size="sm" disabled>3</Button>
-              </div>
-            </div>
           </CardContent>
+
+          {/* 上傳對話框 */}
+          {showUploadDialog && (
+  <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>選擇要上傳的主機</DialogTitle>
+      </DialogHeader>
+
+      <div className="flex flex-col space-y-2 max-h-60 overflow-y-auto">
+        {/* 全選勾選框 */}
+        
+
+        {hosts
+          .filter(h => h.status === 'online')
+          .map(h => (
+            <div
+              key={h.uuid}
+              className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-gray-50"
+              onClick={() => {
+                setSelectedUploadHosts(prev =>
+                  prev.includes(h.uuid)
+                    ? prev.filter(id => id !== h.uuid)
+                    : [...prev, h.uuid]
+                );
+              }}
+            >
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedUploadHosts.includes(h.uuid)}
+                  onChange={() => {}}
+                />
+                <span>{h.hostname}</span>
+              </label>
+              <Badge>Online</Badge>
+            </div>
+          ))}
+      </div>
+
+      <div className="mt-4 flex justify-end gap-2">
+        <Button
+          onClick={() => handleUploadToSelectedHosts(selectedUploadHosts)}
+          disabled={selectedUploadHosts.length === 0}
+        >
+          上傳
+        </Button>
+        <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
+          取消
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
+)}
+
         </Card>
       )}
     </div>

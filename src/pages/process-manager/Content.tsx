@@ -8,6 +8,7 @@ import {
   Square, 
   RotateCcw, 
   PlayCircle, 
+  StopCircle,
   Monitor,
   Activity,
   Search,
@@ -116,10 +117,10 @@ export const ProcessManager = () => {
         } else if (action === 'restart') {
           // For restart, we'll just keep the current status
         } else if (action === 'start_enable') {
-          newProcessData.pcs[uuid].processes[processName].status = true;
+          // newProcessData.pcs[uuid].processes[processName].status = true;
           newProcessData.pcs[uuid].processes[processName].boot = true;
         } else if (action === 'stop_disable') {
-          newProcessData.pcs[uuid].processes[processName].status = false;
+          // newProcessData.pcs[uuid].processes[processName].status = false;
           newProcessData.pcs[uuid].processes[processName].boot = false;
         }
         setProcessData(newProcessData);
@@ -322,7 +323,7 @@ export const ProcessManager = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>篩選</TableHead>
-                          <TableHead>程序名稱</TableHead>
+                          <TableHead className='w-3xl'>程序名稱</TableHead>
                           <TableHead>狀態</TableHead>
                           <TableHead>開機啟動</TableHead>
                           <TableHead className="text-right">操作</TableHead>
@@ -374,15 +375,6 @@ export const ProcessManager = () => {
                                       <Play className="w-3 h-3 mr-1" />
                                       啟動
                                     </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleProcessAction('start_enable', selectedComputer.uuid, processName)}
-                                      className="h-8 px-3"
-                                    >
-                                      <PlayCircle className="w-3 h-3 mr-1" />
-                                      啟動並開機啟動
-                                    </Button>
                                   </>
                                 ) : (
                                   <Button
@@ -393,6 +385,29 @@ export const ProcessManager = () => {
                                   >
                                     <Square className="w-3 h-3 mr-1" />
                                     停止
+                                  </Button>
+                                )}
+                                {!process.boot ? (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleProcessAction('start_enable', selectedComputer.uuid, processName)}
+                                      className="h-8 px-3"
+                                    >
+                                      <PlayCircle className="w-3 h-3 mr-1" />
+                                      開機啟動
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleProcessAction('stop_disable', selectedComputer.uuid, processName)}
+                                    className="h-8 px-3"
+                                  >
+                                    <StopCircle className="w-3 h-3 mr-1" />
+                                    開機停止
                                   </Button>
                                 )}
                                 <Button

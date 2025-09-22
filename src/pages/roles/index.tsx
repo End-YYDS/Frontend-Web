@@ -4,11 +4,17 @@ export const meta = { requiresAuth: false };
 
 const index = () => {
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <div className="flex-1">
+    <div className="max-w-4xl mx-auto py-8 px-6">
+          <div className="text-center mb-8">
+              <h1 
+              className="text-4xl font-bold mb-2" 
+              style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
+              >
+                  Role
+              </h1>
+          </div>
         <RolesContent />
       </div>
-    </div>
   )
 }
 

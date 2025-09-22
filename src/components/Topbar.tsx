@@ -144,8 +144,8 @@ export default function Topbar() {
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
-              <div className="p-3 border-b text-sm font-semibold text-gray-700 flex justify-between items-center">
+            <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 z-50">
+              <div className="p-3 border-b text-sm font-semibold text-gray-600 flex justify-between items-center bg-purple-50/80">
                 <span>Today's Notifications</span>
                 {unreadCount > 0 && (
                   <button
