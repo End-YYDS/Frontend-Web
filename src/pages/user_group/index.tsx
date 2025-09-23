@@ -13,6 +13,8 @@ import { UserManagement } from "./UserManagement";
 import { GroupManagement } from "./GroupManagement";
 import type { User, Group } from "./types";
 
+import { type PageMeta } from '@/types';
+
 const UserGroup = () => {
   const [users, setUsers] = useState<User[]>([
     {
@@ -293,5 +295,11 @@ const PaginationBar = ({
     </Pagination>
   </div>
 );
+
+(UserGroup as any).meta = {
+  requiresAuth: true, //驗證
+  layout: true,
+  // allowedRoles: ['admin']
+} satisfies PageMeta;
 
 export default UserGroup;

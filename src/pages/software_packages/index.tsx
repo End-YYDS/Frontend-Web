@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +31,7 @@ import { Search, Download, Trash, RefreshCw, Package, Plus } from 'lucide-react'
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import type { PageMeta } from '@/types';
 
 interface Package {
   name: string;
@@ -48,7 +48,6 @@ interface PC {
 const ITEMS_PER_PAGE = 20; // 每頁顯示20個項目
 
 const SoftwarePackagesPage = () => {
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [pcs, setPcs] = useState<PC[]>([]);
   const [selectedPc, setSelectedPc] = useState<string>('');
@@ -137,7 +136,7 @@ const SoftwarePackagesPage = () => {
   
   // Filter only installed packages and apply search
   const installedPackages = selectedPcData ? 
-    Object.entries(selectedPcData.packages).filter(([key, pkg]) =>
+    Object.entries(selectedPcData.packages).filter(([, pkg]) =>
       pkg.status === 'Installed' && 
       pkg.name.toLowerCase().includes(searchTerm.toLowerCase())
     ) : [];
@@ -162,46 +161,46 @@ const SoftwarePackagesPage = () => {
   const handleLoadMore = () => {
     setMobileDisplayCount(prev => prev + ITEMS_PER_PAGE);
   };
-
-  const handleInstallPackage = async (packageKey: string) => {
-    try {
-      setIsLoading(true);
+//TODO: 
+  // const handleInstallPackage = async (packageKey: string) => {
+  //   try {
+  //     setIsLoading(true);
       
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+  //     // Mock API call
+  //     await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Mock response - simulate finding similar package if exact not found
-      const foundSimilar = Math.random() > 0.3; // 70% chance of finding similar
-      const actualInstalled = foundSimilar ? packageKey : `${packageKey}-community`;
+  //     // Mock response - simulate finding similar package if exact not found
+  //     const foundSimilar = Math.random() > 0.3; // 70% chance of finding similar
+  //     const actualInstalled = foundSimilar ? packageKey : `${packageKey}-community`;
       
-      // Update local state
-      setPcs(prevPcs => prevPcs.map(pc => 
-        pc.uuid === selectedPc ? {
-          ...pc,
-          packages: {
-            ...pc.packages,
-            [packageKey]: {
-              ...pc.packages[packageKey],
-              status: 'Installed'
-            }
-          }
-        } : pc
-      ));
+  //     // Update local state
+  //     setPcs(prevPcs => prevPcs.map(pc => 
+  //       pc.uuid === selectedPc ? {
+  //         ...pc,
+  //         packages: {
+  //           ...pc.packages,
+  //           [packageKey]: {
+  //             ...pc.packages[packageKey],
+  //             status: 'Installed'
+  //           }
+  //         }
+  //       } : pc
+  //     ));
       
-      toast.success("安裝完成", {
-        description: foundSimilar 
-          ? `成功安裝 ${actualInstalled}`
-          : `找不到指定套件，已安裝類似套件 ${actualInstalled}`
-      });
-    } catch (error) {
-      console.error("Error installing package:", error);
-      toast.error("安裝失敗", {
-        description: "套件安裝過程中發生錯誤"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     toast.success("安裝完成", {
+  //       description: foundSimilar 
+  //         ? `成功安裝 ${actualInstalled}`
+  //         : `找不到指定套件，已安裝類似套件 ${actualInstalled}`
+  //     });
+  //   } catch (error) {
+  //     console.error("Error installing package:", error);
+  //     toast.error("安裝失敗", {
+  //       description: "套件安裝過程中發生錯誤"
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleUninstallPackage = async (packageKey: string) => {
     try {
@@ -649,5 +648,11 @@ const SoftwarePackagesPage = () => {
     </div>
   );
 };
+
+(SoftwarePackagesPage as any).meta = {
+  requiresAuth: true, //驗證
+  layout: true,
+  // allowedRoles: ['admin']
+} satisfies PageMeta;
 
 export default SoftwarePackagesPage;

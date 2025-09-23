@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Bell, ChevronDown, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface Notification {
   id: number;
@@ -60,7 +68,7 @@ const mockNotifications: Notification[] = [
 
 export default function Topbar({ onLogout }: TopbarProps) {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [, setShowUserMenu] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const navigate = useNavigate();
@@ -118,9 +126,9 @@ export default function Topbar({ onLogout }: TopbarProps) {
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm relative">
       {/* Search */}
-      <div className="flex items-center w-64 bg-gray-50 rounded-lg px-3 py-1 border border-gray-200">
+      <div className="flex items-center w-80 rounded-lg px-3 py-0.5">
         <Search className="w-4 h-4 text-gray-400 mr-2" />
-        <input
+        <Input
           type="text"
           placeholder="Search..."
           className="bg-transparent flex-1 text-sm outline-none placeholder-gray-400"
@@ -131,8 +139,8 @@ export default function Topbar({ onLogout }: TopbarProps) {
       <div className="flex items-center space-x-6 relative">
         {/* Notification */}
         <div className="relative" ref={notifRef}>
-          <button
-            className="relative text-gray-500 hover:text-gray-700"
+          <Button
+            className="bg-white relative text-gray-500 hover:bg-gray-100"
             onClick={() => {
               setShowNotifications(!showNotifications);
               setShowUserMenu(false);
@@ -142,19 +150,19 @@ export default function Topbar({ onLogout }: TopbarProps) {
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             )}
-          </button>
+          </Button>
 
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
               <div className="p-3 border-b text-sm font-semibold text-gray-700 flex justify-between items-center">
                 <span>Today's Notifications</span>
                 {unreadCount > 0 && (
-                  <button
+                  <Button
                     onClick={markAllAsRead}
-                    className="text-xs text-purple-600 hover:underline"
+                    className="bg-white hover:bg-gray-100 text-xs text-purple-600 hover:underline"
                   >
                     Mark all as read
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -198,33 +206,27 @@ export default function Topbar({ onLogout }: TopbarProps) {
         </div>
 
         {/* User */}
-        <div className="relative" ref={userRef}>
-          <div
-            className="flex items-center space-x-1 cursor-pointer"
-            onClick={() => {
-              setShowUserMenu(!showUserMenu);
-              setShowNotifications(false);
-            }}
-          >
-            <span className="text-sm font-medium text-gray-800">Derrick Lin</span>
-            <ChevronDown className="w-4 h-4 text-gray-500" />
-          </div>
-
-          {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg border border-gray-200 z-50">
-              <ul className="text-sm">
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Profile</li>
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Settings</li>
-                <li
-                  className="px-4 py-2 text-red-600 hover:bg-gray-100 cursor-pointer"
-                  onClick={onLogout}
-                >
-                  Logout
-                </li>
-              </ul>
-            </div>
-          )}
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="flex items-center space-x-1 text-sm font-medium text-gray-800 hover:bg-transparent"
+            >
+              <span>Derrick Lin</span>
+              <ChevronDown className="w-4 h-4 text-gray-500" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-40">
+            <DropdownMenuItem>Profile</DropdownMenuItem>
+            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600"
+              onClick={onLogout}
+            >
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* 詳細內容 Modal */}
@@ -235,12 +237,12 @@ export default function Topbar({ onLogout }: TopbarProps) {
             ref={modalRef}
             className="bg-white rounded-lg shadow-lg max-w-md w-full p-4 relative z-10"
           >
-            <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+            <Button
+              className="absolute top-2 right-2 bg-white text-gray-400 hover:text-red-500 hover:bg-gray-100"
               onClick={() => setSelectedNotification(null)}
             >
               <X size={20} />
-            </button>
+            </Button>
             <h3 className="font-semibold text-gray-800 mb-2">{selectedNotification.title}</h3>
             <p className="text-sm text-gray-600">{selectedNotification.message}</p>
             <p className="text-xs text-gray-400 mt-2">{selectedNotification.time}</p>

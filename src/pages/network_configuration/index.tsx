@@ -1,7 +1,6 @@
 //TODO: 選擇電腦請依照後端
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   Tabs, 
   TabsContent, 
@@ -50,6 +49,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import type { PageMeta } from '@/types';
 
 // Validation schemas
 const ipAddressRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -82,16 +82,16 @@ const routeSchema = z.object({
     message: "請輸入有效的來源IP位址格式",
   }),
 });
-
-const dnsSchema = z.object({
-  hostname: z.string().min(1, "請輸入主機名稱"),
-  primary: z.string().refine((val) => ipAddressRegex.test(val), {
-    message: "請輸入有效的主要DNS伺服器IP位址",
-  }),
-  secondary: z.string().optional().refine((val) => !val || ipAddressRegex.test(val), {
-    message: "請輸入有效的次要DNS伺服器IP位址",
-  }),
-});
+//TODO: 檢查DNS
+// const dnsSchema = z.object({
+//   hostname: z.string().min(1, "請輸入主機名稱"),
+//   primary: z.string().refine((val) => ipAddressRegex.test(val), {
+//     message: "請輸入有效的主要DNS伺服器IP位址",
+//   }),
+//   secondary: z.string().optional().refine((val) => !val || ipAddressRegex.test(val), {
+//     message: "請輸入有效的次要DNS伺服器IP位址",
+//   }),
+// });
 
 interface NetworkInterface {
   id: string;
@@ -131,7 +131,6 @@ interface Computer {
 }
 
 const NetworkConfigurationPage = () => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("interfaces");
   const [selectedComputer, setSelectedComputer] = useState<string>('');
   const [computers, setComputers] = useState<Computer[]>([]);
@@ -286,23 +285,23 @@ const NetworkConfigurationPage = () => {
       setIsLoading(false);
     }
   };
+//TODO: 
+  // const handleDeleteInterface = async (interfaceId: string) => {
+  //   try {
+  //     setIsLoading(true);
+  //     await new Promise(resolve => setTimeout(resolve, 500));
 
-  const handleDeleteInterface = async (interfaceId: string) => {
-    try {
-      setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const iface = interfaces.find(i => i.id === interfaceId);
-      setInterfaces(prev => prev.filter(i => i.id !== interfaceId));
+  //     const iface = interfaces.find(i => i.id === interfaceId);
+  //     setInterfaces(prev => prev.filter(i => i.id !== interfaceId));
       
-      toast.success(`網路介面刪除成功：已刪除網路介面 ${iface?.name}`);
-    } catch (error) {
-      console.error("Error deleting interface:", error);
-      toast.error("刪除失敗：無法刪除網路介面");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     toast.success(`網路介面刪除成功：已刪除網路介面 ${iface?.name}`);
+  //   } catch (error) {
+  //     console.error("Error deleting interface:", error);
+  //     toast.error("刪除失敗：無法刪除網路介面");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleSaveRoute = async (routeData: Partial<Route>) => {
     try {
@@ -974,5 +973,11 @@ const RouteDialog = ({ route, interfaces, onSave, isLoading, onClose }: any) => 
     </DialogContent>
   );
 };
+
+(NetworkConfigurationPage as any).meta = {
+  requiresAuth: true, //驗證
+  layout: true,
+  // allowedRoles: ['admin']
+} satisfies PageMeta;
 
 export default NetworkConfigurationPage;

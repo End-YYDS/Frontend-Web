@@ -5,12 +5,13 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
-import { Cog, Shield, AlertTriangle, Save } from 'lucide-react';
+import { Shield, AlertTriangle, Save } from 'lucide-react';
 // import { useIsMobile } from "@/hooks/use-mobile";
 import AlertsTab from "./AlertsTab";
 import IpAccessTab from "./IpAccessTab";
 // import ModuleManagementTab from "./ModuleManagementTab";
 import BackupConfigTab from "./BackupConfigTab";
+import type { PageMeta } from '@/types';
 
 const SettingsPage = () => {
   // const isMobile = useIsMobile();
@@ -63,5 +64,11 @@ const SettingsPage = () => {
     </div>
   );
 };
+
+(SettingsPage as any).meta = {
+  requiresAuth: true, //驗證
+  layout: true,
+  // allowedRoles: ['admin']
+} satisfies PageMeta;
 
 export default SettingsPage;

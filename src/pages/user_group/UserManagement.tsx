@@ -93,7 +93,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               onCreateGroup={onCreateGroup}
               existingUsers={users}
               trigger={
-                <Button className="bg-blue-500 hover:bg-blue-600">
+                <Button className="bg-[#8F95A3] hover:bg-[#7B86AA]">
                   <Plus className="h-4 w-4 mr-2" />
                   New
                 </Button>
@@ -167,7 +167,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 />
               </TableHead>
             )}
-            {isEditMode && <TableHead>ID</TableHead>}
             <TableHead>Username</TableHead>
             <TableHead>Group</TableHead>
             <TableHead>Home directory</TableHead>

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { type PageMeta } from '../types';
 import { useAuth } from '@/auth';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 (Login as any).meta = {
   requiresAuth: false,
@@ -43,12 +45,12 @@ function Login() {
       <div className='w-full max-w-md bg-white rounded-lg shadow-lg p-6'>
         <h2 className='text-2xl font-semibold text-center mb-1'>Login</h2>
         <p className='text-gray-600 text-sm text-center mb-6'>
-          Enter your email to log in for this app
+          Log in with your username
         </p>
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div>
             <label className='block text-sm font-bold text-gray-700 mb-1'>使用者</label>
-            <input
+            <Input
               className='w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -57,7 +59,7 @@ function Login() {
           </div>
           <div>
             <label className='block text-sm font-bold text-gray-700 mb-1'>密碼</label>
-            <input
+            <Input 
               type='password'
               className='w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               value={password}
@@ -66,12 +68,12 @@ function Login() {
             />
           </div>
           {error && <p className='text-sm text-red-600 text-center'>{error}</p>}
-          <button
+          <Button
             type='submit'
-            className='w-full py-2 bg-red-600 hover:bg-blue-500 text-white font-extrabold rounded-md transition'
+            className='w-full py-2 bg-[#7B86AA] hover:bg-blue-600 text-white font-extrabold rounded-md transition'
           >
             login
-          </button>
+          </Button>
         </form>
       </div>
     </div>

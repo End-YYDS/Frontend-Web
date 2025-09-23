@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Plus, Trash2, Edit, FileDown, FileUp, Power, PowerOff } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import type { PageMeta } from '@/types';
 
 interface CronJob {
   id: number;
@@ -370,9 +371,9 @@ const CronManagement = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Job</label>
+                    <label className="text-sm font-medium mb-1 block">Job name</label>
                     <Input
-                      placeholder="enter job"
+                      placeholder="enter job name"
                       value={newJob.jobName}
                       onChange={(e) => setNewJob({...newJob, jobName: e.target.value})}
                       className="w-full"
@@ -399,7 +400,7 @@ const CronManagement = () => {
                           value="quick"
                           checked={newJob.scheduleType === 'quick'}
                           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                          onChange={(e) => setNewJob({...newJob, scheduleType: 'quick', quickSchedule: '', minute: '', hour: '', date: '', month: '', week: ''})}
+                          onChange={() => setNewJob({...newJob, scheduleType: 'quick', quickSchedule: '', minute: '', hour: '', date: '', month: '', week: ''})}
                           className="mr-2"
                         />
                         快速排程
@@ -411,7 +412,7 @@ const CronManagement = () => {
                           value="custom"
                           checked={newJob.scheduleType === 'custom'}
                           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                          onChange={(e) => setNewJob({...newJob, scheduleType: 'custom', quickSchedule: ''})}
+                          onChange={() => setNewJob({...newJob, scheduleType: 'custom', quickSchedule: ''})}
                           className="mr-2"
                         />
                         自訂排程
@@ -804,5 +805,11 @@ const CronManagement = () => {
     </div>
   );
 };
+
+(CronManagement as any).meta = {
+  requiresAuth: true, //驗證
+  layout: true,
+  // allowedRoles: ['admin']
+} satisfies PageMeta;
 
 export default CronManagement;
