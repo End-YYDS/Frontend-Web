@@ -13,7 +13,7 @@ const index = () => {
           className="text-4xl font-bold mb-2" 
           style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
           >
-            Servers - Samba Windows File Sharing
+             Samba Windows File Sharing
           </h1>
       </div>
       <ServerContent 

@@ -24,12 +24,10 @@ export const FirewallManager = () => {
   const [selectedChain, setSelectedChain] = useState<string>('INPUT');
   const { toast } = useToast();
 
-  // Dialog 狀態
   const [firewallDialog, setFirewallDialog] = useState({ open: false, newStatus: false });
   const [policyDialog, setPolicyDialog] = useState({ open: false, chain: '', newPolicy: '' });
   const [deleteDialog, setDeleteDialog] = useState({ open: false, chain: '', ruleIndex: -1 });
 
-  // 取得主機
   const fetchHosts = async () => {
     try {
       const testHosts = [
@@ -42,11 +40,10 @@ export const FirewallManager = () => {
       setHosts(testHosts);
       setSelectedHost(testHosts[0]?.uuid || '');
     } catch {
-      toast({ title: "錯誤", description: "無法取得主機列表", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to fetch host list", variant: "destructive" });
     }
   };
 
-  // 取得防火牆狀態
   const fetchFirewallStatus = async (uuid: string) => {
     if (!uuid) return;
     setIsLoading(true);
@@ -66,25 +63,23 @@ export const FirewallManager = () => {
         ]
       };
       setFirewallStatus(testStatus);
-      toast({ title: "成功", description: "已載入防火牆狀態" });
+      toast({ title: "Success", description: "Firewall status loaded" });
     } catch {
-      toast({ title: "錯誤", description: "無法取得防火牆狀態", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to fetch firewall status", variant: "destructive" });
     } finally { setIsLoading(false); }
   };
 
-  // 切換防火牆
-const toggleFirewallStatus = async (status: boolean) => {
-  if (!selectedHost) return;
-  try {
-    const newStatus = status ? 'active' : 'inactive';
-    setFirewallStatus(prev => prev ? { ...prev, Status: newStatus } : null);
-    toast({ title: "成功", description: `防火牆已${status ? '啟用' : '停用'}` });
-  } catch {
-    toast({ title: "錯誤", description: "無法修改防火牆狀態", variant: "destructive" });
-  }
-};
+  const toggleFirewallStatus = async (status: boolean) => {
+    if (!selectedHost) return;
+    try {
+      const newStatus = status ? 'active' : 'inactive';
+      setFirewallStatus(prev => prev ? { ...prev, Status: newStatus } : null);
+      toast({ title: "Success", description: `Firewall has been ${status ? 'enabled' : 'disabled'}` });
+    } catch {
+      toast({ title: "Error", description: "Failed to update firewall status", variant: "destructive" });
+    }
+  };
 
-  // 確認修改策略
   const confirmUpdatePolicy = async () => {
     if (!selectedHost) return;
     const { chain, newPolicy } = policyDialog;
@@ -93,13 +88,12 @@ const toggleFirewallStatus = async (status: boolean) => {
         if (!prev) return null;
         return { ...prev, Chains: prev.Chains.map(c => c.Name === chain ? { ...c, Policy: newPolicy } : c) };
       });
-      toast({ title: "成功", description: `${chain} 鏈的預設策略已更新` });
+      toast({ title: "Success", description: `${chain} chain default policy updated` });
     } catch {
-      toast({ title: "錯誤", description: "無法更新預設策略", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to update policy", variant: "destructive" });
     } finally { setPolicyDialog(prev => ({ ...prev, open: false })); }
   };
 
-  // 確認刪除規則
   const confirmDeleteRule = async () => {
     if (!selectedHost) return;
     const { chain, ruleIndex } = deleteDialog;
@@ -118,9 +112,9 @@ const toggleFirewallStatus = async (status: boolean) => {
           })
         };
       });
-      toast({ title: "成功", description: "規則已刪除" });
+      toast({ title: "Success", description: "Rule deleted" });
     } catch {
-      toast({ title: "錯誤", description: "無法刪除規則", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to delete rule", variant: "destructive" });
     } finally { setDeleteDialog({ open: false, chain: '', ruleIndex: -1 }); }
   };
 
@@ -128,8 +122,8 @@ const toggleFirewallStatus = async (status: boolean) => {
   useEffect(() => { if (selectedHost) fetchFirewallStatus(selectedHost); }, [selectedHost]);
 
   const getStatusBadge = (status: string) => status === 'active'
-    ? <Badge className="bg-green-100 text-green-800"><Shield className="w-3 h-3 mr-1" />啟用</Badge>
-    : <Badge variant="secondary" className="bg-red-100 text-red-800"><AlertTriangle className="w-3 h-3 mr-1" />停用</Badge>;
+    ? <Badge className="bg-green-100 text-green-800"><Shield className="w-3 h-3 mr-1" />Enabled</Badge>
+    : <Badge variant="secondary" className="bg-red-100 text-red-800"><AlertTriangle className="w-3 h-3 mr-1" />Disabled</Badge>;
 
   const getPolicyBadge = (policy: string) => {
     const colors = { ACCEPT: 'bg-green-100 text-green-800', DROP: 'bg-red-100 text-red-800', REJECT: 'bg-orange-100 text-orange-800' };
@@ -143,30 +137,28 @@ const toggleFirewallStatus = async (status: boolean) => {
 
   return (
     <div className="space-y-6">
-      {/* 主機選擇 */}
       <Card>
         <CardContent>
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">選擇主機</span>
+            <span className="text-sm font-medium">Select Host</span>
             <Select value={selectedHost} onValueChange={setSelectedHost}>
-              <SelectTrigger className="w-60"><SelectValue placeholder="請選擇主機" /></SelectTrigger>
+              <SelectTrigger className="w-60"><SelectValue placeholder="Please select host" /></SelectTrigger>
               <SelectContent>{hosts.map(h => <SelectItem key={h.uuid} value={h.uuid}>{h.hostname} ({h.uuid})</SelectItem>)}</SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* 防火牆狀態 */}
       {firewallStatus && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2"><Settings className="w-5 h-5" />防火牆狀態</span>
+              <span className="flex items-center gap-2"><Settings className="w-5 h-5" />Firewall Status</span>
               {getStatusBadge(firewallStatus.Status)}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-between">
-            <span className="text-sm font-medium">防火牆開關</span>
+            <span className="text-sm font-medium">Firewall Switch</span>
             <Switch
               checked={firewallStatus.Status === 'active'}
               onCheckedChange={(value) => setFirewallDialog({ open: true, newStatus: value })}
@@ -175,31 +167,30 @@ const toggleFirewallStatus = async (status: boolean) => {
         </Card>
       )}
 
-      {/* 啟用/停用防火牆確認框 */}
       <Dialog open={firewallDialog.open} onOpenChange={(open) => setFirewallDialog(prev => ({ ...prev, open }))}>
         <DialogContent>
-          <DialogHeader><DialogTitle>確認操作</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Confirm Action</DialogTitle></DialogHeader>
           <div className="py-4">
-            是否要 <span className="font-medium">{firewallDialog.newStatus ? '啟用' : '停用'}</span> 防火牆？
+            Do you want to <span className="font-medium">{firewallDialog.newStatus ? 'enable' : 'disable'}</span> the firewall?
           </div>
           <DialogFooter className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setFirewallDialog(prev => ({ ...prev, open: false }))}>取消</Button>
-            <Button onClick={() => {
+            <Button variant="outline" onClick={() => setFirewallDialog(prev => ({ ...prev, open: false }))}>Cancel</Button>
+            <Button style={{ backgroundColor: '#7B86AA' }} className="hover:opacity-90 text-white"
+            onClick={() => {
               toggleFirewallStatus(firewallDialog.newStatus);
               setFirewallDialog(prev => ({ ...prev, open: false }));
-            }}>確認</Button>
+            }}>Confirm</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* 防火牆鏈規則 */}
       {firewallStatus?.Status === 'active' && firewallStatus.Chains.map(chain => (
         <Card key={chain.Name}>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>{chain.Name} 鏈</span>
+              <span>{chain.Name} Chain</span>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">預設策略:</span>
+                <span className="text-sm text-gray-600">Default Policy:</span>
                 {getPolicyBadge(chain.Policy)}
                 <Select
                   value={chain.Policy}
@@ -217,22 +208,25 @@ const toggleFirewallStatus = async (status: boolean) => {
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
-              <span className="text-sm text-gray-600">共 {chain.Rules_Length} 條規則</span>
-              <Button size="sm" onClick={() => { setSelectedChain(chain.Name); setIsAddRuleOpen(true); }} className="flex items-center gap-1"><Plus className="w-4 h-4" />新增規則</Button>
+              <span className="text-sm text-gray-600">{chain.Rules_Length} Rules</span>
+              <Button size="sm" 
+              onClick={() => { setSelectedChain(chain.Name); setIsAddRuleOpen(true); }} 
+              style={{ backgroundColor: '#7B86AA' }} className="hover:opacity-90 text-white">
+                <Plus className="w-4 h-4" />Add Rule</Button>
             </div>
 
             {chain.Rules.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>動作</TableHead>
-                    <TableHead>協定</TableHead>
-                    <TableHead>輸入介面</TableHead>
-                    <TableHead>輸出介面</TableHead>
-                    <TableHead>來源</TableHead>
-                    <TableHead>目的</TableHead>
-                    <TableHead>目標埠</TableHead>
-                    <TableHead>操作</TableHead>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Protocol</TableHead>
+                    <TableHead>Input Interface</TableHead>
+                    <TableHead>Output Interface</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead>Destination</TableHead>
+                    <TableHead>Target Port</TableHead>
+                    <TableHead>Operation</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -246,7 +240,7 @@ const toggleFirewallStatus = async (status: boolean) => {
                       <TableCell className="max-w-32 truncate">{rule.Destination}</TableCell>
                       <TableCell className="max-w-32 truncate">{rule.Options || '-'}</TableCell>
                       <TableCell>
-                        <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700"
+                        <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50"
                           onClick={() => setDeleteDialog({ open: true, chain: chain.Name, ruleIndex: index })}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -257,62 +251,59 @@ const toggleFirewallStatus = async (status: boolean) => {
                 </TableBody>
               </Table>
             ) : (
-              <div className="text-center py-8 text-gray-500">此鏈目前沒有規則</div>
+              <div className="text-center py-8 text-gray-500">No rules in this chain</div>
             )}
           </CardContent>
         </Card>
       ))}
 
-      {/* 新增規則對話框 */}
-<AddRuleDialog
-  isOpen={isAddRuleOpen}
-  onClose={() => setIsAddRuleOpen(false)}
-  selectedHost={selectedHost}
-  selectedChain={selectedChain}
-  onAddRule={(newRule: FirewallRule) => {
-    // 直接更新防火牆狀態
-    setFirewallStatus(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        Chains: prev.Chains.map(c => {
-          if (c.Name === selectedChain) {
-            const newRules = [...c.Rules, newRule];
-            return { ...c, Rules: newRules, Rules_Length: newRules.length };
-          }
-          return c;
-        })
-      };
-    });
-    toast({ title: "成功", description: "規則已新增" });
-  }}
-/>
+      <AddRuleDialog
+        isOpen={isAddRuleOpen}
+        onClose={() => setIsAddRuleOpen(false)}
+        selectedHost={selectedHost}
+        selectedChain={selectedChain}
+        onAddRule={(newRule: FirewallRule) => {
+          setFirewallStatus(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              Chains: prev.Chains.map(c => {
+                if (c.Name === selectedChain) {
+                  const newRules = [...c.Rules, newRule];
+                  return { ...c, Rules: newRules, Rules_Length: newRules.length };
+                }
+                return c;
+              })
+            };
+          });
+          toast({ title: "Success", description: "Rule added" });
+        }}
+      />
 
-
-      {/* 修改策略確認對話框 */}
       <Dialog open={policyDialog.open} onOpenChange={(open) => setPolicyDialog(prev => ({ ...prev, open }))}>
         <DialogContent>
-          <DialogHeader><DialogTitle>確認修改策略</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Confirm Policy Change</DialogTitle></DialogHeader>
           <div className="py-4">
-            是否將 <span className="font-medium">{policyDialog.chain}</span> 鏈的預設策略修改為 <span className="font-medium">{policyDialog.newPolicy}</span>？
+            Do you want to change <span className="font-medium">{policyDialog.chain}</span> chain default policy to <span className="font-medium">{policyDialog.newPolicy}</span>?
           </div>
           <DialogFooter className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setPolicyDialog(prev => ({ ...prev, open: false }))}>取消</Button>
-            <Button onClick={confirmUpdatePolicy}>確認</Button>
+            <Button variant="outline" onClick={() => setPolicyDialog(prev => ({ ...prev, open: false }))}>Cancel</Button>
+            <Button style = {{ backgroundColor: '#7B86AA' }} className="hover:opacity-90 text-white"
+            onClick={confirmUpdatePolicy}>Confirm</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* 刪除規則確認對話框 */}
       <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}>
         <DialogContent>
-          <DialogHeader><DialogTitle>確認刪除規則</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Confirm Delete Rule</DialogTitle></DialogHeader>
           <div className="py-4">
-            是否要刪除 <span className="font-medium">{deleteDialog.chain}</span> 鏈的第 <span className="font-medium">{deleteDialog.ruleIndex + 1}</span> 條規則？
+            Do you want to delete rule <span className="font-medium">{deleteDialog.ruleIndex + 1}</span> from <span className="font-medium">{deleteDialog.chain}</span> chain?
           </div>
           <DialogFooter className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteDialog(prev => ({ ...prev, open: false }))}>取消</Button>
-            <Button onClick={confirmDeleteRule}>確認</Button>
+            <Button variant="outline" onClick={() => setDeleteDialog(prev => ({ ...prev, open: false }))}>Cancel</Button>
+            <Button style = {{ backgroundColor: '#7B86AA' }} className="hover:opacity-90 text-white"
+            onClick={confirmDeleteRule}>Confirm</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

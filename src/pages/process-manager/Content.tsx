@@ -139,13 +139,13 @@ export const ProcessManager = () => {
       // });
 
       toast({
-        title: "操作完成",
-        description: `${action} 操作已發送至 ${processName} (${uuid})`,
+        title: "Action Completed",
+        description: `${action} action sent to ${processName} (${uuid})`,
       });
     } catch (error) {
       toast({
-        title: "錯誤",
-        description: "操作執行失敗",
+        title: "Error",
+        description: "Failed to perform action",
         variant: "destructive",
       });
     }
@@ -177,10 +177,10 @@ export const ProcessManager = () => {
       const matchesSearch = searchTerm.trim() ? 
         processName.toLowerCase().includes(searchTerm.toLowerCase()) : true;
       
-      // 搜尋時所有程序都要符合搜尋條件，包括釘選的程序
+      // All processes must match search, including pinned ones
       return matchesSearch;
     }).sort(([processNameA], [processNameB]) => {
-      // 釘選的程序排在最前面
+      // Pinned processes appear first
       const aPinned = pinnedProcesses.has(processNameA);
       const bPinned = pinnedProcesses.has(processNameB);
       
@@ -196,7 +196,7 @@ export const ProcessManager = () => {
       <div className="flex items-center justify-center h-64">
         <div className="flex items-center space-x-2">
           <Activity className="w-6 h-6 animate-spin" />
-          <span>載入程序資料中...</span>
+          <span>Loading process data...</span>
         </div>
       </div>
     );
@@ -210,7 +210,7 @@ export const ProcessManager = () => {
           <div className="flex items-center space-x-2">
             <Search className="w-4 h-4 text-gray-500" />
             <Input
-              placeholder={selectedComputer ? "搜尋程序..." : "搜尋電腦..."}
+              placeholder={selectedComputer ? "Search processes..." : "Search computers..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1"
@@ -236,7 +236,7 @@ export const ProcessManager = () => {
                     className="flex items-center space-x-1"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    <span>返回</span>
+                    <span>Back</span>
                   </Button>
                   <Monitor className="w-5 h-5" />
                   <span>{selectedComputer.hostname}</span>
@@ -245,8 +245,8 @@ export const ProcessManager = () => {
               ) : (
                 <>
                   <Monitor className="w-5 h-5" />
-                  <span>電腦列表</span>
-                  <Badge variant="secondary">{processData?.length || 0} 台電腦</Badge>
+                  <span>Computer List</span>
+                  <Badge variant="secondary">{processData?.length || 0} computers</Badge>
                 </>
               )}
             </CardTitle>
@@ -280,15 +280,15 @@ export const ProcessManager = () => {
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div className="p-2 bg-gray-50 rounded">
                             <div className="text-lg font-bold">{stats.total}</div>
-                            <div className="text-xs text-gray-500">總程序</div>
+                            <div className="text-xs text-gray-500">Total</div>
                           </div>
                           <div className="p-2 bg-green-50 rounded">
                             <div className="text-lg font-bold text-green-600">{stats.running}</div>
-                            <div className="text-xs text-gray-500">運行中</div>
+                            <div className="text-xs text-gray-500">Running</div>
                           </div>
                           <div className="p-2 bg-red-50 rounded">
                             <div className="text-lg font-bold text-red-600">{stats.stopped}</div>
-                            <div className="text-xs text-gray-500">已停止</div>
+                            <div className="text-xs text-gray-500">Stopped</div>
                           </div>
                         </div>
                       </CardContent>
@@ -302,19 +302,19 @@ export const ProcessManager = () => {
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <Card className="p-4 text-center">
                     <div className="text-2xl font-bold">{Object.keys(selectedComputer.processes).length}</div>
-                    <div className="text-sm text-gray-500">總程序數</div>
+                    <div className="text-sm text-gray-500">Total Processes</div>
                   </Card>
                   <Card className="p-4 text-center bg-green-50">
                     <div className="text-2xl font-bold text-green-600">
                       {Object.values(selectedComputer.processes).filter(p => p.status).length}
                     </div>
-                    <div className="text-sm text-gray-500">運行中</div>
+                    <div className="text-sm text-gray-500">Running</div>
                   </Card>
                   <Card className="p-4 text-center bg-red-50">
                     <div className="text-2xl font-bold text-red-600">
                       {Object.values(selectedComputer.processes).filter(p => !p.status).length}
                     </div>
-                    <div className="text-sm text-gray-500">已停止</div>
+                    <div className="text-sm text-gray-500">Stopped</div>
                   </Card>
                 </div>
 
@@ -322,11 +322,11 @@ export const ProcessManager = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>篩選</TableHead>
-                          <TableHead className='w-3xl'>程序名稱</TableHead>
-                          <TableHead>狀態</TableHead>
-                          <TableHead>開機啟動</TableHead>
-                          <TableHead className="text-right">操作</TableHead>
+                          <TableHead>Filter</TableHead>
+                          <TableHead className='w-3xl'>Process Name</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Boot</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -346,20 +346,20 @@ export const ProcessManager = () => {
                               <div className="flex items-center space-x-2">
                                 <span>{processName}</span>
                                 {pinnedProcesses.has(processName) && (
-                                  <Badge variant="outline" className="text-xs">已釘選</Badge>
+                                  <Badge variant="outline" className="text-xs">Pinned</Badge>
                                 )}
                               </div>
                             </TableCell>
                             <TableCell>
                               <Badge variant={process.status ? "default" : "secondary"}>
-                                {process.status ? "運行中" : "已停止"}
+                                {process.status ? "Running" : "Stopped"}
                               </Badge>
                             </TableCell>
                             <TableCell>
                               {process.boot ? (
-                                <Badge variant="outline" className="text-green-600">已啟用</Badge>
+                                <Badge variant="outline" className="text-green-600">Enabled</Badge>
                               ) : (
-                                <Badge variant="outline" className="text-gray-500">未啟用</Badge>
+                                <Badge variant="outline" className="text-gray-500">Disabled</Badge>
                               )}
                             </TableCell>
                             <TableCell className="text-right">
@@ -373,7 +373,7 @@ export const ProcessManager = () => {
                                       className="h-8 px-3"
                                     >
                                       <Play className="w-3 h-3 mr-1" />
-                                      啟動
+                                      Start
                                     </Button>
                                   </>
                                 ) : (
@@ -384,7 +384,7 @@ export const ProcessManager = () => {
                                     className="h-8 px-3"
                                   >
                                     <Square className="w-3 h-3 mr-1" />
-                                    停止
+                                    Stop
                                   </Button>
                                 )}
                                 {!process.boot ? (
@@ -396,7 +396,7 @@ export const ProcessManager = () => {
                                       className="h-8 px-3"
                                     >
                                       <PlayCircle className="w-3 h-3 mr-1" />
-                                      開機啟動
+                                      Enable Boot
                                     </Button>
                                   </>
                                 ) : (
@@ -407,7 +407,7 @@ export const ProcessManager = () => {
                                     className="h-8 px-3"
                                   >
                                     <StopCircle className="w-3 h-3 mr-1" />
-                                    開機停止
+                                    Disable Boot
                                   </Button>
                                 )}
                                 <Button
@@ -417,7 +417,7 @@ export const ProcessManager = () => {
                                   className="h-8 px-3"
                                 >
                                   <RotateCcw className="w-3 h-3 mr-1" />
-                                  重啟
+                                  Restart
                                 </Button>
                               </div>
                             </TableCell>
@@ -430,14 +430,14 @@ export const ProcessManager = () => {
                      {!searchTerm.trim() ? (
                        <div>
                          <Search className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                         <p className="text-lg font-medium">請輸入程序名稱進行搜尋</p>
-                         <p className="text-sm">只有輸入搜尋關鍵字時才會顯示程序</p>
+                         <p className="text-lg font-medium">Enter process name to search</p>
+                         <p className="text-sm">Processes are displayed only when searching</p>
                        </div>
                      ) : (
                        <div>
                          <Activity className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                         <p className="text-lg font-medium">未找到匹配的程序</p>
-                         <p className="text-sm">沒有找到包含 "{searchTerm}" 的程序</p>
+                         <p className="text-lg font-medium">No matching processes found</p>
+                         <p className="text-sm">No process contains "{searchTerm}"</p>
                        </div>
                      )}
                    </div>

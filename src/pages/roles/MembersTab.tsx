@@ -38,7 +38,7 @@ export function MembersTab({
         <div className="relative flex-1">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
-            placeholder="搜尋成員"
+            placeholder="Search Members"
             value={searchMember}
             onChange={(e) => onSearchMemberChange(e.target.value)}
             className="pl-10"
@@ -76,7 +76,7 @@ export function MembersTab({
         ))}
         {filteredMembers.length === 0 && (
           <div className="text-center text-gray-500 py-8">
-            {members.length === 0 ? '尚無成員' : '沒有符合搜尋條件的成員'}
+            {members.length === 0 ? 'No members yet' : 'No members match the search criteria'}
           </div>
         )}
       </div>

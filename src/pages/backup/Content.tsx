@@ -22,7 +22,7 @@ export function BackupContent() {
 
   const handleBackupNow = () => {
     if (!filename.trim()) {
-      toast.error('請輸入檔案名稱');
+      toast.error('Please enter a file name');
       return;
     }
 
@@ -38,22 +38,23 @@ export function BackupContent() {
     setFilename('');
     setIsBackupDialogOpen(false);
     
-    toast.success(`備份檔案 "${filename}" 已成功建立`);
+    toast.success(`Backup file "${filename}" has been successfully created`);
 
     console.log('Creating new backup...');
   };
 
   const handleRestore = (backup: any) => {
-    toast.success(`已從 "${backup.filename}" 還原`);
+    toast.success(`Restored from "${backup.filename}"`);
     console.log('Restoring backup:', backup.filename);
   };
 
   const handleDelete = (backupId: number) => {
     const backup = backupHistory.find(b => b.id === backupId);
     setBackupHistory(prev => prev.filter(backup => backup.id !== backupId));
-    toast.success(`已刪除備份 "${backup?.filename}"`);
+    toast.success(`Deleted backup "${backup?.filename}"`);
     console.log('Deleted backup with ID:', backupId);
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br">   
@@ -79,31 +80,33 @@ export function BackupContent() {
                 <DialogTrigger asChild>
                   <Button 
                     style={{ backgroundColor: '#7B86AA' }}
-                    className="hover:opacity-80 text-white px-6 py-2"
+                    className="hover:opacity-90 text-white px-6 py-2"
                   >
                     Backup now
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>建立新備份</DialogTitle>
+                    <DialogTitle>Create New Backup</DialogTitle>
                     <DialogDescription>
-                      請輸入備份檔案名稱
+                      Please enter backup file name
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4">
                     <Input
-                      placeholder="輸入檔案名稱"
+                      placeholder="Enter file name"
                       value={filename}
                       onChange={(e) => setFilename(e.target.value)}
                     />
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsBackupDialogOpen(false)}>
-                      取消
+                      Cancel
                     </Button>
-                    <Button onClick={handleBackupNow}>
-                      確認
+                    <Button style={{ backgroundColor: '#7B86AA' }}
+                            className="hover:opacity-90 text-white" 
+                            onClick={handleBackupNow}>
+                      Confirm
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -111,7 +114,6 @@ export function BackupContent() {
               <span className="text-gray-500">Back up all current settings immediately</span>
             </div>
           </div>
-
           {/* Backup History Section */}
           <div>
             <h2 className="text-xl font-semibold text-gray-600 mb-4">Backup History</h2>
@@ -137,11 +139,10 @@ export function BackupContent() {
                       {/* Restore Dialog */}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
+                          <Button
                             size="sm"
-                            style={{ backgroundColor: '#7B86AA', borderColor: '#7B86AA' }}
-                            className="text-white hover:opacity-80"
+                            style={{ backgroundColor: '#7B86AA'}}
+                            className="text-white hover:opacity-90"
                           >
                             Restore
                           </Button>
@@ -155,7 +156,9 @@ export function BackupContent() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleRestore(backup)}>
+                            <AlertDialogAction style={{ backgroundColor: '#7B86AA' }}
+                            className="hover:opacity-90 text-white" 
+                            onClick={() => handleRestore(backup)}>
                               Restore
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -166,10 +169,9 @@ export function BackupContent() {
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button 
-                            variant="outline" 
+                            variant="ghost" 
                             size="sm"
-                            style={{ backgroundColor: '#7B86AA', borderColor: '#7B86AA' }}
-                            className="text-white hover:bg-red-500 hover:border-red-500 transition-all duration-200"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

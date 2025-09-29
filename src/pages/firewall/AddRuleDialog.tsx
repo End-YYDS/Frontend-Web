@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -22,7 +20,7 @@ interface AddRuleDialogProps {
   onClose: () => void;
   selectedHost: string;
   selectedChain: string;
-  onAddRule: (rule: FirewallRule) => void; // 新增 callback
+  onAddRule: (rule: FirewallRule) => void; // callback for adding rule
 }
 
 export interface FirewallRule {
@@ -75,20 +73,20 @@ export const AddRuleDialog = ({
         Options: port || ''
       };
 
-      console.log('新增防火牆規則:', { Uuid: selectedHost, Chain: selectedChain, ...newRule });
+      console.log('Add Firewall Rule:', { Uuid: selectedHost, Chain: selectedChain, ...newRule });
 
-      // 模擬 API 呼叫
+      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // 呼叫父元件 callback 真正新增規則
+      // Call parent callback to actually add rule
       onAddRule(newRule);
 
       toast({
-        title: "成功",
-        description: "防火牆規則已新增",
+        title: "Success",
+        description: "Firewall rule added",
       });
 
-      // 重置表單
+      // Reset form
       setFormData({
         target: 'ACCEPT',
         protocol: 'tcp',
@@ -105,8 +103,8 @@ export const AddRuleDialog = ({
       onClose();
     } catch (error) {
       toast({
-        title: "錯誤",
-        description: "無法新增防火牆規則",
+        title: "Error",
+        description: "Unable to add firewall rule",
         variant: "destructive",
       });
     } finally {
@@ -131,13 +129,13 @@ export const AddRuleDialog = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>新增 {selectedChain} 鏈規則</DialogTitle>
+          <DialogTitle>Add {selectedChain} Chain Rule</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="target">動作</Label>
+              <Label htmlFor="target">Action</Label>
               <Select value={formData.target} onValueChange={(value) => handleInputChange('target', value)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -151,7 +149,7 @@ export const AddRuleDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="protocol">協定</Label>
+              <Label htmlFor="protocol">Protocol</Label>
               <Select value={formData.protocol} onValueChange={(value) => handleInputChange('protocol', value)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -168,61 +166,61 @@ export const AddRuleDialog = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="inInterface">輸入介面</Label>
+              <Label htmlFor="inInterface">Input Interface</Label>
               <Input
                 id="inInterface"
                 value={formData.inInterface}
                 onChange={(e) => handleInputChange('inInterface', e.target.value)}
-                placeholder="例如: eth0, lo (空白為任意)"
+                placeholder="e.g., eth0, lo (empty for any)"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="outInterface">輸出介面</Label>
+              <Label htmlFor="outInterface">Output Interface</Label>
               <Input
                 id="outInterface"
                 value={formData.outInterface}
                 onChange={(e) => handleInputChange('outInterface', e.target.value)}
-                placeholder="例如: eth0, * (任意)"
+                placeholder="e.g., eth0, * (any)"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="source">來源 IP</Label>
+              <Label htmlFor="source">Source IP</Label>
               <Input
                 id="source"
                 value={formData.source}
                 onChange={(e) => handleInputChange('source', e.target.value)}
-                placeholder="例如: 192.168.1.100, 0.0.0.0/0"
+                placeholder="e.g., 192.168.1.100, 0.0.0.0/0"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="destination">目的 IP</Label>
+              <Label htmlFor="destination">Destination IP</Label>
               <Input
                 id="destination"
                 value={formData.destination}
                 onChange={(e) => handleInputChange('destination', e.target.value)}
-                placeholder="例如: 192.168.1.1, 0.0.0.0/0"
+                placeholder="e.g., 192.168.1.1, 0.0.0.0/0"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="options">目標埠</Label>
+            <Label htmlFor="options">Target Port</Label>
             <Popover open={openPortPopover} onOpenChange={setOpenPortPopover}>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-[200px] justify-start">
-                  {port || "選擇目標埠"}
+                  {port || "Select Target Port"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="p-0" side="right" align="start">
                 <Command>
-                  <CommandInput placeholder="搜尋或輸入自訂..." />
+                  <CommandInput placeholder="Search or input custom..." />
                   <CommandList>
-                    <CommandEmpty>沒有找到結果</CommandEmpty>
+                    <CommandEmpty>No results found</CommandEmpty>
                     <CommandGroup>
                       {portOptions.map((p) => (
                         <CommandItem
@@ -233,7 +231,7 @@ export const AddRuleDialog = ({
                           {p === "Other" ? (
                             <input
                               type="text"
-                              placeholder="自訂目標埠"
+                              placeholder="Custom Target Port"
                               value={customPort}
                               onChange={(e) => setCustomPort(e.target.value)}
                               className="w-full border-none outline-none"
@@ -249,16 +247,17 @@ export const AddRuleDialog = ({
               </PopoverContent>
             </Popover>
             <p className="text-xs text-gray-500">
-              常用選項: tcp dpt:22 (SSH), tcp dpt:80 (HTTP), tcp dpt:443 (HTTPS), udp dpt:53 (DNS)
+              Common options: tcp dpt:22 (SSH), tcp dpt:80 (HTTP), tcp dpt:443 (HTTPS), udp dpt:53 (DNS)
             </p>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
-              取消
+              Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? '新增中...' : '新增規則'}
+            <Button style = {{ backgroundColor: '#7B86AA' }} className="hover:opacity-90 text-white"
+            type="submit" disabled={isLoading}>
+              {isLoading ? 'Adding...' : 'Add Rule'}
             </Button>
           </div>
         </form>

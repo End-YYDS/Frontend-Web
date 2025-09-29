@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -36,14 +34,14 @@ export const ComboboxPort: React.FC<ComboboxPortProps> = ({ value, onChange }) =
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-[150px] justify-start">
-          {value || "選擇目標埠"}
+          {value || "Select Target Port"}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0" side="right" align="start">
         <Command>
-          <CommandInput placeholder="搜尋或輸入自訂..." />
+          <CommandInput placeholder="Search or enter custom..." />
           <CommandList>
-            <CommandEmpty>沒有找到結果</CommandEmpty>
+            <CommandEmpty>No results found</CommandEmpty>
             <CommandGroup>
               {ports.map((port) => (
                 <CommandItem
@@ -54,7 +52,7 @@ export const ComboboxPort: React.FC<ComboboxPortProps> = ({ value, onChange }) =
                   {port === "Other" ? (
                     <input
                       type="text"
-                      placeholder="自訂目標埠"
+                      placeholder="Custom Target Port"
                       value={customValue}
                       onChange={(e) => setCustomValue(e.target.value)}
                       className="w-full border-none outline-none"

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,18 +38,18 @@ export function AddMemberDialog({ allUsers, members, onAddMember }: AddMemberDia
           style={{ backgroundColor: '#7B86AA' }}
           className="hover:opacity-90 text-white"
         >
-          新增成員
+          Add Member
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>選擇成員</DialogTitle>
+          <DialogTitle>Select Member</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="relative">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="搜尋使用者"
+              placeholder="Search Users"
               value={searchAllUsers}
               onChange={(e) => setSearchAllUsers(e.target.value)}
               className="pl-10"
@@ -74,7 +73,7 @@ export function AddMemberDialog({ allUsers, members, onAddMember }: AddMemberDia
             ))}
             {availableUsers.length === 0 && (
               <div className="text-center text-gray-500 py-4">
-                沒有可新增的使用者
+                No users available to add
               </div>
             )}
           </div>

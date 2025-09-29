@@ -31,10 +31,10 @@ interface RoleEditorProps {
 }
 
 const permissionsList = [
-  { id: 0, name: '檢視', bit: 1 << 0 },
-  { id: 1, name: '管理身份組', bit: 1 << 1 },
-  { id: 2, name: '編輯', bit: 1 << 2 },
-  { id: 3, name: '管理', bit: 1 << 3 },
+  { id: 0, name: 'View', bit: 1 << 0 },
+  { id: 1, name: 'Manage Roles', bit: 1 << 1 },
+  { id: 2, name: 'Edit', bit: 1 << 2 },
+  { id: 3, name: 'Manage', bit: 1 << 3 },
 ];
 
 export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSelect }: RoleEditorProps) {
@@ -90,79 +90,79 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
 
   return (
     <div className="min-h-screen bg-gradient-to-br">      
-        <div className="grid grid-cols-12 gap-6">
-          <RoleEditorSidebar 
-            roleName={roleName}
-            selectedColor={selectedColor}
-            currentRole={role}
-            allRoles={allRoles}
-            onBack={onBack}
-            onRoleSelect={onRoleSelect}
-          />
+      <div className="grid grid-cols-12 gap-6">
+        <RoleEditorSidebar 
+          roleName={roleName}
+          selectedColor={selectedColor}
+          currentRole={role}
+          allRoles={allRoles}
+          onBack={onBack}
+          onRoleSelect={onRoleSelect}
+        />
 
-          <div className="col-span-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold mb-6">編輯身份 - {roleName}</h2>
+        <div className="col-span-8">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold mb-6">Edit Role - {roleName}</h2>
+            
+            <Tabs defaultValue="display" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="display">Display</TabsTrigger>
+                <TabsTrigger value="permissions">Permissions</TabsTrigger>
+                <TabsTrigger value="members">Manage Members</TabsTrigger>
+              </TabsList>
               
-              <Tabs defaultValue="display" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="display">顯示</TabsTrigger>
-                  <TabsTrigger value="permissions">權限</TabsTrigger>
-                  <TabsTrigger value="members">管理成員</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="display">
-                  <DisplayTab 
-                    roleName={roleName}
-                    selectedColor={selectedColor}
-                    isEveryoneRole={isEveryoneRole}
-                    onRoleNameChange={setRoleName}
-                    onColorChange={setSelectedColor}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="permissions">
-                  <PermissionsTab 
-                    permissions={permissionsList.map(perm => ({
-                      id: perm.id.toString(),
-                      name: perm.name,
-                      enabled: (rolePermissions & perm.bit) !== 0,
-                      bit: perm.bit
-                    }))}
-                    isEveryoneRole={isEveryoneRole}
-                    onPermissionToggle={togglePermission}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="members">
-                  <MembersTab 
-                    members={members}
-                    allUsers={allUsers}
-                    searchMember={searchMember}
-                    isEveryoneRole={isEveryoneRole}
-                    onSearchMemberChange={setSearchMember}
-                    onAddMember={addMember}
-                    onRemoveMember={removeMember}
-                  />
-                </TabsContent>
-              </Tabs>
+              <TabsContent value="display">
+                <DisplayTab 
+                  roleName={roleName}
+                  selectedColor={selectedColor}
+                  isEveryoneRole={isEveryoneRole}
+                  onRoleNameChange={setRoleName}
+                  onColorChange={setSelectedColor}
+                />
+              </TabsContent>
               
-              <div className="flex justify-end space-x-4 mt-8 pt-6 border-t">
-                <Button variant="outline" onClick={onBack}>
-                  取消
-                </Button>
-                <Button 
-                  onClick={handleSave} 
-                  style={{ backgroundColor: '#7B86AA' }}
-                  className="hover:opacity-90 text-white"
-                  disabled={isEveryoneRole}
-                >
-                  儲存
-                </Button>
-              </div>
+              <TabsContent value="permissions">
+                <PermissionsTab 
+                  permissions={permissionsList.map(perm => ({
+                    id: perm.id.toString(),
+                    name: perm.name,
+                    enabled: (rolePermissions & perm.bit) !== 0,
+                    bit: perm.bit
+                  }))}
+                  isEveryoneRole={isEveryoneRole}
+                  onPermissionToggle={togglePermission}
+                />
+              </TabsContent>
+              
+              <TabsContent value="members">
+                <MembersTab 
+                  members={members}
+                  allUsers={allUsers}
+                  searchMember={searchMember}
+                  isEveryoneRole={isEveryoneRole}
+                  onSearchMemberChange={setSearchMember}
+                  onAddMember={addMember}
+                  onRemoveMember={removeMember}
+                />
+              </TabsContent>
+            </Tabs>
+            
+            <div className="flex justify-end space-x-4 mt-8 pt-6 border-t">
+              <Button variant="outline" onClick={onBack}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                style={{ backgroundColor: '#7B86AA' }}
+                className="hover:opacity-90 text-white"
+                disabled={isEveryoneRole}
+              >
+                Save
+              </Button>
             </div>
           </div>
         </div>
       </div>
+    </div>
   );
 }

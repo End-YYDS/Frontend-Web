@@ -45,7 +45,7 @@ export function RoleEditorSidebar({
           className="flex items-center text-gray-600 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          上一頁
+          Back
         </Button>
         
         <div className="space-y-2">

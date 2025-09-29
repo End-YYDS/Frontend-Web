@@ -214,7 +214,8 @@ export function PCManagerContent() {
         return (
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <Button style={{ backgroundColor: '#7B86AA' }}
+                      className="hover:opacity-90 text-white">
                 <UserPlus className="w-4 h-4" />
                 Add to Group
               </Button>
@@ -242,7 +243,8 @@ export function PCManagerContent() {
                 <Button
                   onClick={handleConfirm}
                   disabled={!selectedGroup}
-                  className="bg-slate-800 hover:bg-slate-700"
+                  style={{ backgroundColor: '#7B86AA' }}
+                  className="hover:opacity-90 text-white"
                 >
                   Confirm
                 </Button>
@@ -310,9 +312,9 @@ export function PCManagerContent() {
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0"
+            className="text-red-500 hover:text-red-700 hover:bg-red-50"
           >
             <LogOut className="w-3 h-3" />
           </Button>
@@ -328,7 +330,7 @@ export function PCManagerContent() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => handleRemoveFromGroup(row.original.id, groupName)}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-500 hover:bg-red-600"
             >
               Remove
             </AlertDialogAction>
@@ -341,8 +343,20 @@ export function PCManagerContent() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br">   
+
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto py-8 px-6">
+        <div className="text-center mb-8">
+          <h1 
+            className="text-4xl font-bold mb-2" 
+            style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
+          >
+            PC Manager
+          </h1>
+        </div>
       {/* 系統管理區塊 */}
+      <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -351,31 +365,32 @@ export function PCManagerContent() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* 新增電腦、新增群組按鈕區 */}
+          {/* Add Computer, Add Group button area */}
           <div className="flex flex-wrap gap-4 mb-4">
-            {/* 新增電腦 */}
+            {/* Add Computer */}
             <Dialog open={isAddComputerOpen} onOpenChange={setIsAddComputerOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-slate-800 hover:bg-slate-700">
+                <Button style={{ backgroundColor: '#7B86AA' }}
+                  className="hover:opacity-90 text-white">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Computer
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>新增 PC</DialogTitle>
+                  <DialogTitle>Add PC</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium">IP 地址</label>
+                    <label className="text-sm font-medium">IP Address</label>
                     <Input
-                      placeholder="例如: 192.168.1.1"
+                      placeholder="e.g. 192.168.1.1"
                       value={newComputer.ip}
                       onChange={(e) => setNewComputer({...newComputer, ip: e.target.value})}
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium">密碼</label>
+                    <label className="text-sm font-medium">Password</label>
                     <Input
                       type="password"
                       value={newComputer.password}
@@ -383,7 +398,7 @@ export function PCManagerContent() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium">群組 (選擇性)</label>
+                    <label className="text-sm font-medium">Group (Optional)</label>
                     <Select value={newComputer.group} onValueChange={(value) => setNewComputer({...newComputer, group: value})}>
                       <SelectTrigger>
                         <SelectValue placeholder="Default Group" />
@@ -398,58 +413,62 @@ export function PCManagerContent() {
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setIsAddComputerOpen(false)}>
-                      取消
+                      Cancel
                     </Button>
-                    <Button onClick={handleAddComputer} className="bg-slate-800 hover:bg-slate-700">
-                      新增 PC
-                    </Button>
+                    <Button onClick={handleAddComputer} 
+                    style={{ backgroundColor: '#7B86AA' }}
+                    className="hover:opacity-90 text-white">
+                    Add PC
+                  </Button>
                   </div>
                 </div>
               </DialogContent>
             </Dialog>
 
-            {/* 新增群組 */}
+            {/* Add Group */}
             <Dialog open={isAddGroupOpen} onOpenChange={setIsAddGroupOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">
+                <Button style={{ backgroundColor: '#7B86AA' }}
+                  className="hover:opacity-90 text-white">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Group
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>新增群組</DialogTitle>
+                  <DialogTitle>Add Group</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium">群組名稱 *</label>
+                    <label className="text-sm font-medium">Group Name *</label>
                     <Input
-                      placeholder="輸入群組名稱"
+                      placeholder="Enter group name"
                       value={newGroup.name}
                       onChange={(e) => setNewGroup({...newGroup, name: e.target.value})}
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium">描述</label>
+                    <label className="text-sm font-medium">Description</label>
                     <Textarea
-                      placeholder="輸入群組描述 (選填)"
+                      placeholder="Enter group description (optional)"
                       value={newGroup.description}
                       onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
                     />
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setIsAddGroupOpen(false)}>
-                      取消
+                      Cancel
                     </Button>
-                    <Button onClick={handleAddGroup} className="bg-slate-800 hover:bg-slate-700">
-                      新增群組
+                    <Button onClick={handleAddGroup} style={{ backgroundColor: '#7B86AA' }}
+                  className="hover:opacity-90 text-white">
+                      Add Group
                     </Button>
                   </div>
                 </div>
               </DialogContent>
             </Dialog>
 
-            {/* 群組篩選 */}
+            {/* Group Filter */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Display Group:</label>
               <Select value={selectedGroupFilter} onValueChange={setSelectedGroupFilter}>
@@ -497,152 +516,158 @@ export function PCManagerContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             {getFilteredGroups().map(group => {
-  const groupComputers = computers.filter(computer => computer.group === group.name);
-  const isEditing = editingGroup === group.name;
-  const selectedInGroup = groupSelectedComputers[group.name] || [];
+            const groupComputers = computers.filter(computer => computer.group === group.name);
+            const isEditing = editingGroup === group.name;
+            const selectedInGroup = groupSelectedComputers[group.name] || [];
 
-  return (
-    <div key={group.id} className="border rounded-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-slate-800 text-white rounded px-2 py-1 text-sm font-mono">
-            {groupComputers.length}
+            return (
+              <div key={group.id} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-slate-800 text-white rounded px-2 py-1 text-sm font-mono">
+                      {groupComputers.length}
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{group.name}</h3>
+                      <p className="text-sm text-slate-600">{group.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+            {isEditing ? (
+              <div className="flex items-center gap-2 mb-2">
+            {/* Remove All 按鈕 + 確認框 */}
+            {selectedInGroup.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="w-4 h-4 mr-1" />
+                    Remove All ({selectedInGroup.length})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Remove Selected Computers</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to remove {selectedInGroup.length} selected computer(s) from "{group.name}"?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        handleBulkRemoveFromGroup(selectedInGroup, group.name);
+                        setGroupSelectedComputers({
+                          ...groupSelectedComputers,
+                          [group.name]: [],
+                        });
+                      }}
+                      className="bg-red-500 hover:bg-red-600"
+                    >
+                      Remove
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
+            {/* Delete Group 按鈕 */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                >
+                  Delete Group
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Group "{group.name}"</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this group? All computers will be moved back to Default Group.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-600 hover:bg-red-700"
+                    onClick={() => {
+                      handleDeleteGroup(group.id);
+                      setGroupSelectedComputers({
+                        ...groupSelectedComputers,
+                        [group.name]: [],
+                      });
+                      if (editingGroup === group.name) setEditingGroup(null);
+                    }}
+                  >
+                    Confirm
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+
+            {/* Edit / Done 按鈕 */}
+            {isEditing ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditingGroup(null);
+                  setGroupSelectedComputers({ ...groupSelectedComputers, [group.name]: [] });
+                }}
+              >
+                Done
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingGroup(group.name)}
+              >
+                <Edit2 className="w-4 h-4 mr-1" />
+                Edit
+              </Button>
+            )}
+            </div>
+            ) : (
+              // 未編輯模式才顯示 Edit 按鈕
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingGroup(group.name)}
+              >
+                <Edit2 className="w-4 h-4 mr-1" />
+                Edit
+              </Button>
+            )}
           </div>
-          <div>
-            <h3 className="font-medium">{group.name}</h3>
-            <p className="text-sm text-slate-600">{group.description}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 mb-2">
-  {isEditing ? (
-    <div className="flex items-center gap-2 mb-2">
-  {/* Remove All 按鈕 + 確認框 */}
-  {selectedInGroup.length > 0 && (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <LogOut className="w-4 h-4 mr-1" />
-          Remove All ({selectedInGroup.length})
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Remove Selected Computers</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to remove {selectedInGroup.length} selected computer(s) from "{group.name}"?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => {
-              handleBulkRemoveFromGroup(selectedInGroup, group.name);
-              setGroupSelectedComputers({
-                ...groupSelectedComputers,
-                [group.name]: [],
-              });
-            }}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            Remove
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )}
 
-  {/* Delete Group 按鈕 */}
-  <AlertDialog>
-    <AlertDialogTrigger asChild>
-      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-        Delete Group
-      </Button>
-    </AlertDialogTrigger>
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Delete Group "{group.name}"</AlertDialogTitle>
-        <AlertDialogDescription>
-          Are you sure you want to delete this group? All computers will be moved back to Default Group.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction
-          className="bg-red-600 hover:bg-red-700"
-          onClick={() => {
-            handleDeleteGroup(group.id);
-            setGroupSelectedComputers({
-              ...groupSelectedComputers,
-              [group.name]: [],
-            });
-            if (editingGroup === group.name) setEditingGroup(null);
-          }}
-        >
-          Confirm
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
+                </div>
 
-
-  {/* Edit / Done 按鈕 */}
-  {isEditing ? (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => {
-        setEditingGroup(null);
-        setGroupSelectedComputers({ ...groupSelectedComputers, [group.name]: [] });
-      }}
-    >
-      Done
-    </Button>
-  ) : (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => setEditingGroup(group.name)}
-    >
-      <Edit2 className="w-4 h-4 mr-1" />
-      Edit
-    </Button>
-  )}
-  </div>
-
-  
-
-  ) : (
-    // 未編輯模式才顯示 Edit 按鈕
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => setEditingGroup(group.name)}
-    >
-      <Edit2 className="w-4 h-4 mr-1" />
-      Edit
-    </Button>
-  )}
-</div>
-
-      </div>
-
-      {groupComputers.length > 0 ? (
-        <DataTable
-          columns={createGroupColumns(group.name, isEditing)}
-          data={groupComputers}
-        />
-      ) : (
-        <div className="text-center py-8 text-slate-500">
-          No computers in this group
-        </div>
-      )}
-    </div>
-  );
-})}
-
+                {groupComputers.length > 0 ? (
+                  <DataTable
+                    columns={createGroupColumns(group.name, isEditing)}
+                    data={groupComputers}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-slate-500">
+                    No computers in this group
+                  </div>
+                )}
+              </div>
+            );
+          })}
           </CardContent>
         </Card>
       )}
+    </div>
+    </div>
     </div>
   );
 }

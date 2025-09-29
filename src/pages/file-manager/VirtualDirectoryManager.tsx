@@ -135,42 +135,42 @@ export const VirtualDirectoryManager = () => {
   const handleContextAction = (action: string, itemName: string) => {
     switch (action) {
       case 'copy':
-        toast({ title: "複製", description: `已複製 ${itemName}` });
+        toast({ title: "Copy", description: `Copied ${itemName}` });
         break;
       case 'delete':
         setFiles(prev => prev.filter(file => file.name !== itemName));
-        toast({ title: "刪除", description: `已刪除 ${itemName}` });
+        toast({ title: "Delete", description: `Deleted ${itemName}` });
         break;
       case 'download':
-        toast({ title: "下載", description: `正在下載 ${itemName}` });
+        toast({ title: "Download", description: `Downloading ${itemName}` });
         break;
       case 'rename':
-        toast({ title: "重新命名", description: `重新命名 ${itemName}` });
+        toast({ title: "Rename", description: `Renamed ${itemName}` });
         break;
     }
   };
   const [selectedUploadHosts, setSelectedUploadHosts] = useState<string[]>([]);
 
  const handleUploadToSelectedHosts = (hostUUIDs: string[]) => {
-    console.log('上傳到主機:', hostUUIDs);
-    // 在這裡加入上傳邏輯
+    console.log('Upload to hosts:', hostUUIDs);
+    // Add upload logic here
     setShowUploadDialog(false);
     setSelectedUploadHosts([]);
   };
 
   return (
     <div className="space-y-4">
-      {/* 主機選擇 */}
+      {/* Host Selection */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-4">
             <CardTitle className="flex items-center gap-2">
               <HardDrive className="w-5 h-5" />
-              主機選擇
+              Host Selection
             </CardTitle>
             <Select value={selectedHost} onValueChange={setSelectedHost}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="選擇主機" />
+                <SelectValue placeholder="Select Host" />
               </SelectTrigger>
               <SelectContent>
                 {hosts.filter(h => h.status === "online").map(h => (
@@ -182,30 +182,31 @@ export const VirtualDirectoryManager = () => {
         </CardHeader>
       </Card>
 
-      {/* 文件瀏覽器 */}
+      {/* File Browser */}
       {selectedHost && (
         <Card>
           <CardHeader>
-            <CardTitle>文件瀏覽器</CardTitle>
+            <CardTitle>File Browser</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {/* 工具列 */}
+            {/* Toolbar */}
             <div className="flex items-center justify-between p-4 border-b bg-gray-50">
               <div className="flex items-center gap-2 overflow-x-auto">
                 <Breadcrumb path={currentPath} onNavigate={navigateToPath} rootPath="/" />
               </div>
-              <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
-                <Upload className="w-4 h-4 mr-1" /> 上傳
+              <Button variant="outline" size="sm" 
+                onClick={() => setShowUploadDialog(true)}>
+                <Upload className="w-4 h-4 mr-1" /> Upload
               </Button>
             </div>
 
-            {/* 狀態列 */}
+            {/* Status Bar */}
             <div className="px-4 py-2 text-sm text-gray-600 border-b">
               Total: {files.filter(f => f.type === 'file').length} files,{" "}
               {files.filter(f => f.type === 'folder').length} folders. Selected: {selectedItems.length}
             </div>
 
-            {/* 文件列表 */}
+            {/* File List */}
             <div className="overflow-auto max-h-96">
               <Table>
                 <TableHeader>
@@ -276,16 +277,16 @@ export const VirtualDirectoryManager = () => {
             </div>
           </CardContent>
 
-          {/* 上傳對話框 */}
+          {/* Upload Dialog */}
           {showUploadDialog && (
   <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>選擇要上傳的主機</DialogTitle>
+        <DialogTitle>Select Hosts to Upload</DialogTitle>
       </DialogHeader>
 
       <div className="flex flex-col space-y-2 max-h-60 overflow-y-auto">
-        {/* 全選勾選框 */}
+        {/* Select All Checkbox */}
         <div className="flex items-center justify-between p-2 rounded">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -304,7 +305,7 @@ export const VirtualDirectoryManager = () => {
                 }
               }}
             />
-            全選
+            Select All
           </label>
         </div>
 
@@ -336,14 +337,16 @@ export const VirtualDirectoryManager = () => {
       </div>
 
       <div className="mt-4 flex justify-end gap-2">
+        <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
+          Cancel
+        </Button>
         <Button
           onClick={() => handleUploadToSelectedHosts(selectedUploadHosts)}
           disabled={selectedUploadHosts.length === 0}
+          style={{ backgroundColor: '#7B86AA' }}
+          className="hover:opacity-90 text-white"
         >
-          上傳
-        </Button>
-        <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
-          取消
+          Upload
         </Button>
       </div>
     </DialogContent>

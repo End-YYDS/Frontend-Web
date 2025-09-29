@@ -28,7 +28,7 @@ export function PermissionsTab({ permissions, isEveryoneRole, onPermissionToggle
       </div>
       
       <div>
-        <h3 className="font-medium text-gray-700 mb-4">一般權限</h3>
+        <h3 className="font-medium text-gray-700 mb-4">General Permissions</h3>
         <div className="space-y-4">
           {permissions.map((permission) => (
             <div key={permission.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">

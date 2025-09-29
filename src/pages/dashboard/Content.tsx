@@ -373,7 +373,7 @@ export function DashboardContent() {
         <Card>
           <CardHeader>
             <CardTitle className="text-slate-700">Disk</CardTitle>
-            <p className="text-sm text-gray-500">已使用 2.1 TB（共 3.2 TB）</p>
+            <p className="text-sm text-gray-500">Used 2.1 TB (Total 3.2 TB)</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -385,33 +385,34 @@ export function DashboardContent() {
                 <div className="bg-gray-500 h-full" style={{ width: '15%' }}></div>
                 <div className="bg-gray-600 h-full" style={{ width: '10%' }}></div>
               </div>
-              
+
               {/* Legend */}
               <div className="flex flex-wrap gap-3 text-sm">
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span>系統文件</span>
+                  <span>System Files</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-orange-400 rounded-full"></div>
-                  <span>應用程式</span>
+                  <span>Applications</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                  <span>用戶資料</span>
+                  <span>User Data</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-                  <span>快取</span>
+                  <span>Cache</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
-                  <span>其他</span>
+                  <span>Others</span>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
+
 
         {/* Computer List */}
         <Card>

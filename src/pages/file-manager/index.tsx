@@ -20,10 +20,9 @@ const index = () => {
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="physical">實體主機</TabsTrigger>
-                <TabsTrigger value="virtual">虛擬目錄</TabsTrigger>
+                <TabsTrigger value="physical">Physical Hosts</TabsTrigger>
+                <TabsTrigger value="virtual">Virtual Machines</TabsTrigger>
             </TabsList>
-        
             <TabsContent value="physical" className="space-y-4">
                 <FileBrowser />
             </TabsContent>

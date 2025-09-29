@@ -52,7 +52,7 @@ const everyoneRole: Role = {
 const defaultRoles: Role[] = [
   { 
     id: 'identity1', 
-    name: '身份1', 
+    name: 'role1', 
     color: '#E5E7EB',
     permissions: 3, // 檢視 + 管理身份組
     members: [
@@ -63,7 +63,7 @@ const defaultRoles: Role[] = [
   },
   { 
     id: 'identity2', 
-    name: '身份2', 
+    name: 'role2', 
     color: '#F59E0B',
     permissions: 7, // 檢視 + 管理身份組 + 編輯
     members: [
@@ -73,7 +73,7 @@ const defaultRoles: Role[] = [
   },
   { 
     id: 'identity3', 
-    name: '身份3', 
+    name: 'role3', 
     color: '#3B82F6',
     permissions: 15, // 所有權限
     members: [
@@ -112,12 +112,12 @@ export function RolesContent() {
 
   const handleDeleteRole = (roleId: string, roleName: string) => {
     if (roleId === 'everyone') {
-      toast.error('無法刪除 @everyone 身份組');
+      toast.error('Cannot delete @everyone role');
       return;
     }
 
     setRoles(roles.filter(role => role.id !== roleId));
-    toast.success(`已刪除身份組 "${roleName}"`);
+    toast.success(`Role "${roleName}" has been deleted`);
   };
 
   const handleBackToList = () => {
@@ -132,16 +132,16 @@ export function RolesContent() {
     }
     
     if (updatedRole.id === 'new-role') {
-      // 新建角色
+      // Create new role
       const newId = `identity${roles.length + 1}`;
       const newRole = { ...updatedRole, id: newId, memberCount: updatedRole.members.length };
       setRoles([...roles, newRole]);
-      toast.success(`已建立身份組 "${updatedRole.name}"`);
+      toast.success(`Role "${updatedRole.name}" has been created`);
     } else {
-      // 更新現有角色
+      // Update existing role
       const updatedRoleWithCount = { ...updatedRole, memberCount: updatedRole.members.length };
       setRoles(roles.map(role => role.id === updatedRole.id ? updatedRoleWithCount : role));
-      toast.success(`已更新身份組 "${updatedRole.name}"`);
+      toast.success(`Role "${updatedRole.name}" has been updated`);
     }
     setEditingRole(null);
   };
@@ -171,7 +171,6 @@ export function RolesContent() {
     <div className="min-h-screen bg-gradient-to-br">
 
       {/* Main Content */}
-
         {/* Default Role Card */}
         <div 
           className="bg-white rounded-lg shadow-sm p-6 mb-6 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -180,7 +179,7 @@ export function RolesContent() {
           <div className="flex items-center">
             <Users className="w-6 h-6 text-gray-600 mr-3" />
             <div>
-              <h3 className="font-semibold text-lg">預設權限</h3>
+              <h3 className="font-semibold text-lg">Default Role</h3>
               <p className="text-gray-600">@everyone</p>
             </div>
           </div>
@@ -191,7 +190,7 @@ export function RolesContent() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="搜尋身份組"
+              placeholder="Search roles"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -202,7 +201,7 @@ export function RolesContent() {
             style={{ backgroundColor: '#7B86AA' }}
             className="hover:opacity-90 text-white ml-4"
           >
-            建立身份組
+            Create Role
           </Button>
         </div>
 
@@ -210,9 +209,9 @@ export function RolesContent() {
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b bg-gray-50">
             <div className="grid grid-cols-4 gap-4">
-              <div className="font-semibold text-gray-700">身份組 - {roles.length}</div>
-              <div className="font-semibold text-gray-700">成員</div>
-              <div className="font-semibold text-gray-700">權限</div>
+              <div className="font-semibold text-gray-700">Roles - {roles.length}</div>
+              <div className="font-semibold text-gray-700">Members</div>
+              <div className="font-semibold text-gray-700">Permissions</div>
               <div></div>
             </div>
           </div>
@@ -249,7 +248,7 @@ export function RolesContent() {
                   </div>
                   <div className="flex justify-end">
                     <AlertDialog>
-                    {/* Trigger 按鈕 */}
+                    {/* Trigger Button */}
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="ghost"
@@ -260,16 +259,16 @@ export function RolesContent() {
                       </Button>
                     </AlertDialogTrigger>
 
-                    {/* 對話框內容 */}
+                    {/* Dialog Content */}
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>確認刪除角色</AlertDialogTitle>
+                        <AlertDialogTitle>Confirm Delete Role</AlertDialogTitle>
                         <AlertDialogDescription>
-                          你確定要刪除角色 "{role.name}" 嗎？此操作無法復原。
+                          Are you sure you want to delete the role "{role.name}"? This action cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           className="bg-red-500 text-white hover:bg-red-600"
                           onClick={(e) => {
@@ -277,7 +276,7 @@ export function RolesContent() {
                             handleDeleteRole(role.id, role.name);
                           }}
                         >
-                          刪除
+                          Delete
                         </AlertDialogAction>
 
                       </AlertDialogFooter>
@@ -288,6 +287,7 @@ export function RolesContent() {
               ))}
           </div>
         </div>
+
       </div>
   );
 }

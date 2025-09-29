@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,8 +90,8 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
   const handleInstallServer = async () => {
     if (selectedComputersForInstall.length === 0) {
       toast({
-        title: "請選擇主機",
-        description: "請至少選擇一台主機進行安裝。",
+        title: "Select Computers",
+        description: "Please select at least one computer to install.",
         variant: "destructive"
       });
       return;
@@ -112,8 +111,8 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
       setSelectedComputersForInstall([]);
       
       toast({
-        title: "安裝成功",
-        description: `${selectedServerData?.name} 已成功安裝到選定的主機上。`,
+        title: "Installation Successful",
+        description: `${selectedServerData?.name} has been installed on the selected computers.`,
       });
     }, 2000);
   };
@@ -128,11 +127,6 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
     );
   }
 
-//   const isServerInstalled = (serverId: string) => {
-//     const server = servers.find(s => s.id === serverId);
-//     return server?.installed || installedServers.includes(serverId);
-//   };
-
   return (
     <div>
       <div className="mb-6">
@@ -141,51 +135,50 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
             <h2 className="text-xl font-bold text-slate-800">
               {getServerDisplayName(selectedServer || "")}
             </h2>
-            <p className="text-slate-600">Manage processes and system operations across all computers</p>
           </div>
           <div className="flex items-center gap-2">
             <Dialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
               <DialogTrigger asChild>
                 <Button style={{ backgroundColor: '#7B86AA' }} className="hover:opacity-80 text-white">
                   <Download className="w-4 h-4 mr-2" />
-                  一鍵安裝
+                  Install All
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>安裝 {selectedServerData?.name}</DialogTitle>
+                  <DialogTitle>Install {selectedServerData?.name}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <p className="text-sm text-slate-600">
-                    選擇要安裝 {selectedServerData?.name} 的主機：
+                    Select computers to install {selectedServerData?.name} on:
                   </p>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {computers.map((computer) => (
-                      <div key={computer.id} className="flex items-center space-x-2 p-2 border rounded">
-                        <Checkbox
-                          id={computer.id}
-                          checked={selectedComputersForInstall.includes(computer.id)}
-                          onCheckedChange={() => handleComputerToggle(computer.id)}
-                        />
-                        <label htmlFor={computer.id} className="flex-1 cursor-pointer">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{computer.name}</span>
-                            <Badge variant={computer.status === 'online' ? 'default' : 'secondary'}>
-                              {computer.status}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-slate-500">{computer.uuid}</p>
-                        </label>
-                      </div>
-                    ))}
+                    {computers
+                      .filter(computer => computer.status === 'online') // only online
+                      .map((computer) => (
+                        <div key={computer.id} className="flex items-center space-x-2 p-2 border rounded">
+                          <Checkbox
+                            id={computer.id}
+                            checked={selectedComputersForInstall.includes(computer.id)}
+                            onCheckedChange={() => handleComputerToggle(computer.id)}
+                          />
+                          <label htmlFor={computer.id} className="flex-1 cursor-pointer">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{computer.name}</span>
+                            </div>
+                            <p className="text-xs text-slate-500">{computer.uuid}</p>
+                          </label>
+                        </div>
+                      ))}
                   </div>
+
                   <div className="flex justify-end gap-2">
                     <Button 
                       variant="outline" 
                       onClick={() => setInstallDialogOpen(false)}
                       disabled={isInstalling}
                     >
-                      取消
+                      Cancel
                     </Button>
                     <Button 
                       onClick={handleInstallServer}
@@ -196,12 +189,12 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
                       {isInstalling ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          安裝中...
+                          Installing...
                         </>
                       ) : (
                         <>
                           <CheckCircle2 className="w-4 h-4 mr-2" />
-                          確定安裝
+                          Confirm Install
                         </>
                       )}
                     </Button>
@@ -227,7 +220,7 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
-                已安裝的伺服器
+                Installed Servers
               </CardTitle>
             </CardHeader>
             <CardContent>
