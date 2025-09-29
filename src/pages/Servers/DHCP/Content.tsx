@@ -141,7 +141,7 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
               <DialogTrigger asChild>
                 <Button style={{ backgroundColor: '#7B86AA' }} className="hover:opacity-80 text-white">
                   <Download className="w-4 h-4 mr-2" />
-                  Install All
+                  Install
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
