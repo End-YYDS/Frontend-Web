@@ -191,13 +191,13 @@ const UserGroup = () => {
             value="users"
             className="flex w-full font-bold flex-col gap-6 data-[state=active]:bg-[#A8AEBD] data-[state=active]:text-white text-gray-700"
           >
-            使用者
+            User
           </TabsTrigger>
           <TabsTrigger
             value="groups"
             className="flex w-full font-bold flex-col gap-6 data-[state=active]:bg-[#A8AEBD] data-[state=active]:text-white text-gray-700"
           >
-            群組
+            Group
           </TabsTrigger>
         </TabsList>
 
@@ -297,7 +297,7 @@ const PaginationBar = ({
 );
 
 (UserGroup as any).meta = {
-  requiresAuth: true, //驗證
+  requiresAuth: false, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

@@ -27,8 +27,8 @@ import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 
 const backupConfigSchema = z.object({
   enableAutoBackup: z.boolean().default(true),
-  backupLocation: z.string().min(1, "備份位置為必填"),
-  backupFrequency: z.string().min(1, "備份頻率為必填"),
+  backupLocation: z.string().min(1, "Backup location is required"),
+  backupFrequency: z.string().min(1, "Backup frequency is required"),
   retentionCount: z.number().min(1).max(100).default(10),
 });
 
@@ -46,28 +46,28 @@ const BackupConfigTab = () => {
   const isAutoBackupEnabled = backupConfigForm.watch("enableAutoBackup");
 
   const handleBackupConfigSubmit = (values: z.infer<typeof backupConfigSchema>) => {
-    console.log("備份配置:", values);
-    toast.success("備份設定已儲存", {
-      description: "您的備份配置已成功更新",
+    console.log("Backup Configuration:", values);
+    toast.success("Backup settings saved", {
+      description: "Your backup configuration has been successfully updated",
     });
   };
 
   const handleImmediateBackup = async () => {
     try {
-      toast.success("開始備份", {
-        description: "正在執行立即備份，請稍候...",
+      toast.success("Backup started", {
+        description: "Running immediate backup, please wait...",
       });
       
       // 模擬備份過程
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      toast.success("備份完成", {
-        description: "系統備份已成功建立",
+      toast.success("Backup completed", {
+        description: "System backup has been successfully created",
       });
     } catch (error) {
       console.error("Error during backup:", error);
-      toast.error("備份失敗", {
-        description: "備份過程中發生錯誤，請稍後再試",
+      toast.error("Backup failed", {
+        description: "An error occurred during backup, please try again later",
       });
     }
   };
@@ -75,9 +75,9 @@ const BackupConfigTab = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>備份配置</CardTitle>
+        <CardTitle>Backup Configuration</CardTitle>
         <CardDescription>
-          設定系統備份相關選項
+          Configure system backup options
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -90,9 +90,9 @@ const BackupConfigTab = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">啟用自動備份</FormLabel>
+                    <FormLabel className="text-base">Enable Auto Backup</FormLabel>
                     <FormDescription>
-                      按照設定的頻率自動備份系統資料
+                      Automatically backup system data based on the configured frequency
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -104,6 +104,7 @@ const BackupConfigTab = () => {
                 </FormItem>
               )}
             />
+            
             {/* 只有在啟用自動備份時才顯示設定選項 */}
             {isAutoBackupEnabled && (
               <Collapsible open={isAutoBackupEnabled}>
@@ -114,7 +115,7 @@ const BackupConfigTab = () => {
                     name="backupLocation"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>備份位置</FormLabel>
+                        <FormLabel>Backup Location</FormLabel>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger>
@@ -122,14 +123,14 @@ const BackupConfigTab = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="local">本地儲存</SelectItem>
-                            <SelectItem value="cloud">雲端儲存</SelectItem>
-                            <SelectItem value="network">網路磁碟</SelectItem>
-                            <SelectItem value="external">外部儲存</SelectItem>
+                            <SelectItem value="local">Local Storage</SelectItem>
+                            <SelectItem value="cloud">Cloud Storage</SelectItem>
+                            <SelectItem value="network">Network Drive</SelectItem>
+                            <SelectItem value="external">External Storage</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          選擇備份檔案的儲存位置
+                          Choose the storage location for backup files
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -141,21 +142,21 @@ const BackupConfigTab = () => {
                     name="backupFrequency"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>備份頻率</FormLabel>
+                        <FormLabel>Backup Frequency</FormLabel>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="選擇備份頻率" />
+                              <SelectValue placeholder="Select backup frequency" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="daily">每日</SelectItem>
-                            <SelectItem value="weekly">每週</SelectItem>
-                            <SelectItem value="monthly">每月</SelectItem>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          選擇系統自動備份的頻率
+                          Choose how often the system automatically backs up
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -168,7 +169,7 @@ const BackupConfigTab = () => {
                     name="retentionCount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>保留份數</FormLabel>
+                        <FormLabel>Retention Count</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -178,7 +179,7 @@ const BackupConfigTab = () => {
                           />
                         </FormControl>
                         <FormDescription>
-                          指定備份檔案保留的份數
+                          Specify how many backup files to retain
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -196,7 +197,19 @@ const BackupConfigTab = () => {
                 className="flex items-center gap-2"
               >
                 <Database className="h-4 w-4" />
-                立即備份
+                Backup Now
+              </Button>
+            </div>
+
+            {/* 保存按鈕 */}
+            <div className="flex justify-end pt-4 border-t">
+              <Button 
+                type="submit"
+                onClick={backupConfigForm.handleSubmit(handleBackupConfigSubmit)}
+                style={{ backgroundColor: '#7B86AA' }}
+                className="hover:opacity-90"
+              >
+                Save Settings
               </Button>
             </div>
           </form>

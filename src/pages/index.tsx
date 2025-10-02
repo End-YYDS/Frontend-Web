@@ -3,7 +3,7 @@ function Home() {
   return <div>Home</div>;
 }
 (Home as any).meta = {
-  requiresAuth: true, //驗證
+  requiresAuth: false, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

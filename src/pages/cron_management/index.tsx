@@ -116,12 +116,12 @@ const CronManagement = () => {
 
   const buildScheduleFromCustom = () => {
     const parts = [];
-    if (newJob.minute && newJob.minute !== 'none') parts.push(`每${newJob.minute}分鐘`);
-    if (newJob.hour && newJob.hour !== 'none') parts.push(`每${newJob.hour}小時`);
-    if (newJob.date && newJob.date !== 'none') parts.push(`每月第${newJob.date}日`);
-    if (newJob.month && newJob.month !== 'none') parts.push(`每${newJob.month}個月`);
-    if (newJob.week && newJob.week !== 'none') parts.push(`每個禮拜${newJob.week}`);
-    return parts.join(', ') || '自訂排程';
+    if (newJob.minute && newJob.minute !== 'none') parts.push(`Every ${newJob.minute} minutes`);
+    if (newJob.hour && newJob.hour !== 'none') parts.push(`Every ${newJob.hour} hours`);
+    if (newJob.date && newJob.date !== 'none') parts.push(`Day ${newJob.date} of the month`);
+    if (newJob.month && newJob.month !== 'none') parts.push(`Every ${newJob.month} months`);
+    if (newJob.week && newJob.week !== 'none') parts.push(`Every ${newJob.week} of the week`);
+    return parts.join(', ') || 'Custom schedule';
   };
 
   const buildScheduleString = () => {
@@ -163,8 +163,8 @@ const CronManagement = () => {
     resetNewJob();
     setIsAddDialogOpen(false);
     toast({
-      title: "成功",
-      description: "Cron 任務已新增"
+      title: "Success",
+      description: "Cron job has been added"
     });
   };
 
@@ -198,8 +198,8 @@ const CronManagement = () => {
       setEditingJob(null);
       resetNewJob();
       toast({
-        title: "成功",
-        description: "Cron 任務已更新"
+        title: "Success",
+        description: "Cron job has been updated"
       });
     }
   };
@@ -208,8 +208,8 @@ const CronManagement = () => {
     setJobs(prev => prev.filter(job => !selectedJobs.includes(job.id)));
     setSelectedJobs([]);
     toast({
-      title: "成功",
-      description: "選中的 Cron 任務已刪除"
+      title: "Success",
+      description: "Selected Cron jobs have been deleted"
     });
   };
 
@@ -229,8 +229,8 @@ const CronManagement = () => {
       }
     });
     toast({
-      title: "成功",
-      description: "選中的任務已啟用"
+      title: "Success",
+      description: "Selected jobs have been enabled"
     });
   };
 
@@ -242,8 +242,8 @@ const CronManagement = () => {
       }
     });
     toast({
-      title: "成功",
-      description: "選中的任務已停用"
+      title: "Success",
+      description: "Selected jobs have been disabled"
     });
   };
 
@@ -251,7 +251,7 @@ const CronManagement = () => {
     const selectedJobsToExport = selectedJobs.length > 0 ? selectedJobs : jobs.map(job => job.id);
     const exportData = jobs.filter(job => selectedJobsToExport.includes(job.id));
     
-    console.log('Export - 使用者選擇匯出的任務:', {
+    console.log('Export - Selected jobs:', {
       selectedJobIds: selectedJobsToExport,
       exportedJobs: exportData,
       totalCount: exportData.length
@@ -270,8 +270,8 @@ const CronManagement = () => {
     URL.revokeObjectURL(url);
     
     toast({
-      title: "匯出成功",
-      description: `已匯出 ${exportData.length} 個 Cron 任務`
+      title: "Export Successful",
+      description: `Exported  ${exportData.length} Cron jobs`
     });
   };
 
@@ -297,17 +297,17 @@ const CronManagement = () => {
               
               setJobs(prev => [...prev, ...newJobs]);
               toast({
-                title: "匯入成功",
-                description: `已匯入 ${newJobs.length} 個 Cron 任務`
+                title: "Import Successful",
+                description: `Import Successful ${newJobs.length} Cron jobs`
               });
             } else {
-              throw new Error('檔案格式不正確');
+              throw new Error('Invalid file format');
             }
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (error) {
             toast({
-              title: "匯入失敗",
-              description: "檔案格式不正確或無法讀取",
+              title: "Import Failed",
+              description: "Invalid file format or unreadable file",
               variant: "destructive"
             });
           }
@@ -321,8 +321,8 @@ const CronManagement = () => {
   const handleDeleteJob = (jobId: number) => {
     setJobs(prev => prev.filter(job => job.id !== jobId));
     toast({
-      title: "成功",
-      description: "Cron 任務已刪除"
+      title: "Success",
+      description: "Cron job has been deleted"
     });
   };
 
@@ -348,7 +348,8 @@ const CronManagement = () => {
             <Dialog open={isAddDialogOpen || !!editingJob} onOpenChange={(open) => !open && handleCloseDialog()}>
               <DialogTrigger asChild>
                 <Button 
-                  className="bg-[#7B86AA] hover:bg-[#7B86AA]"
+                  style={{ backgroundColor: '#7B86AA' }}
+                  className="hover:opacity-90"
                   onClick={() => setIsAddDialogOpen(true)}
                 >
                   <Plus className="h-4 w-4 mr-1" />
@@ -357,7 +358,7 @@ const CronManagement = () => {
               </DialogTrigger>
               <DialogContent className="max-w-md mx-auto">
                 <DialogHeader>
-                  <DialogTitle>{editingJob ? '編輯 Cron 任務' : 'Create a new cron'}</DialogTitle>
+                  <DialogTitle>{editingJob ? 'Edit Cron Job' : 'Create a new cron'}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
@@ -391,7 +392,7 @@ const CronManagement = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm font-medium mb-2 block">排程方式</label>
+                    <label className="text-sm font-medium mb-2 block">Schedule Type</label>
                     <div className="flex gap-4 mb-3">
                       <label className="flex items-center">
                         <input
@@ -403,7 +404,7 @@ const CronManagement = () => {
                           onChange={() => setNewJob({...newJob, scheduleType: 'quick', quickSchedule: '', minute: '', hour: '', date: '', month: '', week: ''})}
                           className="mr-2"
                         />
-                        快速排程
+                        Quick Schedule
                       </label>
                       <label className="flex items-center">
                         <input
@@ -415,7 +416,7 @@ const CronManagement = () => {
                           onChange={() => setNewJob({...newJob, scheduleType: 'custom', quickSchedule: ''})}
                           className="mr-2"
                         />
-                        自訂排程
+                        Custom Schedule
                       </label>
                     </div>
                   </div>
@@ -445,10 +446,10 @@ const CronManagement = () => {
                         <label className="text-xs text-gray-600 mb-1 block">Minute</label>
                         <Select value={newJob.minute} onValueChange={(value) => setNewJob({...newJob, minute: value})}>
                           <SelectTrigger>
-                            <SelectValue placeholder="選擇" />
+                            <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">不設定</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
                             <SelectItem value="1">1</SelectItem>
                             <SelectItem value="5">5</SelectItem>
                             <SelectItem value="10">10</SelectItem>
@@ -462,10 +463,10 @@ const CronManagement = () => {
                         <label className="text-xs text-gray-600 mb-1 block">Hour</label>
                         <Select value={newJob.hour} onValueChange={(value) => setNewJob({...newJob, hour: value})}>
                           <SelectTrigger>
-                            <SelectValue placeholder="選擇" />
+                            <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">不設定</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
                             <SelectItem value="1">1</SelectItem>
                             <SelectItem value="2">2</SelectItem>
                             <SelectItem value="6">6</SelectItem>
@@ -479,10 +480,10 @@ const CronManagement = () => {
                         <label className="text-xs text-gray-600 mb-1 block">Date</label>
                         <Select value={newJob.date} onValueChange={(value) => setNewJob({...newJob, date: value})}>
                           <SelectTrigger>
-                            <SelectValue placeholder="選擇" />
+                            <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">不設定</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
                             <SelectItem value="1">1</SelectItem>
                             <SelectItem value="15">15</SelectItem>
                             <SelectItem value="28">28</SelectItem>
@@ -494,10 +495,10 @@ const CronManagement = () => {
                         <label className="text-xs text-gray-600 mb-1 block">Month</label>
                         <Select value={newJob.month} onValueChange={(value) => setNewJob({...newJob, month: value})}>
                           <SelectTrigger>
-                            <SelectValue placeholder="選擇" />
+                            <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">不設定</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
                             <SelectItem value="1">1</SelectItem>
                             <SelectItem value="3">3</SelectItem>
                             <SelectItem value="6">6</SelectItem>
@@ -510,17 +511,17 @@ const CronManagement = () => {
                         <label className="text-xs text-gray-600 mb-1 block">Week</label>
                         <Select value={newJob.week} onValueChange={(value) => setNewJob({...newJob, week: value})}>
                           <SelectTrigger>
-                            <SelectValue placeholder="選擇" />
+                            <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">不設定</SelectItem>
-                            <SelectItem value="1">一</SelectItem>
-                            <SelectItem value="2">二</SelectItem>
-                            <SelectItem value="1">三</SelectItem>
-                            <SelectItem value="4">四</SelectItem>
-                            <SelectItem value="1">五</SelectItem>
-                            <SelectItem value="1">六</SelectItem>
-                            <SelectItem value="1">日</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
+                            <SelectItem value="1">Monday</SelectItem>
+                            <SelectItem value="2">Tuesday</SelectItem>
+                            <SelectItem value="3">Wednesday</SelectItem>
+                            <SelectItem value="4">Thursday</SelectItem>
+                            <SelectItem value="5">Friday</SelectItem>
+                            <SelectItem value="6">Saturday</SelectItem>
+                            <SelectItem value="7">Sunday</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -537,7 +538,8 @@ const CronManagement = () => {
                     </Button>
                     <Button 
                       onClick={editingJob ? handleUpdateJob : handleAddJob}
-                      className="bg-[#7B86AA] hover:bg-[#7B86AA]"
+                      style={{ backgroundColor: '#7B86AA' }}
+                      className="hover:opacity-90"
                       size="sm"
                     >
                       Save
@@ -560,15 +562,15 @@ const CronManagement = () => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>確認刪除</AlertDialogTitle>
+                  <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
                   <AlertDialogDescription>
-                    您確定要刪除選中的 Cron 任務嗎？此操作無法撤銷。
+                    Are you sure you want to delete the selected Cron jobs? This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>取消</AlertDialogCancel>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDeleteSelected}>
-                    刪除
+                    Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -599,15 +601,15 @@ const CronManagement = () => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>確認啟用</AlertDialogTitle>
+                  <AlertDialogTitle>Confirm Enable</AlertDialogTitle>
                   <AlertDialogDescription>
-                    您確定要啟用選中的 Cron 任務嗎？
+                    Are you sure you want to enable the selected Cron jobs?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>取消</AlertDialogCancel>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleBatchEnable}>
-                    啟用
+                    enable
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -628,15 +630,15 @@ const CronManagement = () => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>確認停用</AlertDialogTitle>
+                  <AlertDialogTitle>Confirm Disable</AlertDialogTitle>
                   <AlertDialogDescription>
-                    您確定要停用選中的 Cron 任務嗎？
+                    Are you sure you want to disable the selected Cron jobs?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>取消</AlertDialogCancel>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleBatchDisable}>
-                    停用
+                    disable
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -645,7 +647,7 @@ const CronManagement = () => {
 
           <div className="mb-4">
             <Input
-              placeholder="搜尋..."
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
@@ -662,12 +664,12 @@ const CronManagement = () => {
                     onChange={handleSelectAll}
                   />
                 </TableHead>
-                <TableHead>使用者名稱</TableHead>
-                <TableHead>排程名稱</TableHead>
-                <TableHead>指令</TableHead>
-                <TableHead>時間</TableHead>
-                <TableHead>狀態</TableHead>
-                <TableHead>操作</TableHead>
+                <TableHead>Username</TableHead>
+                <TableHead>Job Name</TableHead>
+                <TableHead>Command</TableHead>
+                <TableHead>Schedule</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Operation</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -696,7 +698,7 @@ const CronManagement = () => {
                   <TableCell>
                     <div className="flex gap-1">
                       <Button 
-                        variant="outline" 
+                        variant="ghost" 
                         size="sm"
                         onClick={() => handleEditJob(job)}
                       >
@@ -706,7 +708,7 @@ const CronManagement = () => {
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             disabled={job.status === 'active' ? false : job.status === 'inactive' ? false : false}
                           >
@@ -720,16 +722,16 @@ const CronManagement = () => {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>
-                              {job.status === 'active' ? '確認停用' : '確認啟用'}
+                              {job.status === 'active' ? 'Confirm Disable' : 'Confirm Enable'}
                             </AlertDialogTitle>
                             <AlertDialogDescription>
-                              您確定要{job.status === 'active' ? '停用' : '啟用'}此 Cron 任務嗎？
+                              Are you sure you want to {job.status === 'active' ? 'disable' : 'enable'} this Cron job?
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>取消</AlertDialogCancel>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={() => handleToggleStatus(job.id)}>
-                              {job.status === 'active' ? '停用' : '啟用'}
+                              {job.status === 'active' ? 'disable' : 'enable'}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -738,23 +740,24 @@ const CronManagement = () => {
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>確認刪除</AlertDialogTitle>
+                            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
                             <AlertDialogDescription>
-                              您確定要刪除此 Cron 任務嗎？此操作無法撤銷。
+                              Are you sure you want to delete this Cron job? This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>取消</AlertDialogCancel>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={() => handleDeleteJob(job.id)}>
-                              刪除
+                              Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -769,7 +772,7 @@ const CronManagement = () => {
           {totalPages > 1 && (
             <div className="mt-4 flex justify-between items-center">
               <div className="text-sm text-gray-500">
-                顯示 {startIndex + 1} 到 {Math.min(startIndex + itemsPerPage, filteredJobs.length)} 共 {filteredJobs.length} 筆
+                Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredJobs.length)} if {filteredJobs.length} entries
               </div>
               <Pagination>
                 <PaginationContent>
@@ -807,7 +810,7 @@ const CronManagement = () => {
 };
 
 (CronManagement as any).meta = {
-  requiresAuth: true, //驗證
+  requiresAuth: false, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

@@ -93,7 +93,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               onCreateGroup={onCreateGroup}
               existingUsers={users}
               trigger={
-                <Button className="bg-[#8F95A3] hover:bg-[#7B86AA]">
+                <Button 
+                  style={{ backgroundColor: '#7B86AA' }}
+                  className="hover:opacity-90"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   New
                 </Button>
@@ -105,7 +108,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               onClick={() => setIsEditMode(true)}
             >
               <Edit className="h-4 w-4 mr-2" />
-              編輯
+              Edit
             </Button>
           </>
         ) : (
@@ -123,15 +126,18 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               </AlertDialogTrigger>
               <AlertDialogContent className="max-w-sm mx-auto">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>確定要刪除選中的使用者嗎？</AlertDialogTitle>
+                  <AlertDialogTitle>Are you sure you want to delete the selected user?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    此操作無法還原
+                    This operation cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>取消</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteSelectedUsers}>
-                    刪除
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDeleteSelectedUsers}
+                    className="bg-red-500 hover:bg-red-600"
+                  >
+                    Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -171,11 +177,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             <TableHead>Group</TableHead>
             <TableHead>Home directory</TableHead>
             <TableHead>Shell</TableHead>
-            {isEditMode && <TableHead>操作</TableHead>}
+            {isEditMode && <TableHead>Operation</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {currentUsers.map((user, index) => (
+          {currentUsers.map((user) => (
             <TableRow key={user.id}>
               {isEditMode && (
                 <TableCell>
@@ -186,7 +192,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   />
                 </TableCell>
               )}
-              {isEditMode && <TableCell>{index + 1}.</TableCell>}
               <TableCell>{user.username}</TableCell>
               <TableCell>{user.groups.join(', ')}</TableCell>
               <TableCell>{user.homeDirectory}</TableCell>
@@ -195,33 +200,36 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 <TableCell>
                   <div className="flex gap-1">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleEditUser(user)}
                     >
                       <Edit className="h-3 w-3" />
-                      Edit
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="max-w-sm mx-auto">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>確定要刪除 {user.username} 嗎？</AlertDialogTitle>
+                          <AlertDialogTitle>Are you sure you want to delete {user.username} ?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            此操作無法還原
+                            This operation cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>取消</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => onDeleteUser(user.id)}>
-                            刪除
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => onDeleteUser(user.id)}
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Delete
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

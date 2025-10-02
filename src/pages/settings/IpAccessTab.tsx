@@ -19,7 +19,7 @@ import {
   FormDescription, 
   FormField, 
   FormItem, 
-  FormLabel, 
+  FormLabel,  
 } from "@/components/ui/form";
 import {
   Table,
@@ -39,11 +39,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash } from 'lucide-react';
-import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Plus, Trash2 } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 import { ipAccessSchema, type IpAccessSettings, type IpEntry } from "./settings";
 
 const IpAccessTab = () => {
+  const { toast } = useToast();
   const [ipEntries, setIpEntries] = useState<{
     whitelist: IpEntry[];
     blacklist: IpEntry[];
@@ -60,44 +72,64 @@ const IpAccessTab = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newEntryName, setNewEntryName] = useState("");
   const [newEntryIp, setNewEntryIp] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [ipError, setIpError] = useState("");
 
-  const form = useForm<z.infer<typeof ipAccessSchema>>({
-  resolver: zodResolver(ipAccessSchema),
-  defaultValues: {
-    enableIpRestriction: true,
-    listType: "blacklist",
-    allowedIps: "",
-    whitelist: [],
-    blacklist: [],
-  },
-});
+  const form = useForm<IpAccessSettings>({
+    resolver: zodResolver(ipAccessSchema),
+    defaultValues: {
+      enableIpRestriction: true,
+      listType: "blacklist",
+      allowedIps: "",
+      whitelist: [],
+      blacklist: []
+    },
+  });
 
   const currentListType = form.watch("listType");
   const isRestrictionEnabled = form.watch("enableIpRestriction");
 
   const handleSubmit = (values: IpAccessSettings) => {
-    console.log("IP存取控制設定:", values);
-    toast.success("IP存取控制已儲存", {
-      description: "您的IP存取控制設定已成功更新",
+    console.log("IP Access Control Settings:", values);
+    toast({
+      title: "IP Access Control Saved",
+      description: "Your IP access control settings have been successfully updated",
     });
   };
 
   const handleAddIp = () => {
-    if (!newEntryName.trim() || !newEntryIp.trim()) {
-      toast.error("輸入錯誤", {
-        description: "請填寫完整的名稱和IP地址",
-      });
+    console.log("handleAddIp called with:", { name: newEntryName, ip: newEntryIp });
+    
+    // 清除之前的錯誤
+    setNameError("");
+    setIpError("");
+    
+    if (!newEntryName.trim()) {
+      console.log("Empty name field detected");
+      setNameError("Please enter a description name for the IP");
       return;
     }
 
-    // 驗證IP格式
-    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
-    if (!ipRegex.test(newEntryIp.trim())) {
-      toast.error("IP格式錯誤", {
-        description: "請輸入有效的IPv4地址",
-      });
+    if (!newEntryIp.trim()) {
+      console.log("Empty IP field detected");
+      setIpError("Please enter an IP address");
       return;
     }
+
+    // 驗證IP格式 - 更嚴格的驗證
+    const trimmedIp = newEntryIp.trim();
+    console.log("Validating IP:", trimmedIp);
+    
+    // IPv4 地址格式驗證 (包含CIDR支援)
+    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\/(?:[0-9]|[1-2][0-9]|3[0-2]))?$/;
+    
+    if (!ipRegex.test(trimmedIp)) {
+      console.log("IP validation failed for:", trimmedIp);
+      setIpError("Please enter a valid IPv4 address, e.g., 192.168.1.1 or 192.168.1.0/24");
+      return;
+    }
+    
+    console.log("IP validation passed");
 
     const newEntry: IpEntry = {
       id: Date.now().toString(),
@@ -112,10 +144,13 @@ const IpAccessTab = () => {
 
     setNewEntryName("");
     setNewEntryIp("");
+    setNameError("");
+    setIpError("");
     setShowAddDialog(false);
 
-    toast.success("IP已新增", {
-      description: `已成功新增IP到${currentListType === 'whitelist' ? '白名單' : '黑名單'}`,
+    toast({
+      title: "IP Added",
+      description: `Successfully added IP to${currentListType === 'whitelist' ? 'Whitelist' : 'Blacklist'}`,
     });
   };
 
@@ -125,8 +160,9 @@ const IpAccessTab = () => {
       [currentListType]: prev[currentListType].filter(entry => entry.id !== id)
     }));
 
-    toast.success("IP已刪除", {
-      description: `已從${currentListType === 'whitelist' ? '白名單' : '黑名單'}中刪除IP`,
+    toast({
+      title: "IP Deleted",
+      description: `The IP has been removed from the${currentListType === 'whitelist' ? 'whitelist' : 'Blacklist'}`,
     });
   };
 
@@ -139,15 +175,15 @@ const IpAccessTab = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            IP存取控制設定
+            IP Access Control Settings
             {isRestrictionEnabled && (
               <Badge variant={currentListType === 'whitelist' ? 'default' : 'destructive'}>
-                {currentListType === 'whitelist' ? '白名單模式' : '黑名單模式'}
+                {currentListType === 'whitelist' ? 'Whitelist Mode' : 'Blacklist Mode'}
               </Badge>
             )}
           </CardTitle>
           <CardDescription>
-            管理系統的IP存取權限，設定白名單或黑名單模式
+            Manage system IP access permissions by setting whitelist or blacklist mode
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -161,10 +197,10 @@ const IpAccessTab = () => {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">
-                        啟用IP存取限制
+                        Enable IP Access Restriction
                       </FormLabel>
                       <FormDescription>
-                        開啟後將根據設定的名單控制IP存取權限
+                        When enabled, IP access will be controlled based on the configured list
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -185,23 +221,23 @@ const IpAccessTab = () => {
                     name="listType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>名單類型</FormLabel>
+                        <FormLabel>List Type</FormLabel>
                         <Select 
                           value={field.value} 
                           onValueChange={field.onChange}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder="選擇名單類型" />
+                              <SelectValue placeholder="Select list type" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="whitelist">白名單（只允許列表中的IP）</SelectItem>
-                            <SelectItem value="blacklist">黑名單（拒絕列表中的IP）(預設)</SelectItem>
+                            <SelectItem value="blacklist">Blacklist (deny IPs in the list) (default)</SelectItem>
+                            <SelectItem value="whitelist">Whitelist (only allow IPs in the list)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          選擇要使用白名單還是黑名單模式
+                          Choose whether to use whitelist or blacklist mode
                         </FormDescription>
                       </FormItem>
                     )}
@@ -210,50 +246,71 @@ const IpAccessTab = () => {
                   {/* 新增IP按鈕 */}
                   <div className="flex justify-between items-center">
                     <h4 className="text-sm font-medium">
-                      {currentListType === 'whitelist' ? '白名單' : '黑名單'}IP清單
+                      {currentListType === 'whitelist' ? 'whitelist' : 'Blacklist'}IP List
                     </h4>
                     <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                       <DialogTrigger asChild>
-                        <Button>
+                        <Button
+                          style={{ backgroundColor: '#7B86AA' }}
+                          className="hover:opacity-90"
+                        >
                           <Plus className="h-4 w-4 mr-2" />
-                          新增IP
+                          Add IP
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
                           <DialogTitle>
-                            新增IP到{currentListType === 'whitelist' ? '白名單' : '黑名單'}
+                            Add IP to {currentListType === 'whitelist' ? 'whitelist' : 'Blacklist'}
                           </DialogTitle>
                           <DialogDescription>
-                            新增的IP將會被加入到{currentListType === 'whitelist' ? '白名單' : '黑名單'}中
+                            The added IP will be included in the {currentListType === 'whitelist' ? 'whitelist' : 'Blacklist'}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
                           <div>
-                            <Label htmlFor="name">名稱</Label>
+                            <Label htmlFor="name">name</Label>
                             <Input
                               id="name"
                               value={newEntryName}
-                              onChange={(e) => setNewEntryName(e.target.value)}
-                              placeholder="輸入IP描述名稱"
+                              onChange={(e) => {
+                                setNewEntryName(e.target.value);
+                                if (nameError) setNameError("");
+                              }}
+                              placeholder="Enter a description for the IP, e.g., Office Network"
+                              className={nameError ? "border-destructive" : ""}
                             />
+                            {nameError && (
+                              <p className="text-sm text-destructive mt-1">{nameError}</p>
+                            )}
                           </div>
                           <div>
-                            <Label htmlFor="ip">IP地址</Label>
+                            <Label htmlFor="ip">IP Address</Label>
                             <Input
                               id="ip"
                               value={newEntryIp}
-                              onChange={(e) => setNewEntryIp(e.target.value)}
-                              placeholder="例如：192.168.1.1 或 192.168.1.0/24"
+                              onChange={(e) => {
+                                setNewEntryIp(e.target.value);
+                                if (ipError) setIpError("");
+                              }}
+                              placeholder="Enter a valid IPv4 address, e.g., 192.168.1.1 or 192.168.1.0/24"
+                              className={ipError ? "border-destructive" : ""}
                             />
+                            {ipError && (
+                              <p className="text-sm text-destructive mt-1">{ipError}</p>
+                            )}
                           </div>
                         </div>
                         <DialogFooter>
                           <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                            取消
+                            Cancel
                           </Button>
-                          <Button onClick={handleAddIp}>
-                            新增
+                          <Button 
+                            onClick={handleAddIp}
+                            style={{ backgroundColor: '#7B86AA' }}
+                            className="hover:opacity-90"
+                          >
+                            Add
                           </Button>
                         </DialogFooter>
                       </DialogContent>
@@ -264,9 +321,9 @@ const IpAccessTab = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>名稱</TableHead>
-                        <TableHead>IP地址</TableHead>
-                        <TableHead className="text-right">操作</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>IP Address</TableHead>
+                        <TableHead className="text-right">Operation</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -277,13 +334,31 @@ const IpAccessTab = () => {
                           </TableCell>
                           <TableCell>{entry.ip}</TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteIp(entry.id)}
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete  "{entry.name}" ({entry.ip}) This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteIp(entry.id)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -291,7 +366,7 @@ const IpAccessTab = () => {
                       {getCurrentEntries().length === 0 && (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
-                            暫無任何IP地址設定
+                            No IP addresses configured yet
                           </TableCell>
                         </TableRow>
                       )}
@@ -299,6 +374,18 @@ const IpAccessTab = () => {
                   </Table>
                 </div>
               )}
+
+              {/* 保存按鈕 */}
+              <div className="flex justify-end pt-4 border-t">
+                <Button 
+                  type="submit"
+                  onClick={form.handleSubmit(handleSubmit)}
+                  style={{ backgroundColor: '#7B86AA' }}
+                  className="hover:opacity-90"
+                >
+                  Save Settings
+                </Button>
+              </div>
 
             </form>
           </Form>

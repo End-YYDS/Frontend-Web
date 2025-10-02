@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+// import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Select,
   SelectContent,
@@ -27,7 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Download, Trash, RefreshCw, Package, Plus } from 'lucide-react';
+import { Search, Download, Trash2, RefreshCw, Package, Plus } from 'lucide-react';
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
@@ -57,6 +68,8 @@ const SoftwarePackagesPage = () => {
   const [packageToInstall, setPackageToInstall] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [mobileDisplayCount, setMobileDisplayCount] = useState(ITEMS_PER_PAGE); // 手機版顯示數量
+  const [showUninstallDialog, setShowUninstallDialog] = useState(false);
+  const [packageToUninstall, setPackageToUninstall] = useState<{ key: string; name: string } | null>(null);
 
   // Mock data
   useEffect(() => {
@@ -124,8 +137,8 @@ const SoftwarePackagesPage = () => {
       }
     } catch (error) {
       console.error("Error fetching PCs:", error);
-      toast.error("獲取電腦清單失敗", {
-        description: "無法載入電腦清單，請稍後再試"
+      toast.error("Failed to fetch PCs", {
+        description: "Unable to load PC list, please try again later"
       });
     } finally {
       setIsLoading(false);
@@ -202,10 +215,18 @@ const SoftwarePackagesPage = () => {
   //   }
   // };
 
+  const confirmUninstallPackage = (packageKey: string, packageName: string) => {
+    setPackageToUninstall({ key: packageKey, name: packageName });
+    setShowUninstallDialog(true);
+  };
+
   const handleUninstallPackage = async (packageKey: string) => {
+    if (!packageToUninstall) return;
+    
     try {
       setIsLoading(true);
-      
+      setShowUninstallDialog(false);
+
       // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -223,13 +244,14 @@ const SoftwarePackagesPage = () => {
         } : pc
       ));
       
-      toast.success("解除安裝完成", {
-        description: `已成功移除 ${selectedPcData?.packages[packageKey].name}`
+      toast.success("Uninstallation complete", {
+        description: `Successfully removed ${selectedPcData?.packages[packageKey].name}`
       });
+      setPackageToUninstall(null);
     } catch (error) {
       console.error("Error uninstalling package:", error);
-      toast.error("解除安裝失敗", {
-        description: "套件移除過程中發生錯誤"
+      toast.error("Uninstallation failed", {
+        description: "An error occurred during package removal"
       });
     } finally {
       setIsLoading(false);
@@ -267,13 +289,13 @@ const SoftwarePackagesPage = () => {
         }
       }
       
-      toast.success("更新完成", {
-        description: `已成功更新 ${currentPkg?.name}`
+      toast.success("Update complete", {
+        description: `Successfully updated ${currentPkg?.name}`
       });
     } catch (error) {
       console.error("Error updating package:", error);
-      toast.error("更新失敗", {
-        description: "套件更新過程中發生錯誤"
+      toast.error("Update failed", {
+        description: "An error occurred during package update"
       });
     } finally {
       setIsLoading(false);
@@ -309,13 +331,13 @@ const SoftwarePackagesPage = () => {
       setShowInstallDialog(false);
       setPackageToInstall('');
       
-      toast.success("安裝完成", {
-        description: `已成功安裝 ${packageToInstall}`
+      toast.success("Installation complete", {
+        description: `Successfully installed ${packageToInstall}`
       });
     } catch (error) {
       console.error("Error installing custom package:", error);
-      toast.error("安裝失敗", {
-        description: "套件安裝過程中發生錯誤"
+      toast.error("Installation failed", {
+        description: "An error occurred during package installation"
       });
     } finally {
       setIsLoading(false);
@@ -332,7 +354,7 @@ const SoftwarePackagesPage = () => {
       
       // Calculate start and end page numbers
       let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
       
       // Adjust start page if we're near the end
       if (endPage - startPage + 1 < maxVisiblePages) {
@@ -425,7 +447,7 @@ const SoftwarePackagesPage = () => {
           className="w-full"
         >
           <Plus className="h-4 w-4 mr-2" />
-          載入更多已安裝套件 ({installedPackages.length - mobileDisplayCount} 個剩餘)
+          Load more installed packages ({installedPackages.length - mobileDisplayCount} remaining)
         </Button>
       </div>
     );
@@ -444,16 +466,16 @@ const SoftwarePackagesPage = () => {
         {/* PC 選擇和搜尋 */}
         <Card>
           <CardHeader>
-            <CardTitle>選擇電腦</CardTitle>
-            <CardDescription>選擇要管理軟體套件的電腦</CardDescription>
+            <CardTitle>Select PC</CardTitle>
+            <CardDescription>Select the PC to manage software packages</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
-                <Label htmlFor="pc-select" className="mb-2">電腦</Label>
+                <Label htmlFor="pc-select" className="mb-2">PC</Label>
                 <Select value={selectedPc} onValueChange={setSelectedPc}>
                   <SelectTrigger>
-                    <SelectValue placeholder="選擇電腦" />
+                    <SelectValue placeholder="Select PC" />
                   </SelectTrigger>
                   <SelectContent>
                     {pcs.map((pc) => (
@@ -466,12 +488,12 @@ const SoftwarePackagesPage = () => {
               </div>
               
               <div className="flex-1">
-                <Label htmlFor="search" className="mb-2">搜尋已安裝軟體套件</Label>
+                <Label htmlFor="search" className="mb-2">Search Installed Packages</Label>
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="search"
-                    placeholder="搜尋已安裝的軟體套件..."
+                    placeholder="Search installed packages..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-8"
@@ -482,42 +504,42 @@ const SoftwarePackagesPage = () => {
               <div className="flex items-end gap-2">
                 <Button onClick={fetchPCs} disabled={isLoading} className="bg-[#7B86AA] hover:bg-[#7B86AA]">
                   <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                  重新整理
+                  Refresh
                 </Button>
                 
                 <Dialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
                   <DialogTrigger asChild>
                     <Button className="bg-[#7B86AA] hover:bg-[#7B86AA]">
                       <Download className="h-4 w-4 mr-2" />
-                      安裝套件
+                      Install Package
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>安裝新套件</DialogTitle>
+                      <DialogTitle>Install New Package</DialogTitle>
                       <DialogDescription>
-                        輸入要安裝的套件名稱
+                        Enter the package name to install
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="package-name">套件名稱</Label>
+                        <Label htmlFor="package-name">Package Name</Label>
                         <Input
                           id="package-name"
                           value={packageToInstall}
                           onChange={(e) => setPackageToInstall(e.target.value)}
-                          placeholder="例如: nginx, redis, mongodb"
+                          placeholder="e.g., nginx, redis, mongodb"
                         />
                       </div>
                       <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setShowInstallDialog(false)}>
-                          取消
+                          Cancel
                         </Button>
                         <Button 
                           onClick={handleInstallCustomPackage}
                           disabled={!packageToInstall.trim() || isLoading}
                         >
-                          安裝
+                          Install
                         </Button>
                       </div>
                     </div>
@@ -532,11 +554,11 @@ const SoftwarePackagesPage = () => {
         {selectedPcData && (
           <Card>
             <CardHeader>
-              <CardTitle>已安裝軟體套件清單</CardTitle>
+              <CardTitle>Installed Packages</CardTitle>
               <CardDescription>
-                {selectedPcData.name} 的已安裝軟體套件 (共 {installedPackages.length} 個
-                {!isMobile && `, 第 ${currentPage} 頁，共 ${totalPages} 頁`}
-                {isMobile && `, 顯示 ${Math.min(mobileDisplayCount, installedPackages.length)} 個`})
+                Installed packages on {selectedPcData.name} (Total  {installedPackages.length}
+                {!isMobile && `, Page ${currentPage} of ${totalPages} `}
+                {isMobile && `, Showing ${Math.min(mobileDisplayCount, installedPackages.length)}`})
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -545,7 +567,7 @@ const SoftwarePackagesPage = () => {
                 <div className="space-y-3">
                   {currentPackages.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      {isLoading ? '載入中...' : searchTerm ? '找不到相關的已安裝套件' : '目前沒有已安裝的套件'}
+                      {isLoading ? 'Loading...' : searchTerm ? 'No matching installed packages found' : 'No installed packages available'}
                     </div>
                   ) : (
                     currentPackages.map(([key, pkg]) => (
@@ -554,7 +576,7 @@ const SoftwarePackagesPage = () => {
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex-1">
                               <h3 className="font-medium text-base mb-1">{pkg.name}</h3>
-                              <p className="text-sm text-muted-foreground">版本: {pkg.version}</p>
+                              <p className="text-sm text-muted-foreground">Version: {pkg.version}</p>
                             </div>
                           </div>
                           <div className="flex gap-2">
@@ -566,17 +588,17 @@ const SoftwarePackagesPage = () => {
                               className="flex-1"
                             >
                               <RefreshCw className="h-4 w-4 mr-1" />
-                              更新
+                              Version
                             </Button>
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => handleUninstallPackage(key)}
+                              onClick={() => confirmUninstallPackage(key, pkg.name)}
                               disabled={isLoading}
                               className="flex-1"
                             >
-                              <Trash className="h-4 w-4 mr-1" />
-                              移除
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Remove
                             </Button>
                           </div>
                         </CardContent>
@@ -588,20 +610,20 @@ const SoftwarePackagesPage = () => {
                 /* 桌面版：表格 */
                 <Table>
                   <TableCaption>
-                    {searchTerm ? `搜尋結果：${installedPackages.length} 個已安裝套件` : `共 ${installedPackages.length} 個已安裝套件`}
+                    {searchTerm ? `Search results: ${installedPackages.length} installed packages` : `Total ${installedPackages.length} installed packages`}
                   </TableCaption>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>套件名稱</TableHead>
-                      <TableHead>版本</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
+                      <TableHead>Package Name</TableHead>
+                      <TableHead>Version</TableHead>
+                      <TableHead className="text-right">Operation</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {currentPackages.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={3} className="text-center py-4">
-                          {isLoading ? '載入中...' : searchTerm ? '找不到相關的已安裝套件' : '目前沒有已安裝的套件'}
+                          {isLoading ? 'Loading...' : searchTerm ? 'No matching installed packages found' : 'No installed packages available'}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -612,22 +634,20 @@ const SoftwarePackagesPage = () => {
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button 
-                                variant="outline" 
+                                variant="ghost" 
                                 size="sm"
                                 onClick={() => handleUpdatePackage(key)}
                                 disabled={isLoading}
                               >
                                 <RefreshCw className="h-4 w-4 mr-1" />
-                                更新
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
-                                onClick={() => handleUninstallPackage(key)}
-                                disabled={isLoading}
+                                onClick={() => confirmUninstallPackage(key, pkg.name)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
                               >
-                                <Trash className="h-4 w-4 mr-1" />
-                                移除
+                                <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -645,12 +665,39 @@ const SoftwarePackagesPage = () => {
           </Card>
         )}
       </div>
+
+      {/* 移除套件確認對話框 */}
+      <AlertDialog open={showUninstallDialog} onOpenChange={setShowUninstallDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to remove this package?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to remove <strong>{packageToUninstall?.name}</strong>. This action will uninstall the package, but you can reinstall it later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (packageToUninstall) {
+                  handleUninstallPackage(packageToUninstall.key);
+                }
+              }} 
+              disabled={isLoading}
+              style={{ backgroundColor: '#7B86AA' }}
+              className="hover:opacity-90"
+            >
+              Confirm Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
 
 (SoftwarePackagesPage as any).meta = {
-  requiresAuth: true, //驗證
+  requiresAuth: false, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

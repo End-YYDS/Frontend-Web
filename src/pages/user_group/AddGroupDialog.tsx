@@ -67,7 +67,7 @@ export const AddGroupDialog: React.FC<AddGroupDialogProps> = ({
               onChange={(e) => setNewGroup({...newGroup, name: e.target.value})}
             />
             {isDuplicateName && (
-              <p className="text-red-500 text-sm mt-1">名字已重複，需要換一個名字</p>
+              <p className="text-red-500 text-sm mt-1">The name is already exists, you need to change it.</p>
             )}
           </div>
           <div>
@@ -93,7 +93,8 @@ export const AddGroupDialog: React.FC<AddGroupDialogProps> = ({
             </Button>
             <Button 
               onClick={handleAddGroup} 
-              className="flex-1"
+              style={{ backgroundColor: '#7B86AA' }}
+              className="flex-1 hover:opacity-90"
               disabled={isDuplicateName || !newGroup.name}
             >
               Save

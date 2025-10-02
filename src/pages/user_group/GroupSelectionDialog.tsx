@@ -77,7 +77,11 @@ export const GroupSelectionDialog: React.FC<GroupSelectionDialogProps> = ({
               <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
                 Cancel
               </Button>
-              <Button onClick={() => onOpenChange(false)} className="flex-1">
+              <Button 
+                onClick={() => onOpenChange(false)}
+                style={{ backgroundColor: '#7B86AA' }}
+                className="flex-1 hover:opacity-90"
+              >
                 Save
               </Button>
             </div>
@@ -100,10 +104,18 @@ export const GroupSelectionDialog: React.FC<GroupSelectionDialogProps> = ({
               />
             </div>
             <div className="flex gap-2 pt-4">
-              <Button variant="outline" onClick={() => setIsCreateGroupDialogOpen(false)} className="flex-1">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsCreateGroupDialogOpen(false)}
+                className="flex-1"
+              >
                 Cancel
               </Button>
-              <Button onClick={handleCreateNewGroup} className="flex-1">
+              <Button 
+                onClick={handleCreateNewGroup}
+                style={{ backgroundColor: '#7B86AA' }}
+                className="flex-1 hover:opacity-90"
+              >
                 Create
               </Button>
             </div>

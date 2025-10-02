@@ -88,7 +88,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
                 onChange={(e) => setEditUser({...editUser, username: e.target.value})}
               />
               {isDuplicateName && (
-                <p className="text-red-500 text-sm mt-1">名字已重複，需要換一個名字</p>
+                <p className="text-red-500 text-sm mt-1">The name is already exists, you need to change it.</p>
               )}
             </div>
             <div>
@@ -140,7 +140,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
               </Button>
               <Button 
                 onClick={handleUpdateUser} 
-                className="flex-1"
+                style={{ backgroundColor: '#7B86AA' }}
+                className="flex-1 hover:opacity-90"
                 disabled={isDuplicateName || !editUser.username}
               >
                 Save

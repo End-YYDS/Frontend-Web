@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Edit, Table } from 'lucide-react';
+import { Plus, Trash2, Edit } from 'lucide-react';
 import type { Group } from './types';
 import { AddGroupDialog } from './AddGroupDialog';
 import { EditGroupDialog } from './EditGroupDialog';
@@ -56,7 +56,10 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
           users={users}
           existingGroups={groups}
           trigger={
-            <Button className="bg-[#7B86AA] hover:bg-[#7B86AA]">
+            <Button 
+              style={{ backgroundColor: '#7B86AA' }}
+              className="hover:opacity-90"
+            >
               <Plus className="h-4 w-4 mr-2" />
               New Group
             </Button>
@@ -78,13 +81,17 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-lg">{group.name}</h3>
                 <div className="flex gap-1">
-                  <Button variant="outline" size="sm" onClick={() => handleEditGroup(group)} className="gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => handleEditGroup(group)} className="gap-1">
                     <Edit className="h-3 w-3" />
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="h-3 w-3" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent className="max-w-sm mx-auto">

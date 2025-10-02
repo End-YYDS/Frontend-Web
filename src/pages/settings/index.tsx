@@ -33,15 +33,15 @@ const SettingsPage = () => {
           </TabsTrigger> */}
           <TabsTrigger value="ip-access" className="flex items-center font-bold gap-2 data-[state=active]:bg-[#A8AEBD] data-[state=active]:text-white text-gray-700">
             <Shield className="h-4 w-4" />
-            <span>IP存取控制</span>
+            <span>IP Access Control</span>
           </TabsTrigger>
           <TabsTrigger value="alerts" className="flex items-center font-bold gap-2 data-[state=active]:bg-[#A8AEBD] data-[state=active]:text-white text-gray-700">
             <AlertTriangle className="h-4 w-4" />
-            <span>警告設定</span>
+            <span>Alert Settings</span>
           </TabsTrigger>
           <TabsTrigger value="backup" className="flex items-center font-bold gap-2 data-[state=active]:bg-[#A8AEBD] data-[state=active]:text-white text-gray-700">
             <Save className="h-4 w-4" />
-            <span>備份配置</span>
+            <span>Backup Configuration</span>
           </TabsTrigger>
         </TabsList>
 
@@ -66,7 +66,7 @@ const SettingsPage = () => {
 };
 
 (SettingsPage as any).meta = {
-  requiresAuth: true, //驗證
+  requiresAuth: false, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

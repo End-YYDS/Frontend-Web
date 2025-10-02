@@ -5,19 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { 
-    Form, 
-    FormControl, 
-    FormDescription, 
-    FormField, 
-    FormItem, 
-    FormLabel, 
-    FormMessage 
+  Form, 
+  FormControl, 
+  FormDescription, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
 } from "@/components/ui/form";
 import { toast } from "sonner";
 import { alertSettingsSchema } from "./settings";
 import type { z } from "zod";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-
 
 type AlertSettings = z.infer<typeof alertSettingsSchema>;
 
@@ -36,9 +35,9 @@ const AlertsTab = () => {
   const isNotificationsEnabled = form.watch("enableNotifications");
 
   const handleSubmit = (values: AlertSettings) => {
-    console.log("警告設定:", values);
-    toast.success("警告設定已儲存", {
-      description: "您的系統監控警告設定已成功更新",
+    console.log("Alert Settings:", values);
+    toast.success("Alert settings saved", {
+      description: "Your system monitoring alert settings have been successfully updated",
     });
   };
 
@@ -50,17 +49,17 @@ const AlertsTab = () => {
       memory: 80,
       network: 85,
     });
-    toast.success("已重設為預設值", {
-      description: "所有警告設定已重設為系統預設值",
+    toast.success("Reset to defaults", {
+      description: "All alert settings have been reset to system default values",
     });
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>系統監控警告設定</CardTitle>
+        <CardTitle>System Monitoring Alert Settings</CardTitle>
         <CardDescription>
-          設定系統資源使用量的警告閾值，當超過設定值時將發送通知
+          Set alert thresholds for system resource usage. Notifications will be sent when usage exceeds the thresholds.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -74,10 +73,10 @@ const AlertsTab = () => {
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">
-                      啟用通知
+                      Enable Notifications
                     </FormLabel>
                     <FormDescription>
-                      開啟後當資源使用量超過警告閾值時將發送通知
+                      Notifications will be sent when resource usage exceeds the thresholds.
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -90,7 +89,7 @@ const AlertsTab = () => {
               )}
             />
 
-             {/* 只有在啟用通知時才顯示警告設定 */}
+            {/* 只有在啟用通知時才顯示警告設定 */}
             {isNotificationsEnabled && (
               <Collapsible open={isNotificationsEnabled}>
                 <CollapsibleContent className="space-y-4">
@@ -100,7 +99,7 @@ const AlertsTab = () => {
                     name="cpuUsage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>CPU使用率警告閾值 (%)</FormLabel>
+                        <FormLabel>CPU Usage Alert Threshold (%)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -111,7 +110,7 @@ const AlertsTab = () => {
                           />
                         </FormControl>
                         <FormDescription>
-                          當CPU使用率超過此百分比時發送警告（1-100%）
+                          Send an alert when CPU usage exceeds this percentage (1-100%).
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -124,7 +123,7 @@ const AlertsTab = () => {
                     name="diskUsage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>磁碟使用率警告閾值 (%)</FormLabel>
+                        <FormLabel>Disk Usage Alert Threshold (%)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -135,7 +134,7 @@ const AlertsTab = () => {
                           />
                         </FormControl>
                         <FormDescription>
-                          當磁碟使用率超過此百分比時發送警告（1-100%）
+                          Send an alert when disk usage exceeds this percentage (1-100%).
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -148,7 +147,7 @@ const AlertsTab = () => {
                     name="memory"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>記憶體使用率警告閾值 (%)</FormLabel>
+                        <FormLabel>Memory Usage Alert Threshold (%)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -159,7 +158,7 @@ const AlertsTab = () => {
                           />
                         </FormControl>
                         <FormDescription>
-                          當記憶體使用率超過此百分比時發送警告（1-100%）
+                          Send an alert when memory usage exceeds this percentage (1-100%).
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -172,7 +171,7 @@ const AlertsTab = () => {
                     name="network"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>網路使用率警告閾值 (%)</FormLabel>
+                        <FormLabel>Network Usage Alert Threshold (%)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -183,7 +182,7 @@ const AlertsTab = () => {
                           />
                         </FormControl>
                         <FormDescription>
-                          當網路使用率超過此百分比時發送警告（1-100%）
+                          Send an alert when network usage exceeds this percentage (1-100%).
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -199,7 +198,19 @@ const AlertsTab = () => {
                 variant="outline" 
                 onClick={handleResetDefaults}
               >
-                重設為預設值
+                Reset to Defaults
+              </Button>
+            </div>
+
+            {/* 保存按鈕 */}
+            <div className="flex justify-end pt-4 border-t">
+              <Button 
+                type="submit"
+                onClick={form.handleSubmit(handleSubmit)}
+                style={{ backgroundColor: '#7B86AA' }}
+                className="hover:opacity-90"
+              >
+                Save Settings
               </Button>
             </div>
           </form>

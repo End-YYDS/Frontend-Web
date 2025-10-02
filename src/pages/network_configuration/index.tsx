@@ -28,6 +28,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Select,
   SelectContent,
@@ -36,7 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Network, Edit, Power, PowerOff } from 'lucide-react';
+import { Edit, Trash2, Power, PowerOff } from 'lucide-react';
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,28 +68,28 @@ const cidrRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|
 const interfaceSchema = z.object({
   dhcp: z.boolean(),
   ipv4: z.string().optional().refine((val) => !val || ipAddressRegex.test(val), {
-    message: "請輸入有效的IP位址格式",
+    message: "Please enter a valid IP address",
   }),
   netmask: z.string().optional().refine((val) => !val || ipAddressRegex.test(val), {
-    message: "請輸入有效的子網路遮罩格式",
+    message: "Please enter a valid subnet mask",
   }),
   gateway: z.string().optional().refine((val) => !val || ipAddressRegex.test(val), {
-    message: "請輸入有效的閘道位址格式",
+    message: "Please enter a valid gateway address",
   }),
   mtu: z.number().min(68).max(9000),
 });
 
 const routeSchema = z.object({
   destinationNetwork: z.string().refine((val) => cidrRegex.test(val) || val === "0.0.0.0/0", {
-    message: "請輸入有效的目的網段格式 (如: 192.168.1.0/24)",
+    message: "Please enter a valid destination network (e.g., 192.168.1.0/24)",
   }),
   nextHop: z.string().refine((val) => ipAddressRegex.test(val) || val === "0.0.0.0", {
-    message: "請輸入有效的下一跳IP位址",
+    message: "Please enter a valid next hop IP address",
   }),
-  dev: z.string().min(1, "請選擇介面"),
+  dev: z.string().min(1, "Please select an interface"),
   metric: z.number().min(0).max(65535),
   src: z.string().optional().refine((val) => !val || ipAddressRegex.test(val), {
-    message: "請輸入有效的來源IP位址格式",
+    message: "Please enter a valid source IP address",
   }),
 });
 //TODO: 檢查DNS
@@ -145,6 +155,8 @@ const NetworkConfigurationPage = () => {
   const [showRouteDialog, setShowRouteDialog] = useState(false);
   const [editingInterface, setEditingInterface] = useState<NetworkInterface | null>(null);
   const [editingRoute, setEditingRoute] = useState<Route | null>(null);
+  const [showDeleteRouteDialog, setShowDeleteRouteDialog] = useState(false);
+  const [routeToDelete, setRouteToDelete] = useState<{ id: string; destination: string } | null>(null);
 
   // Mock data
   useEffect(() => {
@@ -237,7 +249,7 @@ const NetworkConfigurationPage = () => {
       }
     } catch (error) {
       console.error("Error fetching network data:", error);
-      toast.error("獲取網路資料失敗：無法載入網路配置，請稍後再試");
+      toast.error("Failed to fetch network data. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -252,14 +264,14 @@ const NetworkConfigurationPage = () => {
         setInterfaces(prev => prev.map(iface => 
           iface.id === editingInterface.id ? { ...iface, ...interfaceData } : iface
         ));
-        toast.success(`網路介面更新成功：已更新網路介面 ${interfaceData.name}`);
+        toast.success(`Interface updated successfully: ${interfaceData.name}`);
       }
 
       setShowInterfaceDialog(false);
       setEditingInterface(null);
     } catch (error) {
       console.error("Error saving interface:", error);
-      toast.error("儲存失敗：無法儲存網路介面設定");
+      toast.error("Failed to save interface settings");
     } finally {
       setIsLoading(false);
     }
@@ -277,10 +289,10 @@ const NetworkConfigurationPage = () => {
       ));
 
       const iface = interfaces.find(i => i.id === interfaceId);
-      toast.success(`網路介面${iface?.status === 'Up' ? '關閉' : '啟動'}成功：已${iface?.status === 'Up' ? '關閉' : '啟動'}網路介面 ${iface?.name}`);
+      toast.success(`Network interface ${iface?.status === 'Up' ? 'stopped' : 'started'} successfully: ${iface?.status === 'Up' ? 'Stopped' : 'Started'} interface ${iface?.name}`);
     } catch (error) {
       console.error("Error toggling interface:", error);
-      toast.error("操作失敗：無法切換網路介面狀態");
+      toast.error("Operation failed: Unable to toggle network interface status");
     } finally {
       setIsLoading(false);
     }
@@ -312,7 +324,7 @@ const NetworkConfigurationPage = () => {
         setRoutes(prev => prev.map(route => 
           route.id === editingRoute.id ? { ...route, ...routeData } : route
         ));
-        toast.success(`路由更新成功：已更新路由 ${routeData.destinationNetwork}`);
+        toast.success(`Route updated successfully:  ${routeData.destinationNetwork}`);
       } else {
         const newRoute: Route = {
           id: `route_${Date.now()}`,
@@ -323,31 +335,56 @@ const NetworkConfigurationPage = () => {
           src: routeData.src || ''
         };
         setRoutes(prev => [...prev, newRoute]);
-        toast.success(`路由新增成功：已新增路由 ${newRoute.destinationNetwork}`);
+        toast.success(`Route added successfully:${newRoute.destinationNetwork}`);
       }
 
       setShowRouteDialog(false);
       setEditingRoute(null);
     } catch (error) {
       console.error("Error saving route:", error);
-      toast.error("儲存失敗：無法儲存路由設定");
+      toast.error("Failed to save route settings");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeleteRoute = async (routeId: string) => {
+  // const handleDeleteRoute = async (routeId: string) => {
+  //   try {
+  //     setIsLoading(true);
+  //     await new Promise(resolve => setTimeout(resolve, 500));
+
+  //     const route = routes.find(r => r.id === routeId);
+  //     setRoutes(prev => prev.filter(r => r.id !== routeId));
+      
+  //     toast.success(`Route deleted successfully: ${route?.destinationNetwork}`);
+  //   } catch (error) {
+  //     console.error("Error deleting route:", error);
+  //     toast.error("Failed to delete route");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  const confirmDeleteRoute = (routeId: string, destination: string) => {
+    setRouteToDelete({ id: routeId, destination });
+    setShowDeleteRouteDialog(true);
+  };
+
+  const handleDeleteRoute = async () => {
+    if (!routeToDelete) return;
+    
     try {
       setIsLoading(true);
+      setShowDeleteRouteDialog(false);
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const route = routes.find(r => r.id === routeId);
-      setRoutes(prev => prev.filter(r => r.id !== routeId));
+      setRoutes(prev => prev.filter(r => r.id !== routeToDelete.id));
       
-      toast.success(`路由刪除成功：已刪除路由 ${route?.destinationNetwork}`);
+      toast.success(`Route deleted successfully: ${routeToDelete.destination}`);
+      setRouteToDelete(null);
     } catch (error) {
       console.error("Error deleting route:", error);
-      toast.error("刪除失敗：無法刪除路由");
+      toast.error("Deletion failed: Unable to delete route");
     } finally {
       setIsLoading(false);
     }
@@ -358,10 +395,10 @@ const NetworkConfigurationPage = () => {
       setIsLoading(true);
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      toast.success("DNS設定儲存成功：主機名稱和DNS伺服器設定已更新");
+      toast.success("DNS settings saved successfully");
     } catch (error) {
       console.error("Error saving DNS:", error);
-      toast.error("儲存失敗：無法儲存DNS設定");
+      toast.error("Failed to save DNS settings");
     } finally {
       setIsLoading(false);
     }
@@ -370,31 +407,30 @@ const NetworkConfigurationPage = () => {
   const selectedComputerData = computers.find(pc => pc.id === selectedComputer);
 
   return (
-    <div className="container mx-auto py-6 px-4 md:px-6">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-2">
-          <Network className="h-6 w-6" />
-          <h1 className="text-2xl md:text-3xl font-bold">網路配置</h1>
-        </div>
+      <div className="container mx-auto py-6 px-4">
+        <div className="bg-[#A8AEBD] py-3 mb-3">
+        <h1 className="text-2xl font-extrabold text-center text-[#E6E6E6]">
+          Network Configuration
+        </h1>
       </div>
 
       {/* 電腦選擇 */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>選擇電腦</CardTitle>
-          <CardDescription>選擇要進行網路配置的電腦</CardDescription>
+          <CardTitle>Select PC</CardTitle>
+          <CardDescription>Select a PC to configure network settings</CardDescription>
         </CardHeader>
         <CardContent>
           <Select value={selectedComputer} onValueChange={setSelectedComputer}>
             <SelectTrigger className="w-full md:w-1/2">
-              <SelectValue placeholder="請選擇電腦" />
+              <SelectValue placeholder="Select a PC" />
             </SelectTrigger>
             <SelectContent>
               {computers.map((computer) => (
                 <SelectItem key={computer.id} value={computer.id}>
                   <div className="flex items-center gap-2">
                     <Badge variant={computer.status === 'online' ? 'default' : 'secondary'}>
-                      {computer.status === 'online' ? '線上' : '離線'}
+                      {computer.status === 'online' ? 'Online' : 'Offline'}
                     </Badge>
                     {computer.name} ({computer.ip})
                   </div>
@@ -408,9 +444,9 @@ const NetworkConfigurationPage = () => {
       {selectedComputer && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="w-full">
-            <TabsTrigger value="interfaces" className="flex-1">網路介面</TabsTrigger>
-            <TabsTrigger value="routing" className="flex-1">路由和閘道</TabsTrigger>
-            <TabsTrigger value="dns" className="flex-1">主機名稱和DNS</TabsTrigger>
+            <TabsTrigger value="interfaces" className="flex-1">Network Interfaces</TabsTrigger>
+            <TabsTrigger value="routing" className="flex-1">Routing & Gateways</TabsTrigger>
+            <TabsTrigger value="dns" className="flex-1">Hostname & DNS</TabsTrigger>
           </TabsList>
 
           {/* 網路介面 */}
@@ -420,23 +456,23 @@ const NetworkConfigurationPage = () => {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle>實體網路介面</CardTitle>
+                    <CardTitle>Physical Network Interfaces</CardTitle>
                     <CardDescription>
-                      管理 {selectedComputerData?.name} 的實體網路介面設定
+                      Manage {selectedComputerData?.name}'s physical network interface settings
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <Table>
-                  <TableCaption>實體網路介面清單</TableCaption>
+                  <TableCaption>List of physical network interfaces</TableCaption>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>名稱</TableHead>
-                      <TableHead>IP位址</TableHead>
-                      <TableHead>MAC位址</TableHead>
-                      <TableHead>狀態</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>IP Address</TableHead>
+                      <TableHead>MAC Address</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Operation</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -447,13 +483,13 @@ const NetworkConfigurationPage = () => {
                         <TableCell>{iface.mac}</TableCell>
                         <TableCell>
                           <Badge variant={iface.status === 'Up' ? 'default' : 'secondary'}>
-                            {iface.status === 'Up' ? '啟動' : '關閉'}
+                            {iface.status === 'Up' ? 'Up' : 'Down'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm"
                               onClick={() => handleToggleInterface(iface.id)}
                               disabled={isLoading}
@@ -464,7 +500,7 @@ const NetworkConfigurationPage = () => {
                               }
                             </Button>
                             <Button 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm"
                               onClick={() => {
                                 setEditingInterface(iface);
@@ -487,23 +523,23 @@ const NetworkConfigurationPage = () => {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle>虛擬介面卡</CardTitle>
+                    <CardTitle>Virtual Interfaces</CardTitle>
                     <CardDescription>
-                      管理虛擬網路介面設定 (Bridge、VLAN等)
+                      Manage virtual network interface settings (Bridge, VLAN, etc.)
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <Table>
-                  <TableCaption>虛擬網路介面清單</TableCaption>
+                  <TableCaption>List of virtual network interfaces</TableCaption>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>名稱</TableHead>
-                      <TableHead>IP位址</TableHead>
-                      <TableHead>類型</TableHead>
-                      <TableHead>狀態</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>IP Address</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Operation</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -512,17 +548,17 @@ const NetworkConfigurationPage = () => {
                         <TableCell className="font-medium">{iface.name}</TableCell>
                         <TableCell>{iface.ipv4}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">虛擬</Badge>
+                          <Badge variant="outline">Virtual</Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant={iface.status === 'Up' ? 'default' : 'secondary'}>
-                            {iface.status === 'Up' ? '啟動' : '關閉'}
+                            {iface.status === 'Up' ? 'Up' : 'Down'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm"
                               onClick={() => handleToggleInterface(iface.id)}
                               disabled={isLoading}
@@ -533,7 +569,7 @@ const NetworkConfigurationPage = () => {
                               }
                             </Button>
                             <Button 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm"
                               onClick={() => {
                                 setEditingInterface(iface);
@@ -558,15 +594,18 @@ const NetworkConfigurationPage = () => {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle>路由和閘道</CardTitle>
-                    <CardDescription>管理系統路由表設定</CardDescription>
+                    <CardTitle>Routing & Gateways</CardTitle>
+                    <CardDescription>Manage system routing table</CardDescription>
                   </div>
                   <Dialog open={showRouteDialog} onOpenChange={setShowRouteDialog}>
                     <Button onClick={() => {
                       setEditingRoute(null);
                       setShowRouteDialog(true);
-                    }}>
-                      新增路由
+                      }}
+                      style={{ backgroundColor: '#7B86AA' }}
+                      className="hover:opacity-90"
+                    >
+                      Add Route
                     </Button>
                     <RouteDialog 
                       route={editingRoute}
@@ -580,15 +619,15 @@ const NetworkConfigurationPage = () => {
               </CardHeader>
               <CardContent>
                 <Table>
-                  <TableCaption>系統路由表</TableCaption>
+                  <TableCaption>System Routing Table</TableCaption>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>目的網段</TableHead>
-                      <TableHead>下一跳</TableHead>
-                      <TableHead>介面</TableHead>
-                      <TableHead>優先度</TableHead>
-                      <TableHead>來源IP</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
+                      <TableHead>Destination</TableHead>
+                      <TableHead>Next Hop</TableHead>
+                      <TableHead>Interface</TableHead>
+                      <TableHead>Metric</TableHead>
+                      <TableHead>Source IP</TableHead>
+                      <TableHead className="text-right">Operation</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -602,7 +641,7 @@ const NetworkConfigurationPage = () => {
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm"
                               onClick={() => {
                                 setEditingRoute(route);
@@ -611,13 +650,14 @@ const NetworkConfigurationPage = () => {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="ghost"
                               size="sm"
-                              onClick={() => handleDeleteRoute(route.id)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => confirmDeleteRoute(route.id, route.destinationNetwork)}
                               disabled={isLoading}
                             >
-                              刪除
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -633,25 +673,25 @@ const NetworkConfigurationPage = () => {
           <TabsContent value="dns" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>主機名稱和DNS用戶端</CardTitle>
-                <CardDescription>設定系統主機名稱和DNS伺服器</CardDescription>
+                <CardTitle>Hostname & DNS Client</CardTitle>
+                <CardDescription>Configure system hostname and DNS servers</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* 主機名稱佔一整排 */}
                 <div>
-                  <Label htmlFor="hostname">主機名稱</Label>
+                  <Label htmlFor="hostname">Hostname</Label>
                   <Input
                     id="hostname"
                     value={dnsConfig.hostname}
                     onChange={(e) => setDnsConfig(prev => ({ ...prev, hostname: e.target.value }))}
-                    placeholder="例如: server-001"
+                    placeholder="e.g., server-001"
                   />
                 </div>
                 
                 {/* DNS伺服器分兩邊 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="primary-dns">主要DNS伺服器</Label>
+                    <Label htmlFor="primary-dns">Primary DNS</Label>
                     <Input
                       id="primary-dns"
                       value={dnsConfig.dns.primary}
@@ -659,12 +699,12 @@ const NetworkConfigurationPage = () => {
                         ...prev, 
                         dns: { ...prev.dns, primary: e.target.value }
                       }))}
-                      placeholder="例如: 8.8.8.8"
+                      placeholder="e.g., 8.8.8.8"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="secondary-dns">次要DNS伺服器</Label>
+                    <Label htmlFor="secondary-dns">Secondary DNS</Label>
                     <Input
                       id="secondary-dns"
                       value={dnsConfig.dns.secondary}
@@ -672,14 +712,18 @@ const NetworkConfigurationPage = () => {
                         ...prev, 
                         dns: { ...prev.dns, secondary: e.target.value }
                       }))}
-                      placeholder="例如: 8.8.4.4"
+                      placeholder="e.g., 8.8.4.4"
                     />
                   </div>
                 </div>
                 
                 <div className="flex justify-end">
-                  <Button onClick={handleSaveDNS} disabled={isLoading}>
-                    儲存DNS設定
+                  <Button 
+                    onClick={handleSaveDNS} disabled={isLoading}
+                    style={{ backgroundColor: '#7B86AA' }}
+                    className="hover:opacity-90"
+                  >
+                    Save DNS Settings
                   </Button>
                 </div>
               </CardContent>
@@ -697,6 +741,28 @@ const NetworkConfigurationPage = () => {
           onClose={() => setShowInterfaceDialog(false)}
         />
       )}
+
+      {/* 刪除路由確認對話框 */}
+      <AlertDialog open={showDeleteRouteDialog} onOpenChange={setShowDeleteRouteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this route?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to delete the route with destination  <strong>{routeToDelete?.destination}</strong>. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() =>handleDeleteRoute} disabled={isLoading}
+              style={{ backgroundColor: '#7B86AA' }}
+              className="hover:opacity-90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
@@ -725,8 +791,8 @@ const InterfaceDialog = ({ interface: iface, onSave, isLoading, onClose }: any) 
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>編輯網路介面 - {iface?.name}</DialogTitle>
-          <DialogDescription>設定網路介面參數</DialogDescription>
+          <DialogTitle>Edit Network Interface - {iface?.name}</DialogTitle>
+          <DialogDescription>Configure network interface parameters</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -736,7 +802,7 @@ const InterfaceDialog = ({ interface: iface, onSave, isLoading, onClose }: any) 
               name="dhcp"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-medium">IP位址設定方式</FormLabel>
+                  <FormLabel className="text-base font-medium">IP Address Configuration</FormLabel>
                   <FormControl>
                     <RadioGroup 
                       value={field.value ? "dhcp" : "manual"}
@@ -745,11 +811,11 @@ const InterfaceDialog = ({ interface: iface, onSave, isLoading, onClose }: any) 
                     >
                       <div className="flex items-center space-x-2 flex-1">
                         <RadioGroupItem value="dhcp" id="dhcp" />
-                        <Label htmlFor="dhcp" className="cursor-pointer">自動 (DHCP)</Label>
+                        <Label htmlFor="dhcp" className="cursor-pointer">Automatic (DHCP)</Label>
                       </div>
                       <div className="flex items-center space-x-2 flex-1">
                         <RadioGroupItem value="manual" id="manual" />
-                        <Label htmlFor="manual" className="cursor-pointer">手動</Label>
+                        <Label htmlFor="manual" className="cursor-pointer">Manual</Label>
                       </div>
                     </RadioGroup>
                   </FormControl>
@@ -766,7 +832,7 @@ const InterfaceDialog = ({ interface: iface, onSave, isLoading, onClose }: any) 
                     name="ipv4"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>IPv4位址</FormLabel>
+                        <FormLabel>IPv4 Address</FormLabel>
                         <FormControl>
                           <Input placeholder="192.168.1.100" {...field} />
                         </FormControl>
@@ -779,7 +845,7 @@ const InterfaceDialog = ({ interface: iface, onSave, isLoading, onClose }: any) 
                     name="netmask"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>子網路遮罩</FormLabel>
+                        <FormLabel>Subnet Mask</FormLabel>
                         <FormControl>
                           <Input placeholder="255.255.255.0" {...field} />
                         </FormControl>
@@ -795,7 +861,7 @@ const InterfaceDialog = ({ interface: iface, onSave, isLoading, onClose }: any) 
                     name="gateway"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>閘道</FormLabel>
+                        <FormLabel>Gateway</FormLabel>
                         <FormControl>
                           <Input placeholder="192.168.1.1" {...field} />
                         </FormControl>
@@ -808,7 +874,7 @@ const InterfaceDialog = ({ interface: iface, onSave, isLoading, onClose }: any) 
                     name="mtu"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>MTU大小</FormLabel>
+                        <FormLabel>MTU Size</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -828,9 +894,13 @@ const InterfaceDialog = ({ interface: iface, onSave, isLoading, onClose }: any) 
             )}
             
             <div className="flex justify-end gap-2">
-              <Button variant="outline" type="button" onClick={onClose}>取消</Button>
-              <Button type="submit" disabled={isLoading}>
-                更新
+              <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
+              <Button 
+                type="submit" disabled={isLoading}
+                style={{ backgroundColor: '#7B86AA' }}
+                className="hover:opacity-90"  
+              >
+                Update
               </Button>
             </div>
           </form>
@@ -863,8 +933,8 @@ const RouteDialog = ({ route, interfaces, onSave, isLoading, onClose }: any) => 
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>{route ? '編輯路由' : '新增路由'}</DialogTitle>
-        <DialogDescription>設定路由參數</DialogDescription>
+        <DialogTitle>{route ? 'Edit route' : 'Add route'}</DialogTitle>
+        <DialogDescription>Configure network interface parameters</DialogDescription>
       </DialogHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -874,7 +944,7 @@ const RouteDialog = ({ route, interfaces, onSave, isLoading, onClose }: any) => 
               name="destinationNetwork"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>目的網段</FormLabel>
+                  <FormLabel>Destination Network</FormLabel>
                   <FormControl>
                     <Input placeholder="192.168.1.0/24" {...field} />
                   </FormControl>
@@ -887,7 +957,7 @@ const RouteDialog = ({ route, interfaces, onSave, isLoading, onClose }: any) => 
               name="nextHop"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>下一跳 (Next hop)</FormLabel>
+                  <FormLabel>Next hop</FormLabel>
                   <FormControl>
                     <Input placeholder="192.168.1.1" {...field} />
                   </FormControl>
@@ -905,17 +975,17 @@ const RouteDialog = ({ route, interfaces, onSave, isLoading, onClose }: any) => 
                   name="dev"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>介面</FormLabel>
+                      <FormLabel>Interface</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="選擇介面" />
+                            <SelectValue placeholder="Select Interface" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {interfaces.map((iface: NetworkInterface) => (
                             <SelectItem key={iface.id} value={iface.name}>
-                              {iface.name} ({iface.type === 'physical' ? '實體' : '虛擬'})
+                              {iface.name} ({iface.type === 'physical' ? 'Physical' : 'Virtual'})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -929,7 +999,7 @@ const RouteDialog = ({ route, interfaces, onSave, isLoading, onClose }: any) => 
                   name="metric"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>優先度</FormLabel>
+                      <FormLabel>Metric</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -951,7 +1021,7 @@ const RouteDialog = ({ route, interfaces, onSave, isLoading, onClose }: any) => 
                 name="src"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>來源IP （可選）</FormLabel>
+                    <FormLabel>Source IP (Optional)</FormLabel>
                     <FormControl>
                       <Input placeholder="192.168.1.100" {...field} />
                     </FormControl>
@@ -963,9 +1033,13 @@ const RouteDialog = ({ route, interfaces, onSave, isLoading, onClose }: any) => 
           )}
           
           <div className="flex justify-end gap-2">
-            <Button variant="outline" type="button" onClick={onClose}>取消</Button>
-            <Button type="submit" disabled={isLoading}>
-              {route ? '更新' : '新增'}
+            <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
+            <Button 
+              type="submit" disabled={isLoading}
+              style={{ backgroundColor: '#7B86AA' }}
+              className="hover:opacity-90"
+            >
+              {route ? 'Update' : 'Add'}
             </Button>
           </div>
         </form>
@@ -975,7 +1049,7 @@ const RouteDialog = ({ route, interfaces, onSave, isLoading, onClose }: any) => 
 };
 
 (NetworkConfigurationPage as any).meta = {
-  requiresAuth: true, //驗證
+  requiresAuth: false, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;
