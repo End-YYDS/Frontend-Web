@@ -44,112 +44,159 @@ interface ProcessData {
   length: number;
 }
 
+// 模擬資料
+const mockData: ProcessData = {
+  pcs: {
+    'PC-001': {
+      uuid: 'PC-001',
+      hostname: 'Workstation-01',
+      length: 5,
+      processes: {
+        'chrome.exe': { status: true, boot: true },
+        'explorer.exe': { status: true, boot: true },
+        'notepad.exe': { status: false, boot: false },
+        'discord.exe': { status: true, boot: true },
+        'vscode.exe': { status: false, boot: true },
+      }
+    },
+    'PC-002': {
+      uuid: 'PC-002',
+      hostname: 'Workstation-02',
+      length: 4,
+      processes: {
+        'chrome.exe': { status: true, boot: true },
+        'explorer.exe': { status: false, boot: true },
+        'notepad.exe': { status: false, boot: false },
+        'zoom.exe': { status: true, boot: true },
+      }
+    },
+  },
+  length: 2
+};
+
 export const ProcessManager = () => {
-  const [processData, setProcessData] = useState<ProcessData | null>(null);
+  const [processData, setProcessData] = useState<ProcessData | null>(mockData);
   const [selectedComputer, setSelectedComputer] = useState<Computer | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [pinnedProcesses, setPinnedProcesses] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  // Mock data for demonstration
-  useEffect(() => {
-    const mockData: ProcessData = {
-      pcs: {
-        "uuid-001": {
-          uuid: "uuid-001",
-          hostname: "DESKTOP-001",
-          processes: {
-            "nginx": { status: true, boot: true },
-            "mysql": { status: true, boot: false },
-            "apache": { status: false, boot: true },
-            "redis": { status: true, boot: true },
-            "docker": { status: true, boot: true },
-            "nodejs": { status: false, boot: false }
-          },
-          length: 6
-        },
-        "uuid-002": {
-          uuid: "uuid-002",
-          hostname: "SERVER-002",
-          processes: {
-            "nginx": { status: true, boot: true },
-            "postgresql": { status: false, boot: false },
-            "docker": { status: true, boot: true },
-            "elasticsearch": { status: true, boot: true },
-            "kibana": { status: false, boot: true }
-          },
-          length: 5
-        },
-        "uuid-003": {
-          uuid: "uuid-003",
-          hostname: "WORKSTATION-003",
-          processes: {
-            "nodejs": { status: true, boot: false },
-            "mongodb": { status: false, boot: true },
-            "elasticsearch": { status: true, boot: true },
-            "redis": { status: false, boot: false },
-            "apache": { status: true, boot: true }
-          },
-          length: 5
-        }
-      },
-      length: 3
-    };
-    
-    setTimeout(() => {
-      setProcessData(mockData);
-      setLoading(false);
-    }, 1000);
-  }, []);
-
-  const handleProcessAction = async (action: string, uuid: string, processName: string) => {
+  // 取得所有電腦 Process
+  const fetchAllProcesses = async () => {
+    setLoading(true);
     try {
-      console.log(`Action: ${action}, UUID: ${uuid}, Process: ${processName}`);
-      
-      // Update local state immediately for better UX
+      const res = await fetch('/api/process/all');
+      if (!res.ok) throw new Error('API fetch failed');
+      const data = await res.json();
+
+      const pcs: Record<string, Computer> = {};
+      Object.entries(data.Pcs).forEach(([uuid, pc]: any) => {
+        pcs[uuid] = {
+          uuid,
+          hostname: pc.Hostname,
+          processes: Object.fromEntries(
+            Object.entries(pc.Process).map(([name, p]: any) => [
+              name,
+              { status: p.Status, boot: p.Boot }
+            ])
+          ),
+          length: pc.Length
+        };
+      });
+
+      setProcessData({ pcs, length: data.Length });
+    } catch (err) {
+      console.warn('Using mock data due to API error:', err);
+      toast({ title: "Notice", description: "Using mock data", variant: "default" });
+      setProcessData(mockData); // 使用模擬資料
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 取得單一電腦的 Process
+  const fetchOneComputerProcesses = async (uuid: string) => {
+    try {
+      const res = await fetch('/api/process/one', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Uuid: uuid })
+      });
+      if (!res.ok) throw new Error('API fetch failed');
+      const data = await res.json();
       if (processData) {
         const newProcessData = { ...processData };
-        if (action === 'start') {
-          newProcessData.pcs[uuid].processes[processName].status = true;
-        } else if (action === 'stop') {
-          newProcessData.pcs[uuid].processes[processName].status = false;
-        } else if (action === 'restart') {
-          // For restart, we'll just keep the current status
-        } else if (action === 'start_enable') {
-          // newProcessData.pcs[uuid].processes[processName].status = true;
-          newProcessData.pcs[uuid].processes[processName].boot = true;
-        } else if (action === 'stop_disable') {
-          // newProcessData.pcs[uuid].processes[processName].status = false;
-          newProcessData.pcs[uuid].processes[processName].boot = false;
-        }
+        newProcessData.pcs[uuid].processes = Object.fromEntries(
+          Object.entries(data.Process).map(([name, p]: any) => [name, { status: p.Status, boot: p.Boot }])
+        );
         setProcessData(newProcessData);
-        
-        // Update selected computer if it's currently shown
+
         if (selectedComputer && selectedComputer.uuid === uuid) {
           setSelectedComputer(newProcessData.pcs[uuid]);
         }
       }
-      
-      // Mock API call
-      // const response = await fetch(`/api/process/action/${action}`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ Uuid: uuid, Process: processName })
-      // });
-
-      toast({
-        title: "Action Completed",
-        description: `${action} action sent to ${processName} (${uuid})`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to perform action",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.warn('Using existing data/mock data due to API error:', err);
+      toast({ title: "Notice", description: "Failed to fetch computer processes, using mock/existing data", variant: "default" });
     }
   };
+
+  // 處理 Process 行為
+  const handleProcessAction = async (action: string, uuid: string, processName: string) => {
+    try {
+      const apiMap: Record<string, string> = {
+        start: '/api/process/action/start',
+        stop: '/api/process/action/stop',
+        restart: '/api/process/action/restart',
+        start_enable: '/api/process/action/start_enable',
+        stop_disable: '/api/process/action/stop_disable',
+        enable: '/api/process/action/enable',
+        disable: '/api/process/action/disable'
+      };
+      const url = apiMap[action];
+
+      if (!url) throw new Error(`Unknown action: ${action}`);
+
+      // **先更新本地狀態，假設 API 成功**
+      if (processData) {
+        const newProcessData = { ...processData };
+        const process = newProcessData.pcs[uuid].processes[processName];
+
+        if (action === 'start') process.status = true;
+        else if (action === 'stop') process.status = false;
+        else if (action === 'start_enable') process.boot = true;
+        else if (action === 'stop_disable') process.boot = false;
+
+        setProcessData(newProcessData);
+        if (selectedComputer && selectedComputer.uuid === uuid) {
+          setSelectedComputer(newProcessData.pcs[uuid]);
+        }
+      }
+
+      // 實際呼叫 API
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Uuid: uuid, Process: processName })
+      });
+      if (!res.ok) throw new Error('API action failed');
+      const result = await res.json();
+
+      if (result.Type === 'OK') {
+        toast({ title: "Action Completed", description: `${action} sent to ${processName}` });
+      } else {
+        toast({ title: "Error", description: result.Message, variant: "destructive" });
+      }
+    } catch (error) {
+      console.warn('API failed, local state may be inconsistent', error);
+      toast({ title: "Notice", description: "Action simulated with mock data", variant: "default" });
+    }
+  };
+
+  useEffect(() => {
+    fetchAllProcesses();
+  }, []);
 
   const filteredComputers = processData ? Object.entries(processData.pcs).filter(([, computer]) =>
     computer.hostname.toLowerCase().includes(searchTerm.toLowerCase())
@@ -164,11 +211,8 @@ export const ProcessManager = () => {
 
   const handleTogglePin = (processName: string) => {
     const newPinnedProcesses = new Set(pinnedProcesses);
-    if (newPinnedProcesses.has(processName)) {
-      newPinnedProcesses.delete(processName);
-    } else {
-      newPinnedProcesses.add(processName);
-    }
+    if (newPinnedProcesses.has(processName)) newPinnedProcesses.delete(processName);
+    else newPinnedProcesses.add(processName);
     setPinnedProcesses(newPinnedProcesses);
   };
 
@@ -176,17 +220,13 @@ export const ProcessManager = () => {
     Object.entries(selectedComputer.processes).filter(([processName]) => {
       const matchesSearch = searchTerm.trim() ? 
         processName.toLowerCase().includes(searchTerm.toLowerCase()) : true;
-      
-      // All processes must match search, including pinned ones
       return matchesSearch;
-    }).sort(([processNameA], [processNameB]) => {
-      // Pinned processes appear first
-      const aPinned = pinnedProcesses.has(processNameA);
-      const bPinned = pinnedProcesses.has(processNameB);
-      
+    }).sort(([a], [b]) => {
+      const aPinned = pinnedProcesses.has(a);
+      const bPinned = pinnedProcesses.has(b);
       if (aPinned && !bPinned) return -1;
       if (!aPinned && bPinned) return 1;
-      return processNameA.localeCompare(processNameB);
+      return a.localeCompare(b);
     }) : [];
 
   const displayProcesses = selectedComputer ? filteredProcesses : [];
@@ -255,7 +295,6 @@ export const ProcessManager = () => {
         <CardContent>
           <ScrollArea className="h-[600px]">
             {!selectedComputer ? (
-              // Computer List View
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredComputers.map(([uuid, computer]) => {
                   const stats = getComputerStats(computer);
@@ -275,7 +314,10 @@ export const ProcessManager = () => {
                       </CardHeader>
                       <CardContent 
                         className="pt-0 cursor-pointer"
-                        onClick={() => setSelectedComputer(computer)}
+                        onClick={() => {
+                          setSelectedComputer(computer);
+                          fetchOneComputerProcesses(computer.uuid);
+                        }}
                       >
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div className="p-2 bg-gray-50 rounded">
@@ -297,8 +339,8 @@ export const ProcessManager = () => {
                 })}
               </div>
             ) : (
-              // Process List View for Selected Computer
               <div className="space-y-4">
+                {/* Summary Cards */}
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <Card className="p-4 text-center">
                     <div className="text-2xl font-bold">{Object.keys(selectedComputer.processes).length}</div>
@@ -318,130 +360,126 @@ export const ProcessManager = () => {
                   </Card>
                 </div>
 
-                 {displayProcesses.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Filter</TableHead>
-                          <TableHead className='w-3xl'>Process Name</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Boot</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {displayProcesses.map(([processName, process]) => (
-                          <TableRow key={processName}>
-                            <TableCell>
-                              <Button
-                                size="sm"
-                                variant={pinnedProcesses.has(processName) ? "default" : "outline"}
-                                onClick={() => handleTogglePin(processName)}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Pin className={`w-3 h-3 ${pinnedProcesses.has(processName) ? 'fill-current' : ''}`} />
-                              </Button>
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              <div className="flex items-center space-x-2">
-                                <span>{processName}</span>
-                                {pinnedProcesses.has(processName) && (
-                                  <Badge variant="outline" className="text-xs">Pinned</Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={process.status ? "default" : "secondary"}>
-                                {process.status ? "Running" : "Stopped"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {process.boot ? (
-                                <Badge variant="outline" className="text-green-600">Enabled</Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-gray-500">Disabled</Badge>
+                {displayProcesses.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Filter</TableHead>
+                        <TableHead className='w-3xl'>Process Name</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Boot</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {displayProcesses.map(([processName, process]) => (
+                        <TableRow key={processName}>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant={pinnedProcesses.has(processName) ? "default" : "outline"}
+                              onClick={() => handleTogglePin(processName)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Pin className={`w-3 h-3 ${pinnedProcesses.has(processName) ? 'fill-current' : ''}`} />
+                            </Button>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center space-x-2">
+                              <span>{processName}</span>
+                              {pinnedProcesses.has(processName) && (
+                                <Badge variant="outline" className="text-xs">Pinned</Badge>
                               )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end space-x-1">
-                                {!process.status ? (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleProcessAction('start', selectedComputer.uuid, processName)}
-                                      className="h-8 px-3"
-                                    >
-                                      <Play className="w-3 h-3 mr-1" />
-                                      Start
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleProcessAction('stop', selectedComputer.uuid, processName)}
-                                    className="h-8 px-3"
-                                  >
-                                    <Square className="w-3 h-3 mr-1" />
-                                    Stop
-                                  </Button>
-                                )}
-                                {!process.boot ? (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleProcessAction('start_enable', selectedComputer.uuid, processName)}
-                                      className="h-8 px-3"
-                                    >
-                                      <PlayCircle className="w-3 h-3 mr-1" />
-                                      Enable Boot
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleProcessAction('stop_disable', selectedComputer.uuid, processName)}
-                                    className="h-8 px-3"
-                                  >
-                                    <StopCircle className="w-3 h-3 mr-1" />
-                                    Disable Boot
-                                  </Button>
-                                )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={process.status ? "default" : "secondary"}>
+                              {process.status ? "Running" : "Stopped"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {process.boot ? (
+                              <Badge variant="outline" className="text-green-600">Enabled</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-gray-500">Disabled</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-1">
+                              {!process.status ? (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleProcessAction('restart', selectedComputer.uuid, processName)}
+                                  onClick={() => handleProcessAction('start', selectedComputer.uuid, processName)}
                                   className="h-8 px-3"
                                 >
-                                  <RotateCcw className="w-3 h-3 mr-1" />
-                                  Restart
+                                  <Play className="w-3 h-3 mr-1" />
+                                  Start
                                 </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                 ) : (
-                   <div className="text-center py-8 text-gray-500">
-                     {!searchTerm.trim() ? (
-                       <div>
-                         <Search className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                         <p className="text-lg font-medium">Enter process name to search</p>
-                         <p className="text-sm">Processes are displayed only when searching</p>
-                       </div>
-                     ) : (
-                       <div>
-                         <Activity className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                         <p className="text-lg font-medium">No matching processes found</p>
-                         <p className="text-sm">No process contains "{searchTerm}"</p>
-                       </div>
-                     )}
-                   </div>
-                 )}
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleProcessAction('stop', selectedComputer.uuid, processName)}
+                                  className="h-8 px-3"
+                                >
+                                  <Square className="w-3 h-3 mr-1" />
+                                  Stop
+                                </Button>
+                              )}
+                              {!process.boot ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleProcessAction('start_enable', selectedComputer.uuid, processName)}
+                                  className="h-8 px-3"
+                                >
+                                  <PlayCircle className="w-3 h-3 mr-1" />
+                                  Enable Boot
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleProcessAction('stop_disable', selectedComputer.uuid, processName)}
+                                  className="h-8 px-3"
+                                >
+                                  <StopCircle className="w-3 h-3 mr-1" />
+                                  Disable Boot
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleProcessAction('restart', selectedComputer.uuid, processName)}
+                                className="h-8 px-3"
+                              >
+                                <RotateCcw className="w-3 h-3 mr-1" />
+                                Restart
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    {!searchTerm.trim() ? (
+                      <div>
+                        <Search className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                        <p className="text-lg font-medium">Enter process name to search</p>
+                        <p className="text-sm">Processes are displayed only when searching</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <Activity className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                        <p className="text-lg font-medium">No matching processes found</p>
+                        <p className="text-sm">No process contains "{searchTerm}"</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </ScrollArea>

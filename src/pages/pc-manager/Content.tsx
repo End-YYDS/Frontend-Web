@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -27,87 +27,184 @@ interface ComputerGroup {
 }
 
 export function PCManagerContent() {
-  const [computers, setComputers] = useState<Computer[]>([
-    { id: '1', name: 'PC-1', ip: '192.168.1.101', status: 'Online', group: 'HIII' },
-    { id: '2', name: 'PC-2', ip: '192.168.1.102', status: 'Offline' },
-    { id: '3', name: 'PC-3', ip: '192.168.1.103', status: 'Online' },
-  ]);
-
-  const [groups, setGroups] = useState<ComputerGroup[]>([
-    { id: '1', name: 'HIII', description: '主要伺服器群組', computerCount: 1 },
-    { id: '2', name: '測試伺服器', description: '開發環境測試用', computerCount: 0 },
-  ]);
-
+  const [computers, setComputers] = useState<Computer[]>([]);
+  const [groups, setGroups] = useState<ComputerGroup[]>([]);
   const [isAddComputerOpen, setIsAddComputerOpen] = useState(false);
   const [isAddGroupOpen, setIsAddGroupOpen] = useState(false);
-  // const [selectedComputers, setSelectedComputers] = useState<string[]>([]);
-  const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
-  // const [assignTargetGroup, setAssignTargetGroup] = useState<string>('');
   const [editingGroup, setEditingGroup] = useState<string | null>(null);
   const [groupSelectedComputers, setGroupSelectedComputers] = useState<{[key: string]: string[]}>({});
+  const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
 
-  const defaultGroupComputers = computers.filter(computer => !computer.group);
+  const [newComputer, setNewComputer] = useState({ ip: '', password: '', group: '' });
+  const [newGroup, setNewGroup] = useState({ name: '', description: '' });
 
-  const [newComputer, setNewComputer] = useState({
-    ip: '',
-    password: '',
-    group: '',
-  });
-
-  const [newGroup, setNewGroup] = useState({
-    name: '',
-    description: '',
-  });
-
-  const handleAddToGroup = (computerId: string, groupName: string) => {
-    setComputers(computers.map(computer =>
-      computer.id === computerId
-        ? { ...computer, group: groupName }
-        : computer
-    ));
-  };
-
-  const handleAddComputer = () => {
-    if (newComputer.ip) {
-      const computerName = `PC-${computers.length + 1}`;
-      const computer: Computer = {
-        id: (computers.length + 1).toString(),
-        name: computerName,
-        ip: newComputer.ip,
+  // -------------------- API --------------------
+  // 取得所有主機
+  const fetchAllComputers = async () => {
+    try {
+      const res = await fetch('/api/chm/pc/all');
+      const data = await res.json();
+      const pcs: Computer[] = Object.entries(data.Pcs).map(([uuid, pc]: any, ) => ({
+        id: uuid,
+        name: pc.Hostname,
+        ip: pc.Ip,
         status: 'Offline',
-        group: newComputer.group === 'none' ? undefined : newComputer.group,
-      };
-      setComputers([...computers, computer]);
-      setNewComputer({ ip: '', password: '', group: '' });
-      setIsAddComputerOpen(false);
+      }));
+      setComputers(pcs);
+    } catch (err) {
+      console.error('Fetch all PCs failed:', err);
+    }
+  };
+const defaultGroupComputers = computers.filter(computer => !computer.group);
+
+  // 新增管理主機
+  const addComputerAPI = async (ip: string, password: string) => {
+    try {
+      const res = await fetch('/api/chm/pc/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Ip: ip, Password: password })
+      });
+      const data = await res.json();
+      return data; // {Type: OK|ERR, Message: string}
+    } catch (err) {
+      console.error('Add PC API failed:', err);
+      return { Type: 'ERR', Message: String(err) };
     }
   };
 
-  const handleAddGroup = () => {
-    if (newGroup.name) {
+
+  // -------------------- PC Group --------------------
+  const fetchAllGroups = async () => {
+    try {
+      const res = await fetch('/api/chm/pcgroup');
+      const data = await res.json();
+      const groupList: ComputerGroup[] = Object.entries(data.Groups).map(([vxlanid, g]: any) => ({
+        id: vxlanid,
+        name: g.Groupname,
+        description: g.Describe || '',
+        computerCount: g.Pcs?.length || 0
+      }));
+      setGroups(groupList);
+    } catch (err) {
+      console.error('Fetch all groups failed:', err);
+    }
+  };
+
+  
+  const deleteGroupAPI = async (vxlanid: string) => {
+    try {
+      const res = await fetch('/api/chm/pcgroup', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Vxlanid: vxlanid })
+      });
+      return await res.json();
+    } catch (err) {
+      console.error('Delete group API failed:', err);
+      return { Type: 'ERR', Message: String(err) };
+    }
+  };
+
+  // -------------------- Init --------------------
+  useEffect(() => {
+    fetchAllComputers();
+    fetchAllGroups();
+  }, []);
+
+  // -------------------- Add / Remove PC --------------------
+  const handleAddComputer = async () => {
+    if (!newComputer.ip || !newComputer.password) return;
+
+    const result = await addComputerAPI(newComputer.ip, newComputer.password);
+    if (result.Type === 'OK') {
+      await fetchAllComputers();
+      setIsAddComputerOpen(false);
+      setNewComputer({ ip: '', password: '', group: '' });
+    } else {
+      alert(`Add PC failed: ${result.Message}`);
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: string) => {
+    const result = await deleteGroupAPI(groupId);
+    if (result.Type === 'OK') {
+      setGroups(groups.filter(g => g.id !== groupId));
+      setComputers(computers.map(c => c.group === groups.find(g => g.id === groupId)?.name ? { ...c, group: undefined } : c));
+    } else {
+      alert(`Delete group failed: ${result.Message}`);
+    }
+  };
+
+  const handleAddToGroup = async (computerId: string, groupName: string) => {
+  try {
+    // 找出電腦的 hostname
+    const targetComputer = computers.find(c => c.id === computerId);
+    if (!targetComputer) return;
+
+    // 呼叫 API 更新群組 (PATCH: 更新單一內容)
+    const response = await fetch("/api/chm/pcgroup", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        [groupName]: {
+          Pcs: [targetComputer.name] // 假設 Pcs 用 hostname
+        }
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.Type === "OK") {
+      // 成功就更新前端 state
+      setComputers(prev =>
+        prev.map(computer =>
+          computer.id === computerId ? { ...computer, group: groupName } : computer
+        )
+      );
+    } else {
+      alert(`Failed to add to group: ${data.Message}`);
+    }
+  } catch (error) {
+    console.error("Error adding to group:", error);
+    alert("Failed to add computer to group due to network error.");
+  }
+};
+
+const handleAddGroup = async () => {
+  if (!newGroup.name) return;
+
+  try {
+    const response = await fetch("/api/chm/pcgroup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        Groupname: newGroup.name,
+        Describe: newGroup.description
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.Type === "OK") {
+      // 成功就更新前端 state
       const group: ComputerGroup = {
-        id: (groups.length + 1).toString(),
+        id: (groups.length + 1).toString(), // 前端生成暫時 id
         name: newGroup.name,
         description: newGroup.description,
-        computerCount: 0,
+        computerCount: 0
       };
-      setGroups([...groups, group]);
-      setNewGroup({ name: '', description: '' });
+      setGroups(prev => [...prev, group]);
+      setNewGroup({ name: "", description: "" });
       setIsAddGroupOpen(false);
+    } else {
+      alert(`Failed to add group: ${data.Message}`);
     }
-  };
-
-  const handleDeleteGroup = (groupId: string) => {
-    const groupToDelete = groups.find(g => g.id === groupId);
-    if (groupToDelete) {
-      setComputers(computers.map(computer =>
-        computer.group === groupToDelete.name
-          ? { ...computer, group: undefined }
-          : computer
-      ));
-    }
-    setGroups(groups.filter(g => g.id !== groupId));
-  };
+  } catch (error) {
+    console.error("Error adding group:", error);
+    alert("Failed to add group due to network error.");
+  }
+};
 
   const handleRemoveFromGroup = (computerId: string, groupName: string) => {
     setComputers(computers.map(computer =>
