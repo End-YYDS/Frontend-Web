@@ -1,7 +1,7 @@
 //TODO: 序號API、更改憑證有效時間，要從後端拿
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, ShieldX} from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
+import type { PageMeta } from '@/types';
 
 interface Certificate {
   id: string;
@@ -49,7 +50,7 @@ interface RevokedCertificateInfo {
 }
 
 const CertificateManagementPage = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [certificates, setCertificates] = useState<Certificate[]>([
     {
       id: "1",
@@ -78,9 +79,9 @@ const CertificateManagementPage = () => {
   const [revokedCertificates, setRevokedCertificates] = useState<RevokedCertificateInfo[]>([]);
   const [revokeReason, setRevokeReason] = useState("");
 
-  const handleBackToHome = () => {
-    navigate('/');
-  };
+  // const handleBackToHome = () => {
+  //   navigate('/');
+  // };
 
   const generateNewCertificate = (commonName: string, issuer: string) => {
     const newCert: Certificate = {
@@ -108,7 +109,7 @@ const CertificateManagementPage = () => {
   };
 
   const handleRevokeCertificate = (certificateId: string, commonName: string, issuer: string, serialNumber: string) => {
-    const reason = revokeReason.trim() || "憑證管理員手動吊銷";
+    const reason = revokeReason.trim() || "Manually revoked by certificate administrator";
     
     // 移除原憑證並標記為已吊銷
     setCertificates(prev => prev.filter(cert => cert.id !== certificateId));
@@ -129,14 +130,14 @@ const CertificateManagementPage = () => {
       setCertificates(prev => [...prev, newCert]);
       
       toast({
-        title: "憑證處理完成",
-        description: `憑證 ${commonName} 已吊銷並重新發布新憑證`,
+        title: "Certificate process completed",
+        description: `Certificate ${commonName} has been revoked and a new one has been issued.`,
       });
     }, 1000);
 
     toast({
-      title: "憑證已吊銷",
-      description: `憑證 ${commonName} 已成功吊銷，正在重新發布新憑證...`,
+      title: "Certificate revoked",
+      description: `Certificate ${commonName} was successfully revoked. Reissuing a new certificate...`,
     });
     
     setRevokeReason("");
@@ -157,7 +158,7 @@ const CertificateManagementPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">有效憑證</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Certificates</CardTitle>
             <Shield className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -167,7 +168,7 @@ const CertificateManagementPage = () => {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">已吊銷憑證</CardTitle>
+            <CardTitle className="text-sm font-medium">Revoked Certificates</CardTitle>
             <ShieldX className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
@@ -181,10 +182,10 @@ const CertificateManagementPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-green-500" />
-            有效憑證列表
+            Active Certificates List
           </CardTitle>
           <CardDescription>
-            目前有效的CA憑證
+            Currently active CA certificates
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -192,10 +193,10 @@ const CertificateManagementPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>通用名稱</TableHead>
-                  <TableHead>簽名者</TableHead>
-                  <TableHead>有效期間</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+                  <TableHead>Common Name</TableHead>
+                  <TableHead>Issuer</TableHead>
+                  <TableHead>Validity</TableHead>
+                  <TableHead className="text-right">Operation</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -209,7 +210,7 @@ const CertificateManagementPage = () => {
                       <div className="text-sm">
                         <div>{cert.validFrom}</div>
                         <div className="text-gray-500">
-                          至 {cert.validTo}
+                          to {cert.validTo}
                         </div>
                       </div>
                     </TableCell>
@@ -217,43 +218,43 @@ const CertificateManagementPage = () => {
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="destructive" size="sm">
-                            吊銷
+                            Revoke
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>確認吊銷憑證</AlertDialogTitle>
+                            <AlertDialogTitle>Confirm Revocation</AlertDialogTitle>
                             <AlertDialogDescription>
-                              您確定要吊銷憑證「{cert.commonName}」嗎？
+                              Are you sure you want to revoke certificate "{cert.commonName}"?
                               <br />
-                              序號：{cert.serialNumber}
+                              Serial Number: {cert.serialNumber}
                               <br />
                               <span className="text-red-600 font-medium">
-                                此操作無法復原，憑證吊銷後將立即失效並重新發布新憑證。
+                                This action cannot be undone. The certificate will be immediately invalidated and a new one will be issued.
                               </span>
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                               <Label htmlFor="reason" className="text-right">
-                                吊銷原因
+                                Revocation Reason
                               </Label>
                               <Input
                                 id="reason"
                                 value={revokeReason}
                                 onChange={(e) => setRevokeReason(e.target.value)}
-                                placeholder="請輸入吊銷原因（可選）"
+                                placeholder="Enter revocation reason (optional)"
                                 className="col-span-3"
                               />
                             </div>
                           </div>
                           <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setRevokeReason("")}>取消</AlertDialogCancel>
+                            <AlertDialogCancel onClick={() => setRevokeReason("")}>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleRevokeCertificate(cert.id, cert.commonName, cert.issuer, cert.serialNumber)}
                               className="bg-red-600 hover:bg-red-700"
                             >
-                              確認吊銷
+                              Confirm Revocation
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -265,7 +266,7 @@ const CertificateManagementPage = () => {
                 {activeCertificates.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                      暫無有效憑證
+                      No active certificates
                     </TableCell>
                   </TableRow>
                 )}
@@ -280,10 +281,10 @@ const CertificateManagementPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShieldX className="h-5 w-5 text-red-500" />
-            已吊銷憑證列表
+            Revoked Certificates List
           </CardTitle>
           <CardDescription>
-            已被吊銷的CA憑證記錄
+            Records of revoked CA certificates
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -291,9 +292,9 @@ const CertificateManagementPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>序號</TableHead>
-                  <TableHead>吊銷時間</TableHead>
-                  <TableHead>吊銷原因</TableHead>
+                  <TableHead>Serial Number</TableHead>
+                  <TableHead>Revoked At</TableHead>
+                  <TableHead>Reason</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -310,7 +311,7 @@ const CertificateManagementPage = () => {
                 {revokedCertificates.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
-                      暫無已吊銷憑證
+                      No revoked certificates
                     </TableCell>
                   </TableRow>
                 )}
@@ -322,5 +323,11 @@ const CertificateManagementPage = () => {
     </div>
   );
 };
+
+(CertificateManagementPage as any).meta = {
+  requiresAuth: false, //驗證
+  layout: true,
+  // allowedRoles: ['admin']
+} satisfies PageMeta;
 
 export default CertificateManagementPage;

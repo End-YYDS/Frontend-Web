@@ -684,10 +684,9 @@ const SoftwarePackagesPage = () => {
                 }
               }} 
               disabled={isLoading}
-              style={{ backgroundColor: '#7B86AA' }}
-              className="hover:opacity-90"
+              className="bg-red-500 hover:bg-red-600"
             >
-              Confirm Remove
+              Remove
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

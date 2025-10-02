@@ -755,8 +755,7 @@ const NetworkConfigurationPage = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() =>handleDeleteRoute} disabled={isLoading}
-              style={{ backgroundColor: '#7B86AA' }}
-              className="hover:opacity-90"
+              className="bg-red-500 hover:bg-red-600"
             >
               Delete
             </AlertDialogAction>

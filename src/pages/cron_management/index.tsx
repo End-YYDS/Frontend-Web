@@ -569,7 +569,10 @@ const CronManagement = () => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteSelected}>
+                  <AlertDialogAction 
+                    onClick={handleDeleteSelected}
+                    className="bg-red-500 hover:bg-red-600"
+                  >
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -608,8 +611,12 @@ const CronManagement = () => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleBatchEnable}>
-                    enable
+                  <AlertDialogAction 
+                    onClick={handleBatchEnable}
+                    style={{ backgroundColor: '#7B86AA' }}
+                    className="hover:opacity-90"
+                  >
+                    Enable
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -637,8 +644,12 @@ const CronManagement = () => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleBatchDisable}>
-                    disable
+                  <AlertDialogAction 
+                    onClick={handleBatchDisable}
+                    style={{ backgroundColor: '#7B86AA' }}
+                    className="hover:opacity-90"
+                  >
+                    Disable
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -730,8 +741,12 @@ const CronManagement = () => {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleToggleStatus(job.id)}>
-                              {job.status === 'active' ? 'disable' : 'enable'}
+                            <AlertDialogAction 
+                              onClick={() => handleToggleStatus(job.id)}
+                              style={{ backgroundColor: '#7B86AA' }}
+                              className="hover:opacity-90"
+                            >
+                              {job.status === 'active' ? 'Disable' : 'Enable'}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -756,7 +771,10 @@ const CronManagement = () => {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteJob(job.id)}>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteJob(job.id)}
+                              className="bg-red-500 hover:bg-red-600"
+                            >
                               Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>

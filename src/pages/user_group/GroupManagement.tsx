@@ -96,12 +96,17 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
                     </AlertDialogTrigger>
                     <AlertDialogContent className="max-w-sm mx-auto">
                       <AlertDialogHeader>
-                        <AlertDialogTitle>確定要刪除群組 {group.name} 嗎？</AlertDialogTitle>
-                        <AlertDialogDescription>此操作無法還原</AlertDialogDescription>
+                        <AlertDialogTitle>Are you sure you want to delete group {group.name}?</AlertDialogTitle>
+                        <AlertDialogDescription>This action cannot be undone</AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>取消</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDeleteGroup(group.id)}>刪除</AlertDialogAction>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => onDeleteGroup(group.id)}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          Delete
+                        </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>

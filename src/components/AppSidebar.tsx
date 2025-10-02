@@ -5,6 +5,7 @@ import {
   Users,
   Shield,
   Settings,
+  ShieldCheck,
   Archive,
   FileText,
   Monitor,
@@ -45,6 +46,7 @@ const items: Item[] = [
 
   { title: 'CHM - Backup', url: '/backup', icon: Archive },
   { title: 'CHM - Settings', url: '/settings', icon: Settings },
+  { title: 'CHM - mCA', url: '/certificate_management', icon: ShieldCheck },
   { title: 'System & Host Logs', url: '/s&h-logs', icon: FileText },
 
   { title: 'CHM - PC Manager', url: '/pc-manager', icon: Monitor },
@@ -62,7 +64,7 @@ const items: Item[] = [
 // 分類配置：父層是分類名稱，子層是要顯示的 item 標題
 const categories: Record<string, string[]> = {
   User: ['CHM - User & Group', 'CHM - Roles'],
-  System: ['CHM - Backup', 'CHM - Settings', 'System & Host Logs'],
+  System: ['CHM - Backup', 'CHM - Settings', 'CHM - mCA', 'System & Host Logs'],
   'Host Management': ['CHM - PC Manager', 'Process Manager', 'Cron Management'],
   'Resources & Services': ['Servers', 'Software Package', 'File Manager'],
   Network: ['Firewall', 'Network Configuration'],

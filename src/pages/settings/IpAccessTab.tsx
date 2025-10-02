@@ -353,7 +353,10 @@ const IpAccessTab = () => {
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteIp(entry.id)}>
+                                  <AlertDialogAction 
+                                    onClick={() => handleDeleteIp(entry.id)}
+                                    className="bg-red-500 hover:bg-red-600"
+                                  >
                                     Delete
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
