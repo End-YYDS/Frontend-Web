@@ -55,7 +55,7 @@ const sidebarItems = [
     items: [
       { name: "CHM - Backup", icon: Archive, path: "/backup" },
       { name: "CHM - Settings", icon: Settings, path: "/settings" },
-      { name: "System & Host Logs", icon: FileText, path: "/logs" },
+      { name: "System & Host Logs", icon: FileText, path: "/syslogs" },
     ],
   },
   {

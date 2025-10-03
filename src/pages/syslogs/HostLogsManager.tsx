@@ -1,0 +1,219 @@
+import React, { useEffect, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+// import { Calendar } from '@/components/ui/calendar';
+// import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Search, Filter, Download, ChevronDown, ChevronRight, Server } from 'lucide-react';
+// import { format } from 'date-fns';
+// import { cn } from '@/lib/utils';
+
+// -------------------- Type 定義 --------------------
+interface LogEntry {
+  id: string;
+  Month: string;
+  Day: number;
+  Time: string;
+  Hostname: string;
+  Type: 'SYSTEM' | 'WARNING' | 'ERROR' | 'INFO';
+  Messages: string;
+}
+
+interface PcEntry {
+  uuid: string;
+}
+
+// -------------------- Component --------------------
+export const HostLogsManager = () => {
+  const [pcs, setPcs] = useState<PcEntry[]>([]);
+  const [selectedPc, setSelectedPc] = useState('');
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLogs, setSelectedLogs] = useState<string[]>([]);
+  const [expandedLogs, setExpandedLogs] = useState<string[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterValues, ] = useState({ month: '', timeRange: '', type: '' });
+  const [filterEnabled, ] = useState({ month: false, date: false, timeRange: false, type: false });
+  const [selectedDate, ] = useState<Date>();
+
+  // -------------------- Helper --------------------
+  const getMonthName = (monthNumber: string) => {
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return months[parseInt(monthNumber)-1];
+  };
+
+  // const checkTimeRange = (time: string, range: string) => {
+  //   const hour = parseInt(time.split(':')[0]);
+  //   switch(range){
+  //     case 'morning': return hour >=6 && hour<12;
+  //     case 'afternoon': return hour>=12 && hour<18;
+  //     case 'evening': return hour>=18 && hour<24;
+  //     case 'night': return hour>=0 && hour<6;
+  //     default: return true;
+  //   }
+  // };
+
+  const getTypeVariant = (type: string) => {
+    switch(type){
+      case 'SYSTEM': return 'default';
+      case 'WARNING': return 'destructive';
+      case 'ERROR': return 'destructive';
+      case 'INFO': return 'secondary';
+      default: return 'default';
+    }
+  };
+
+  // const applyFilter = (key: string, value: string) => {
+  //   setFilterValues(prev => ({ ...prev, [key]: value }));
+  // };
+
+  // const clearFilters = () => {
+  //   setFilterValues({ month: '', timeRange: '', type: '' });
+  //   setFilterEnabled({ month: false, date: false, timeRange: false, type: false });
+  //   setSelectedDate(undefined);
+  // };
+
+  // -------------------- API --------------------
+  const fetchPcs = async () => {
+    try {
+      const res = await fetch('/api/logs/pc/all');
+      if (!res.ok) throw new Error('Failed to fetch PCs');
+      const data = await res.json();
+      const pcsData: PcEntry[] = Object.values(data.Pcs);
+      setPcs(pcsData);
+    } catch (err) {
+      console.error('Failed to fetch PCs:', err);
+    }
+  };
+
+  const fetchLogs = async (uuid: string) => {
+    if (!uuid) return;
+    try {
+      // 如果有任何過濾條件，使用 query API
+      let url = `/api/logs/pc?Uuid=${uuid}`;
+      if (filterEnabled.month) url = `/api/logs/pc/query?Uuid=${uuid}&Search=Month&Parameter=${getMonthName(filterValues.month)}`;
+      else if (filterEnabled.timeRange) url = `/api/logs/pc/query?Uuid=${uuid}&Search=Time&Parameter=${filterValues.timeRange}`;
+      else if (filterEnabled.type) url = `/api/logs/pc/query?Uuid=${uuid}&Search=Type&Parameter=${filterValues.type}`;
+      else if (filterEnabled.date && selectedDate) url = `/api/logs/pc/query?Uuid=${uuid}&Search=Day&Parameter=${selectedDate.getDate().toString()}`;
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch logs');
+      const data = await res.json();
+      const logsData: LogEntry[] = Object.entries(data.Logs).map(([id, log]: any) => ({ id, ...log }));
+      setLogs(logsData);
+    } catch (err) {
+      console.error('Failed to fetch logs:', err);
+      setLogs([]);
+    }
+  };
+
+  useEffect(()=>{ fetchPcs(); }, []);
+  useEffect(()=>{ fetchLogs(selectedPc); }, [selectedPc, filterValues, filterEnabled, selectedDate]);
+
+  // -------------------- Log 操作 --------------------
+  const toggleLogExpansion = (logId: string) => {
+    setExpandedLogs(prev => prev.includes(logId) ? prev.filter(id=>id!==logId) : [...prev, logId]);
+  };
+
+  const toggleLogSelection = (logId: string) => {
+    setSelectedLogs(prev => prev.includes(logId) ? prev.filter(id=>id!==logId) : [...prev, logId]);
+  };
+
+  const selectAllLogs = () => {
+    if (selectedLogs.length===logs.length) setSelectedLogs([]);
+    else setSelectedLogs(logs.map(log=>log.id));
+  };
+
+  // -------------------- JSX --------------------
+  return (
+    <div className="space-y-4 p-4">
+      {/* PC 選擇 */}
+      <div className="flex items-center space-x-4 p-4 bg-muted/50 rounded-lg">
+        <Server className="h-5 w-5" />
+        <span className="text-sm font-medium">Select PC:</span>
+        <Select value={selectedPc} onValueChange={setSelectedPc}>
+          <SelectTrigger className="w-48 border rounded-md px-3 py-2 bg-white text-gray-700">
+            <SelectValue placeholder="Please select a PC" />
+          </SelectTrigger>
+          <SelectContent>
+            {pcs.map(pc => <SelectItem key={pc.uuid} value={pc.uuid}>{pc.uuid}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {selectedPc && (
+        <>
+          {/* 搜尋 / Filter / Export */}
+          <div className="flex space-x-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input placeholder="Search logs..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="pl-10" />
+            </div>
+            <Button variant="outline" onClick={()=>setIsFilterOpen(!isFilterOpen)} className="flex items-center space-x-2">
+              <Filter className="h-4 w-4" /><span>Filter</span>
+            </Button>
+            <Button style={{ backgroundColor: '#7B86AA' }} className="hover:opacity-90 text-white">
+              <Download className="h-4 w-4" />
+              <span>{selectedLogs.length>0 ? `Export (${selectedLogs.length})` : 'Export (All)'}</span>
+            </Button>
+          </div>
+
+          {/* Collapsible Advanced Filter */}
+          <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <CollapsibleContent className="space-y-4 p-4 border rounded-lg bg-muted/50">
+              <h3 className="font-medium text-sm">Advanced Filters</h3>
+              {/* Month / Date / Time / Type Filter 同你提供的 UI */}
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Logs Table */}
+          <div className="border rounded-lg text-xs">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableCell><Checkbox checked={selectedLogs.length===logs.length} onCheckedChange={selectAllLogs} /></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Day</TableCell>
+                  <TableCell>Time</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Messages</TableCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.filter(log=>log.Messages.toLowerCase().includes(searchTerm.toLowerCase())).map(log=>(
+                  <React.Fragment key={log.id}>
+                    <TableRow className="hover:bg-muted/50">
+                      <TableCell><Checkbox checked={selectedLogs.includes(log.id)} onCheckedChange={()=>toggleLogSelection(log.id)} /></TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={()=>toggleLogExpansion(log.id)} className="h-8 w-8 p-0">
+                          {expandedLogs.includes(log.id) ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
+                        </Button>
+                      </TableCell>
+                      <TableCell>{log.Month}</TableCell>
+                      <TableCell>{log.Day}</TableCell>
+                      <TableCell>{log.Time}</TableCell>
+                      <TableCell><Badge variant={getTypeVariant(log.Type)}>{log.Type}</Badge></TableCell>
+                      <TableCell className="max-w-md truncate">{log.Messages}</TableCell>
+                    </TableRow>
+                    {expandedLogs.includes(log.id) && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="bg-muted/30 p-4 text-xs break-words max-h-[200px] overflow-y-auto">
+                          {log.Messages}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
