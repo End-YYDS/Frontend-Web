@@ -51,7 +51,7 @@ const CronManagement = () => {
       setJobs(jobsArray);
     } catch (error) {
       console.error(error);
-      toast({ title: 'Fetch Failed', description: 'Failed to fetch cron jobs', variant: 'destructive' });
+      toast({ title: 'Fetch Failed', description: 'Failed to fetch cron jobs' });
     }
   };
 
@@ -61,7 +61,7 @@ const CronManagement = () => {
       toast({ title: 'Success', description: 'Cron job added' });
       fetchJobs();
     } catch (error) {
-      toast({ title: 'Failed', description: 'Failed to add cron job', variant: 'destructive' });
+      toast({ title: 'Failed', description: 'Failed to add cron job'});
     }
   };
 
@@ -72,7 +72,7 @@ const CronManagement = () => {
       toast({ title: 'Success', description: 'Cron job updated' });
       fetchJobs();
     } catch (error) {
-      toast({ title: 'Failed', description: 'Failed to update cron job', variant: 'destructive' });
+      toast({ title: 'Failed', description: 'Failed to update cron job'});
     }
   };
 
@@ -83,7 +83,7 @@ const CronManagement = () => {
       toast({ title: 'Success', description: 'Cron job deleted' });
       fetchJobs();
     } catch (error) {
-      toast({ title: 'Failed', description: 'Failed to delete cron job', variant: 'destructive' });
+      toast({ title: 'Failed', description: 'Failed to delete cron job'});
     }
   };
 
@@ -98,7 +98,7 @@ const CronManagement = () => {
       toast({ title: 'Success', description: 'Cron jobs imported' });
       fetchJobs();
     } catch (error) {
-      toast({ title: 'Failed', description: 'Failed to import cron jobs', variant: 'destructive' });
+      toast({ title: 'Failed', description: 'Failed to import cron jobs'});
     }
   };
 
@@ -115,7 +115,7 @@ const CronManagement = () => {
       URL.revokeObjectURL(url);
       toast({ title: 'Success', description: 'Cron jobs exported' });
     } catch (error) {
-      toast({ title: 'Failed', description: 'Failed to export cron jobs', variant: 'destructive' });
+      toast({ title: 'Failed', description: 'Failed to export cron jobs'});
     }
   };
 
@@ -236,11 +236,11 @@ const CronManagement = () => {
     else setSelectedJobs(currentJobs.map(job => job.id));
   };
 
-  const handleToggleStatus = async (jobId: number) => {
-    const job = jobs.find(j => j.id === jobId);
-    if (!job) return;
-    const newStatus = job.status === 'active' ? 'inactive' : 'active';
-    await updateJobApi(jobId, { ...job, status: newStatus });
+  const handleToggleStatus = async () => {
+    // const job = jobs.find(j => j.id === jobId);
+    // if (!job) return;
+    // const newStatus = job.status === 'active' ? 'inactive' : 'active';
+    // await updateJobApi(jobId, { ...job, status: newStatus });
   };
 
   const handleBatchEnable = async () => {
@@ -255,8 +255,14 @@ const CronManagement = () => {
         Name: job.jobName,
         Command: job.command,
         Username: job.username,
-        Schedule: job.schedule,
-        status: 'active'
+        Schedule: {
+          Minute: parseInt(newJob.minute) || 0,
+          Hour: parseInt(newJob.hour) || 0,
+          Date: parseInt(newJob.date) || 0,
+          Month: parseInt(newJob.month) || 0,
+          Week: parseInt(newJob.week) || 0,
+        },
+        // status: 'active'
       };
       return updateJobApi(id, payload);
     }));
@@ -268,7 +274,7 @@ const CronManagement = () => {
       const job = jobs.find(j => j.id === id);
       return job && job.status === 'active';
     });
-    await Promise.all(toDisable.map(id => updateJobApi(id, { ...jobs.find(j => j.id === id), status: 'inactive' } as CronJobEntry)));
+    await Promise.all(toDisable.map(id => updateJobApi(id, { ...jobs.find(j => j.id === id), status: 'inactive' } as unknown as CronJobEntry)));
     toast({ title: "Success", description: "Selected jobs have been disabled" });
   };
 
@@ -707,7 +713,7 @@ const CronManagement = () => {
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction 
-                              onClick={() => handleToggleStatus(job.id)}
+                              onClick={() => handleToggleStatus()}
                               style={{ backgroundColor: '#7B86AA' }}
                               className="hover:opacity-90"
                             >
