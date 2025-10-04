@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Pagination,
   PaginationContent,
@@ -11,53 +12,43 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagement } from "./UserManagement";
 import { GroupManagement } from "./GroupManagement";
-import type { User, Group } from "./types";
-
-import { type PageMeta } from '@/types';
+import type { User, Group, CreateUserRequest, PatchUser, CreateGroupRequest, PatchGroup } from "./types";
+import { type PageMeta } from "@/types";
 
 const UserGroup = () => {
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: 1,
-      username: "user1",
-      groups: ["group1"],
-      homeDirectory: "/root",
-      shell: "/usr/sbin/nologin",
-    },
-    {
-      id: 2,
-      username: "user2",
-      groups: ["group1", "group2"],
-      homeDirectory: "/bin",
-      shell: "/usr/sbin/nologin",
-    },
-    {
-      id: 3,
-      username: "user3",
-      groups: ["group2"],
-      homeDirectory: "/bin",
-      shell: "/usr/sbin/nologin",
-    },
-  ]);
-
-  const [groups, setGroups] = useState<Group[]>([
-    {
-      id: 1,
-      name: "group1",
-      users: ["user1", "user2"],
-    },
-    {
-      id: 2,
-      name: "group2",
-      users: ["user2", "user3"],
-    },
-  ]);
-
+  const [users, setUsers] = useState<User[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState<"users" | "groups">("users");
   const itemsPerPage = 10;
 
+  // --------------- Fetch Data -----------------
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get<{ Users: User[] }>("/api/chm/user", { withCredentials: true });
+      setUsers(res.data.Users || []);
+    } catch (err) {
+      toast("Failed to fetch user data.",);
+    }
+  };
+
+  const fetchGroups = async () => {
+    try {
+      const res = await axios.get<{ Groups: Group[] }>("/api/chm/group", { withCredentials: true });
+      setGroups(res.data.Groups || []);
+    } catch (err) {
+      toast("Failed to fetch group data.",);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchUsers();
+    fetchGroups();
+  }, []);
+
+  // --------------- Filtered & Pagination -----------------
   const filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -71,109 +62,102 @@ const UserGroup = () => {
   );
 
   const totalPages = Math.ceil(
-    (activeTab === "users" ? filteredUsers.length : filteredGroups.length) /
-      itemsPerPage
+    (activeTab === "users" ? filteredUsers.length : filteredGroups.length) / itemsPerPage
   );
 
-  const handleAddUser = (user: Omit<User, "id">) => {
-    const newUser: User = { id: Date.now(), ...user };
-    setUsers((prev) => [...prev, newUser]);
-    setGroups((prev) =>
-      prev.map((group) =>
-        user.groups.includes(group.name)
-          ? { ...group, users: [...group.users, user.username] }
-          : group
-      )
-    );
-    toast("使用者已新增");
-  };
-
-  const handleUpdateUser = (id: number, user: Omit<User, "id">) => {
-    const oldUser = users.find((u) => u.id === id);
-    setUsers((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, ...user } : u))
-    );
-    if (oldUser) {
-      setGroups((prev) =>
-        prev.map((group) => ({
-          ...group,
-          users: group.users
-            .filter((username) => username !== oldUser.username)
-            .concat(user.groups.includes(group.name) ? [user.username] : []),
-        }))
-      );
-    }
-    toast("使用者資訊已更新");
-  };
-
-  const handleDeleteUser = (userId: number) => {
-    const user = users.find((u) => u.id === userId);
-    if (user) {
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
-      setGroups((prev) =>
-        prev.map((group) => ({
-          ...group,
-          users: group.users.filter((username) => username !== user.username),
-        }))
-      );
-      toast("使用者已刪除");
+  // ------------------- User CRUD --------------------
+  const handleAddUser = async (user: Omit<User, "id">) => {
+    try {
+      const req: CreateUserRequest = {
+        username: user.username,
+        groups: user.groups,
+        homeDirectory: user.homeDirectory,
+        shell: user.shell,
+      };
+      const res = await axios.post<{ id: number }>("/api/chm/user", req, { withCredentials: true });
+      setUsers((prev) => [...prev, { ...user, id: Number(res.data.id) }]);
+      toast("User has been added.");
+      fetchGroups(); // 更新群組成員
+    } catch {
+      toast("Failed to add user.");
     }
   };
 
-  const handleDeleteSelectedUsers = (userIds: number[]) => {
-    const selectedUserObjects = users.filter((user) =>
-      userIds.includes(user.id)
-    );
-    const selectedUsernames = selectedUserObjects.map((u) => u.username);
-    setUsers((prev) => prev.filter((u) => !userIds.includes(u.id)));
-    setGroups((prev) =>
-      prev.map((group) => ({
-        ...group,
-        users: group.users.filter(
-          (username) => !selectedUsernames.includes(username)
-        ),
-      }))
-    );
-    toast("選中的使用者已刪除");
-  };
-
-  const handleCreateGroup = (name: string) => {
-    const newGroup: Group = { id: Date.now(), name, users: [] };
-    setGroups((prev) => [...prev, newGroup]);
-    toast("群組已新增");
-  };
-
-  const handleAddGroup = (group: Omit<Group, "id">) => {
-    const newGroup: Group = { id: Date.now(), ...group };
-    setGroups((prev) => [...prev, newGroup]);
-    toast("群組已新增");
-  };
-
-  const handleUpdateGroup = (id: number, group: Omit<Group, "id">) => {
-    setGroups((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, ...group } : g))
-    );
-    toast("群組已更新");
-  };
-
-  const handleDeleteGroup = (groupId: number) => {
-    const group = groups.find((g) => g.id === groupId);
-    if (group) {
-      setGroups((prev) => prev.filter((g) => g.id !== groupId));
+  const handleUpdateUser = async (id: number, user: Omit<User, "id">) => {
+    try {
+      const patch: PatchUser = {
+        username: user.username,
+        groups: user.groups,
+        homeDirectory: user.homeDirectory,
+        shell: user.shell,
+      };
+      await axios.patch(`/api/chm/user`, { [id]: patch }, { withCredentials: true });
       setUsers((prev) =>
-        prev.map((user) => ({
-          ...user,
-          groups: user.groups.filter((g) => g !== group.name),
-        }))
+        prev.map((u) => (u.id === Number(id) ? { ...u, ...user } : u))
       );
-      toast("群組已刪除");
+      toast("User has been updated.");
+      fetchGroups();
+    } catch {
+      toast("Failed to update user.");
+    }
+  };
+
+  const handleDeleteUser = async (id: number) => {
+      try {
+        await axios.delete("/api/chm/user", { data: { uid: id.toString() }, withCredentials: true });
+        setUsers((prev) => prev.filter((u) => u.id !== id));
+        toast("User has been deleted.");
+        fetchGroups();
+      } catch {
+        toast("Failed to delete user.");
+      }
+    };
+
+  // ------------------- Group CRUD --------------------
+  const handleAddGroup = async (group: Omit<Group, "id">) => {
+    try {
+      const req: CreateGroupRequest = {
+        name: group.name,
+        users: group.users,
+      };
+      const res = await axios.post<{ id: number }>("/api/chm/group", req, { withCredentials: true });
+      setGroups((prev) => [...prev, { ...group, id: Number(res.data.id) }]);
+      toast("Group has been added.");
+    } catch {
+      toast("Failed to add group.");
+    }
+  };
+
+  const handleUpdateGroup = async (id: number, group: Omit<Group, "id">) => {
+    try {
+      const patch: PatchGroup = {
+        name: group.name,
+        users: group.users,
+      };
+      await axios.patch("/api/chm/group", { [id]: patch }, { withCredentials: true });
+      setGroups((prev) =>
+        prev.map((g) => (g.id === Number(id) ? { ...g, ...group } : g))
+      );
+      toast("Group has been updated.");
+    } catch {
+      toast("Failed to update group.");
+    }
+  };
+
+  const handleDeleteGroup = async (id: number) => {
+    try {
+      await axios.delete("/api/chm/group", { data: { gid: id }, withCredentials: true });
+      setGroups((prev) => prev.filter((g) => g.id !== Number(id)));
+      toast("Group has been deleted.");
+    } catch {
+      toast("Failed to delete group.");
     }
   };
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <div className="bg-[#A8AEBD] py-3 mb-3">
-        <h1 className="text-2xl font-extrabold text-center text-[#E6E6E6]">
+      <div className="bg-[#A8AEBD] py-1.5 mb-6">
+        <h1 className="text-4xl font-extrabold text-center text-[#E6E6E6]">
           User & Group
         </h1>
       </div>
@@ -186,35 +170,27 @@ const UserGroup = () => {
         }}
         className="w-full"
       >
-        <TabsList className="w-full bg-[#F7F8FA] border-b rounded-b-lg">
-          <TabsTrigger
-            value="users"
-            className="flex w-full font-bold flex-col gap-6 data-[state=active]:bg-[#A8AEBD] data-[state=active]:text-white text-gray-700"
-          >
-            User
-          </TabsTrigger>
-          <TabsTrigger
-            value="groups"
-            className="flex w-full font-bold flex-col gap-6 data-[state=active]:bg-[#A8AEBD] data-[state=active]:text-white text-gray-700"
-          >
-            Group
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="users">User</TabsTrigger>
+          <TabsTrigger value="groups">Group</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="users" className="bg-white p-4">
+        <TabsContent value="users" className="space-y-4">
           <UserManagement
             users={users}
             onAddUser={handleAddUser}
             onUpdateUser={handleUpdateUser}
             onDeleteUser={handleDeleteUser}
-            onDeleteSelectedUsers={handleDeleteSelectedUsers}
             groups={groups}
-            onCreateGroup={handleCreateGroup}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-          />
+            itemsPerPage={itemsPerPage} onDeleteSelectedUsers={(ids: number[]): void => {
+              // Implement functionality for deleting selected users
+              ids.forEach((id) => handleDeleteUser(id));
+            }} onCreateGroup={() => {
+              toast("Create group functionality is not implemented yet.");
+            }}          />
           {filteredUsers.length > itemsPerPage && (
             <PaginationBar
               currentPage={currentPage}
@@ -224,7 +200,7 @@ const UserGroup = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="groups" className="bg-white p-4">
+        <TabsContent value="groups" className="space-y-4">
           <GroupManagement
             groups={groups}
             users={users}
@@ -249,7 +225,7 @@ const UserGroup = () => {
   );
 };
 
-// 分頁元件抽出來共用
+// ---------------- Pagination ----------------
 const PaginationBar = ({
   currentPage,
   totalPages,
@@ -297,9 +273,8 @@ const PaginationBar = ({
 );
 
 (UserGroup as any).meta = {
-  requiresAuth: false, //驗證
+  requiresAuth: false,
   layout: true,
-  // allowedRoles: ['admin']
 } satisfies PageMeta;
 
 export default UserGroup;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Plus, Trash2, Edit, FileDown, FileUp, Power, PowerOff } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import type { PageMeta } from '@/types';
+import axios from "axios";
+import type { CronJobEntry, GetAllResponse, CreateCronRequest, DeleteCronRequest, PutCronRequest } from "./types";
 
 interface CronJob {
   id: number;
@@ -22,95 +24,111 @@ interface CronJob {
 
 const CronManagement = () => {
   const { toast } = useToast();
-  const [jobs, setJobs] = useState<CronJob[]>([
-    {
-      id: 1,
-      username: 'user1',
-      jobName: 'cache cleaner',
-      command: 'rm -rf /var/cache',
-      schedule: 'Startup',
-      status: 'active'
-    },
-    {
-      id: 2,
-      username: 'user2',
-      jobName: 'keep alive',
-      command: 'ping google.com',
-      schedule: 'Daily',
-      status: 'inactive'
-    },
-    {
-      id: 3,
-      username: 'user1',
-      jobName: 'logger',
-      command: '/usr/bin/find',
-      schedule: '30minute/1hour',
-      status: 'inactive'
-    }
-  ]);
-
+  const [jobs, setJobs] = useState<CronJob[]>([]);
   const [selectedJobs, setSelectedJobs] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<CronJob | null>(null);
-  const [newJob, setNewJob] = useState({
-    username: '',
-    jobName: '',
-    command: '',
-    schedule: '',
-    status: 'active' as 'active' | 'inactive',
-    scheduleType: 'quick' as 'quick' | 'custom',
-    quickSchedule: '',
-    minute: '',
-    hour: '',
-    date: '',
-    month: '',
-    week: ''
+  const [newJob, setNewJob] = useState<any>({
+    username: '', jobName: '', command: '', schedule: '', status: 'active',
+    scheduleType: 'quick', quickSchedule: '', minute: '', hour: '', date: '', month: '', week: ''
   });
-
   const itemsPerPage = 10;
 
-  const filteredJobs = jobs.filter(job =>
-    job.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.jobName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.command.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentJobs = filteredJobs.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleSelectJob = (jobId: number) => {
-    setSelectedJobs(prev => 
-      prev.includes(jobId) 
-        ? prev.filter(id => id !== jobId)
-        : [...prev, jobId]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedJobs.length === currentJobs.length) {
-      setSelectedJobs([]);
-    } else {
-      setSelectedJobs(currentJobs.map(job => job.id));
+  // -------------------- API --------------------
+  const fetchJobs = async () => {
+    try {
+      const res = await axios.get<GetAllResponse>('/api/cron/all', { withCredentials: true });
+      const jobsArray: CronJob[] = Object.entries(res.data.Jobs).map(([id, job]) => ({
+        id: Number(id),
+        username: job.Username,
+        jobName: job.Name,
+        command: job.Command,
+        schedule: `${job.Schedule.Minute}/${job.Schedule.Hour}/${job.Schedule.Date}/${job.Schedule.Month}/${job.Schedule.Week}`,
+        status: 'active'
+      }));
+      setJobs(jobsArray);
+    } catch (error) {
+      console.error(error);
+      toast({ title: 'Fetch Failed', description: 'Failed to fetch cron jobs', variant: 'destructive' });
     }
   };
 
+  const addJobApi = async (job: CreateCronRequest) => {
+    try {
+      await axios.post('/api/cron', job, { withCredentials: true });
+      toast({ title: 'Success', description: 'Cron job added' });
+      fetchJobs();
+    } catch (error) {
+      toast({ title: 'Failed', description: 'Failed to add cron job', variant: 'destructive' });
+    }
+  };
+
+  const updateJobApi = async (id: number, job: CronJobEntry) => {
+    try {
+      const data: PutCronRequest = { [id]: job };
+      await axios.put('/api/cron', data, { withCredentials: true });
+      toast({ title: 'Success', description: 'Cron job updated' });
+      fetchJobs();
+    } catch (error) {
+      toast({ title: 'Failed', description: 'Failed to update cron job', variant: 'destructive' });
+    }
+  };
+
+  const deleteJobApi = async (id: number) => {
+    try {
+      const data: DeleteCronRequest = { id: id.toString() };
+      await axios.delete('/api/cron', { data, withCredentials: true });
+      toast({ title: 'Success', description: 'Cron job deleted' });
+      fetchJobs();
+    } catch (error) {
+      toast({ title: 'Failed', description: 'Failed to delete cron job', variant: 'destructive' });
+    }
+  };
+
+  const importJobsApi = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      await axios.post('/api/cron/action/import', formData, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast({ title: 'Success', description: 'Cron jobs imported' });
+      fetchJobs();
+    } catch (error) {
+      toast({ title: 'Failed', description: 'Failed to import cron jobs', variant: 'destructive' });
+    }
+  };
+
+  const exportJobsApi = async () => {
+    try {
+      const res = await axios.post('/api/cron/action/export', {}, { withCredentials: true, responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `cron-jobs-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({ title: 'Success', description: 'Cron jobs exported' });
+    } catch (error) {
+      toast({ title: 'Failed', description: 'Failed to export cron jobs', variant: 'destructive' });
+    }
+  };
+
+  // -------------------- Lifecycle --------------------
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  // -------------------- Helper Functions --------------------
   const resetNewJob = () => {
     setNewJob({
-      username: '',
-      jobName: '',
-      command: '',
-      schedule: '',
-      status: 'active',
-      scheduleType: 'quick',
-      quickSchedule: '',
-      minute: '',
-      hour: '',
-      date: '',
-      month: '',
-      week: ''
+      username: '', jobName: '', command: '', schedule: '', status: 'active',
+      scheduleType: 'quick', quickSchedule: '', minute: '', hour: '', date: '', month: '', week: ''
     });
   };
 
@@ -127,20 +145,13 @@ const CronManagement = () => {
   const buildScheduleString = () => {
     if (newJob.scheduleType === 'quick' && newJob.quickSchedule) {
       switch (newJob.quickSchedule) {
-        case 'Startup':
-          return 'Startup';
-        case 'Hourly':
-          return 'Hourly';
-        case 'Daily':
-          return 'Daily';
-        case 'Weekly':
-          return 'Weekly';
-        case 'Monthly':
-          return 'Monthly';
-        case 'Yearly':
-          return 'Yearly';
-        default:
-          return newJob.quickSchedule;
+        case 'Startup': return 'Startup';
+        case 'Hourly': return 'Hourly';
+        case 'Daily': return 'Daily';
+        case 'Weekly': return 'Weekly';
+        case 'Monthly': return 'Monthly';
+        case 'Yearly': return 'Yearly';
+        default: return newJob.quickSchedule;
       }
     } else if (newJob.scheduleType === 'custom') {
       return buildScheduleFromCustom();
@@ -148,24 +159,117 @@ const CronManagement = () => {
     return '';
   };
 
-  const handleAddJob = () => {
-    const schedule = buildScheduleString();
-    
-    const job: CronJob = {
-      id: Date.now(),
-      username: newJob.username,
-      jobName: newJob.jobName,
-      command: newJob.command,
-      schedule: schedule,
-      status: newJob.status
-    };
-    setJobs(prev => [...prev, job]);
+  const handleCloseDialog = () => {
+    if (editingJob) setEditingJob(null);
+    else setIsAddDialogOpen(false);
     resetNewJob();
+  };
+
+  // -------------------- CRUD Handlers --------------------
+  const handleAddJob = async () => {
+    const scheduleObj = {
+      Minute: parseInt(newJob.minute) || 0,
+      Hour: parseInt(newJob.hour) || 0,
+      Date: parseInt(newJob.date) || 0,
+      Month: parseInt(newJob.month) || 0,
+      Week: parseInt(newJob.week) || 0
+    };
+    const payload: CreateCronRequest = {
+      Name: newJob.jobName,
+      Command: newJob.command,
+      Username: newJob.username,
+      Schedule: scheduleObj
+    };
+    await addJobApi(payload);
     setIsAddDialogOpen(false);
-    toast({
-      title: "Success",
-      description: "Cron job has been added"
+  };
+
+  const handleUpdateJob = async () => {
+    if (!editingJob) return;
+    const scheduleObj = {
+      Minute: parseInt(newJob.minute) || 0,
+      Hour: parseInt(newJob.hour) || 0,
+      Date: parseInt(newJob.date) || 0,
+      Month: parseInt(newJob.month) || 0,
+      Week: parseInt(newJob.week) || 0
+    };
+    const payload: CronJobEntry = {
+      Name: newJob.jobName,
+      Command: newJob.command,
+      Username: newJob.username,
+      Schedule: scheduleObj
+    };
+    await updateJobApi(editingJob.id, payload);
+    setEditingJob(null);
+  };
+
+  const handleDeleteJob = async (id: number) => {
+    await deleteJobApi(id);
+  };
+
+  const handleDeleteSelected = async () => {
+    await Promise.all(selectedJobs.map(id => deleteJobApi(id)));
+    setSelectedJobs([]);
+  };
+
+  const handleImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,.txt,.cron';
+    input.onchange = async (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) await importJobsApi(file);
+    };
+    input.click();
+  };
+
+  const handleExport = async () => {
+    await exportJobsApi();
+  };
+
+  const handleSelectJob = (jobId: number) => {
+    setSelectedJobs(prev => prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedJobs.length === currentJobs.length) setSelectedJobs([]);
+    else setSelectedJobs(currentJobs.map(job => job.id));
+  };
+
+  const handleToggleStatus = async (jobId: number) => {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job) return;
+    const newStatus = job.status === 'active' ? 'inactive' : 'active';
+    await updateJobApi(jobId, { ...job, status: newStatus });
+  };
+
+  const handleBatchEnable = async () => {
+    const toEnable = selectedJobs.filter(id => {
+      const job = jobs.find(j => j.id === id);
+      return job && job.status === 'inactive';
     });
+    await Promise.all(toEnable.map(id => {
+      const job = jobs.find(j => j.id === id);
+      if (!job) return Promise.resolve();
+      const payload: CronJobEntry = {
+        Name: job.jobName,
+        Command: job.command,
+        Username: job.username,
+        Schedule: job.schedule,
+        status: 'active'
+      };
+      return updateJobApi(id, payload);
+    }));
+    toast({ title: "Success", description: "Selected jobs have been enabled" });
+  };
+
+  const handleBatchDisable = async () => {
+    const toDisable = selectedJobs.filter(id => {
+      const job = jobs.find(j => j.id === id);
+      return job && job.status === 'active';
+    });
+    await Promise.all(toDisable.map(id => updateJobApi(id, { ...jobs.find(j => j.id === id), status: 'inactive' } as CronJobEntry)));
+    toast({ title: "Success", description: "Selected jobs have been disabled" });
   };
 
   const handleEditJob = (job: CronJob) => {
@@ -186,160 +290,21 @@ const CronManagement = () => {
     });
   };
 
-  const handleUpdateJob = () => {
-    if (editingJob) {
-      const schedule = buildScheduleString();
-      
-      setJobs(prev => prev.map(job => 
-        job.id === editingJob.id 
-          ? { ...job, username: newJob.username, jobName: newJob.jobName, command: newJob.command, schedule: schedule, status: newJob.status }
-          : job
-      ));
-      setEditingJob(null);
-      resetNewJob();
-      toast({
-        title: "Success",
-        description: "Cron job has been updated"
-      });
-    }
-  };
-
-  const handleDeleteSelected = () => {
-    setJobs(prev => prev.filter(job => !selectedJobs.includes(job.id)));
-    setSelectedJobs([]);
-    toast({
-      title: "Success",
-      description: "Selected Cron jobs have been deleted"
-    });
-  };
-
-  const handleToggleStatus = (jobId: number) => {
-    setJobs(prev => prev.map(job => 
-      job.id === jobId 
-        ? { ...job, status: job.status === 'active' ? 'inactive' : 'active' }
-        : job
-    ));
-  };
-
-  const handleBatchEnable = () => {
-    selectedJobs.forEach(jobId => {
-      const job = jobs.find(j => j.id === jobId);
-      if (job && job.status === 'inactive') {
-        handleToggleStatus(jobId);
-      }
-    });
-    toast({
-      title: "Success",
-      description: "Selected jobs have been enabled"
-    });
-  };
-
-  const handleBatchDisable = () => {
-    selectedJobs.forEach(jobId => {
-      const job = jobs.find(j => j.id === jobId);
-      if (job && job.status === 'active') {
-        handleToggleStatus(jobId);
-      }
-    });
-    toast({
-      title: "Success",
-      description: "Selected jobs have been disabled"
-    });
-  };
-
-  const handleExport = () => {
-    const selectedJobsToExport = selectedJobs.length > 0 ? selectedJobs : jobs.map(job => job.id);
-    const exportData = jobs.filter(job => selectedJobsToExport.includes(job.id));
-    
-    console.log('Export - Selected jobs:', {
-      selectedJobIds: selectedJobsToExport,
-      exportedJobs: exportData,
-      totalCount: exportData.length
-    });
-    
-    // 建立 JSON 檔案並下載
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `cron-jobs-export-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Export Successful",
-      description: `Exported  ${exportData.length} Cron jobs`
-    });
-  };
-
-  const handleImport = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,.txt,.cron';
-    input.onchange = (event) => {
-      const file = (event.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const content = e.target?.result as string;
-            const importedJobs = JSON.parse(content);
-            
-            if (Array.isArray(importedJobs)) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const newJobs = importedJobs.map((job: any) => ({
-                ...job,
-                id: Date.now() + Math.random() // 確保 ID 唯一
-              }));
-              
-              setJobs(prev => [...prev, ...newJobs]);
-              toast({
-                title: "Import Successful",
-                description: `Import Successful ${newJobs.length} Cron jobs`
-              });
-            } else {
-              throw new Error('Invalid file format');
-            }
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          } catch (error) {
-            toast({
-              title: "Import Failed",
-              description: "Invalid file format or unreadable file",
-              variant: "destructive"
-            });
-          }
-        };
-        reader.readAsText(file);
-      }
-    };
-    input.click();
-  };
-
-  const handleDeleteJob = (jobId: number) => {
-    setJobs(prev => prev.filter(job => job.id !== jobId));
-    toast({
-      title: "Success",
-      description: "Cron job has been deleted"
-    });
-  };
-
-  const handleCloseDialog = () => {
-    if (editingJob) {
-      setEditingJob(null);
-    } else {
-      setIsAddDialogOpen(false);
-    }
-    resetNewJob();
-  };
+  // -------------------- Pagination & Filter --------------------
+  const filteredJobs = jobs.filter(job =>
+    job.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.jobName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.command.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentJobs = filteredJobs.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-      <div className="container mx-auto py-6 px-4">
-        <div className="bg-[#A8AEBD] py-3 mb-3">
-        <h1 className="text-2xl font-extrabold text-center text-[#E6E6E6]">
-          Cron Management
+    <div className="container mx-auto py-6 px-4">
+      <div className="bg-[#A8AEBD] py-1.5 mb-6">
+        <h1 className="text-4xl font-extrabold text-center text-[#E6E6E6]">
+              Cron Management
         </h1>
       </div>
       <Card>

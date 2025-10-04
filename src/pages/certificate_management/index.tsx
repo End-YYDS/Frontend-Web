@@ -1,7 +1,8 @@
 //TODO: 序號API、更改憑證有效時間，要從後端拿
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; // ★ 新增 axios
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -30,6 +31,9 @@ import { Shield, ShieldX} from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import type { PageMeta } from '@/types';
 
+// ★ 匯入後端回傳型別
+import type { GetValids, GetRevokeds, RevokeRequest } from './types';
+
 interface Certificate {
   id: string;
   commonName: string;
@@ -51,109 +55,134 @@ interface RevokedCertificateInfo {
 
 const CertificateManagementPage = () => {
   // const navigate = useNavigate();
-  const [certificates, setCertificates] = useState<Certificate[]>([
-    {
-      id: "1",
-      commonName: "www.example.com",
-      issuer: "CA Root Authority",
-      serialNumber: "1A:2B:3C:4D:5E:6F",
-      validFrom: "2024-01-01",
-      validTo: "2025-01-01",
-      status: "active",
-      keySize: 2048,
-      algorithm: "RSA"
-    },
-    {
-      id: "2",
-      commonName: "api.example.com",
-      issuer: "CA Root Authority",
-      serialNumber: "2A:3B:4C:5D:6E:7F",
-      validFrom: "2024-02-01",
-      validTo: "2025-02-01",
-      status: "active",
-      keySize: 2048,
-      algorithm: "RSA"
-    }
-  ]);
 
+  // ★ 後端有效憑證清單
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  // ★ 後端吊銷憑證清單
   const [revokedCertificates, setRevokedCertificates] = useState<RevokedCertificateInfo[]>([]);
   const [revokeReason, setRevokeReason] = useState("");
 
-  // const handleBackToHome = () => {
-  //   navigate('/');
+  // -----------------------------
+  // ★ 頁面載入時抓取有效/吊銷憑證
+  // -----------------------------
+  useEffect(() => {
+    fetchValids();
+    fetchRevoked();
+  }, []);
+
+  // ★ 取得有效憑證
+  const fetchValids = async () => {
+    try {
+      const res = await axios.get<GetValids>('/api/chm/mCA/valid', { withCredentials: true });
+      // 模擬測試資料可放這裡（若後端尚未串接）
+      // res.data = {
+      //   Valid: [
+      //     { Name: 'www.example.com', Signer: 'CA Root Authority', Period: '2024-01-01~2025-01-01' },
+      //     { Name: 'api.example.com', Signer: 'CA Root Authority', Period: '2024-02-01~2025-02-01' }
+      //   ],
+      //   Length: 2
+      // };
+
+      const mapped = res.data.Valid.map((v, idx) => {
+        const [from, to] = v.Period.split('~');
+        return {
+          id: `${idx + 1}`,
+          commonName: v.Name,
+          issuer: v.Signer,
+          serialNumber: `SN-${idx + 1}`, // ★ TODO: 後端序號API
+          validFrom: from.trim(),
+          validTo: to.trim(),
+          status: 'active',
+          keySize: 2048,
+          algorithm: 'RSA'
+        } as Certificate;
+      });
+      setCertificates(mapped);
+    } catch (err) {
+      console.error('Failed to fetch valids:', err);
+      toast({ title: "Fetch Error", description: "無法取得有效憑證列表" });
+    }
+  };
+
+  // ★ 取得已吊銷憑證
+  const fetchRevoked = async () => {
+    try {
+      const res = await axios.get<GetRevokeds>('/api/chm/mCA/revoked', { withCredentials: true });
+      // 模擬測試資料
+      // res.data = {
+      //   Revoke: [
+      //     { Number: '1001', Time: '2025-10-04T09:30', Reason: 'Expired' }
+      //   ],
+      //   Length: 1
+      // };
+
+      const mapped = res.data.Revoke.map((r, idx) => ({
+        id: `${idx + 1}`,
+        serialNumber: r.Number,
+        revokedAt: r.Time,
+        reason: r.Reason
+      }));
+      setRevokedCertificates(mapped);
+    } catch (err) {
+      console.error('Failed to fetch revoked list:', err);
+      toast({
+        title: "Fetch Error",
+        description: "Failed to fetch the revocation certificate list",
+      });
+    }
+  };
+
+  // -----------------------------
+  // ★ 吊銷憑證
+  // -----------------------------
+  const handleRevokeCertificate = async (_certificateId: string, commonName: string, _issuer: string, _serialNumber: string) => {
+    const reason = revokeReason.trim() || "Manually revoked by certificate administrator";
+
+    try {
+      // ★ 呼叫後端吊銷API
+      const payload: RevokeRequest = { Name: commonName, Reason: reason };
+      const res = await axios.post('/api/chm/mCA/revoke', payload, { withCredentials: true });
+      console.log('Revoke response:', res.data);
+
+      toast({ title: "Certificate revoked", description: `Certificate ${commonName} 已被吊銷` });
+      setRevokeReason("");
+
+      // 重新抓取最新列表
+      fetchValids();
+      fetchRevoked();
+    } catch (err) {
+      console.error('Revoke failed:', err);
+      toast({
+        title: "Revoke Error",
+        description: "Revocation failed. Please try again later.",
+      });
+    }
+  };
+
+  // -----------------------------
+  // 模擬用：產生序號
+  // -----------------------------
+  // const generateSerialNumber = () => {
+  //   const chars = '0123456789ABCDEF';
+  //   let result = '';
+  //   for (let i = 0; i < 6; i++) {
+  //     if (i > 0) result += ':';
+  //     result += chars[Math.floor(Math.random() * 16)] + chars[Math.floor(Math.random() * 16)];
+  //   }
+  //   return result;
   // };
 
-  const generateNewCertificate = (commonName: string, issuer: string) => {
-    const newCert: Certificate = {
-      id: Date.now().toString(),
-      commonName,
-      issuer,
-      serialNumber: generateSerialNumber(),
-      validFrom: new Date().toISOString().split('T')[0],
-      validTo: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      status: 'active',
-      keySize: 2048,
-      algorithm: 'RSA'
-    };
-    return newCert;
-  };
-
-  const generateSerialNumber = () => {
-    const chars = '0123456789ABCDEF';
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-      if (i > 0) result += ':';
-      result += chars[Math.floor(Math.random() * 16)] + chars[Math.floor(Math.random() * 16)];
-    }
-    return result;
-  };
-
-  const handleRevokeCertificate = (certificateId: string, commonName: string, issuer: string, serialNumber: string) => {
-    const reason = revokeReason.trim() || "Manually revoked by certificate administrator";
-    
-    // 移除原憑證並標記為已吊銷
-    setCertificates(prev => prev.filter(cert => cert.id !== certificateId));
-    
-    // 添加到已吊銷憑證列表
-    const revokedInfo: RevokedCertificateInfo = {
-      id: certificateId,
-      serialNumber,
-      revokedAt: new Date().toLocaleString('zh-TW'),
-      reason
-    };
-    
-    setRevokedCertificates(prev => [...prev, revokedInfo]);
-    
-    // 重新發布新憑證
-    setTimeout(() => {
-      const newCert = generateNewCertificate(commonName, issuer);
-      setCertificates(prev => [...prev, newCert]);
-      
-      toast({
-        title: "Certificate process completed",
-        description: `Certificate ${commonName} has been revoked and a new one has been issued.`,
-      });
-    }, 1000);
-
-    toast({
-      title: "Certificate revoked",
-      description: `Certificate ${commonName} was successfully revoked. Reissuing a new certificate...`,
-    });
-    
-    setRevokeReason("");
-  };
-
-  // 只顯示有效憑證，移除已過期憑證
+  // 只顯示有效憑證
   const activeCertificates = certificates.filter(cert => cert.status === 'active');
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <div className="bg-[#A8AEBD] py-3 mb-3">
-        <h1 className="text-2xl font-extrabold text-center text-[#E6E6E6]">
-          mCA
-        </h1>
-      </div>
-
+<div className="bg-[#A8AEBD] py-1.5 mb-6">
+       <h1 className="text-4xl font-extrabold text-center text-[#E6E6E6]">
+            mCA
+       </h1>
+  </div>
+      
       {/* 統計卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card>
@@ -202,24 +231,18 @@ const CertificateManagementPage = () => {
               <TableBody>
                 {activeCertificates.map((cert) => (
                   <TableRow key={cert.id}>
-                    <TableCell className="font-medium">
-                      {cert.commonName}
-                    </TableCell>
+                    <TableCell className="font-medium">{cert.commonName}</TableCell>
                     <TableCell>{cert.issuer}</TableCell>
                     <TableCell>
                       <div className="text-sm">
                         <div>{cert.validFrom}</div>
-                        <div className="text-gray-500">
-                          to {cert.validTo}
-                        </div>
+                        <div className="text-gray-500">to {cert.validTo}</div>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm">
-                            Revoke
-                          </Button>
+                          <Button variant="destructive" size="sm">Revoke</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
@@ -262,7 +285,7 @@ const CertificateManagementPage = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                
+
                 {activeCertificates.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
@@ -300,14 +323,12 @@ const CertificateManagementPage = () => {
               <TableBody>
                 {revokedCertificates.map((cert) => (
                   <TableRow key={cert.id}>
-                    <TableCell className="font-mono text-sm">
-                      {cert.serialNumber}
-                    </TableCell>
+                    <TableCell className="font-mono text-sm">{cert.serialNumber}</TableCell>
                     <TableCell>{cert.revokedAt}</TableCell>
                     <TableCell>{cert.reason}</TableCell>
                   </TableRow>
                 ))}
-                
+
                 {revokedCertificates.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">

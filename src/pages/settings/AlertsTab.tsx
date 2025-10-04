@@ -1,26 +1,23 @@
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { toast } from "sonner";
+import axios from "axios";
 import { alertSettingsSchema } from "./settings";
 import type { z } from "zod";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import type { Values, ValuesUpdate } from "./types";
 
 type AlertSettings = z.infer<typeof alertSettingsSchema>;
 
 const AlertsTab = () => {
+  const [loading, setLoading] = useState(true);
+
   const form = useForm<AlertSettings>({
     resolver: zodResolver(alertSettingsSchema),
     defaultValues: {
@@ -34,13 +31,28 @@ const AlertsTab = () => {
 
   const isNotificationsEnabled = form.watch("enableNotifications");
 
-  const handleSubmit = (values: AlertSettings) => {
-    console.log("Alert Settings:", values);
-    toast.success("Alert settings saved", {
-      description: "Your system monitoring alert settings have been successfully updated",
-    });
+
+
+  // -------------------- Fetch API --------------------
+  const fetchValues = async () => {
+    try {
+      const res = await axios.get<Values>("/api/chm/setting/values", { withCredentials: true });
+      form.reset({
+        enableNotifications: true,
+        cpuUsage: res.data.Cpu_usage ?? 80,
+        diskUsage: res.data.Disk_usage ?? 90,
+        memory: res.data.Memory ?? 80,
+        network: res.data.Network ?? 85,
+      });
+    } catch (err) {
+      toast.error("Failed to fetch alert settings, using defaults");
+      // 保留預設值，API 失敗也不改
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Reset Defaults 保留原本預設值
   const handleResetDefaults = () => {
     form.reset({
       enableNotifications: true,
@@ -54,6 +66,34 @@ const AlertsTab = () => {
     });
   };
 
+  useEffect(() => {
+    fetchValues();
+  }, []);
+
+  // -------------------- Save API --------------------
+  const handleSubmit = async (values: AlertSettings) => {
+    const payload: ValuesUpdate = {
+      Cpu_usage: values.cpuUsage,
+      Disk_usage: values.diskUsage,
+      Memory: values.memory,
+      Network: values.network,
+    };
+
+    try {
+      const res = await axios.put<{ Type: "OK" | "ERR"; Message: string }>("/api/chm/setting/values", payload, { withCredentials: true });
+      if (res.data.Type === "OK") {
+        toast.success("Alert settings saved", { description: res.data.Message });
+        fetchValues(); // refresh
+      } else {
+        toast.error(res.data.Message);
+      }
+    } catch (err) {
+      toast.error("Failed to save alert settings");
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+
   return (
     <Card>
       <CardHeader>
@@ -65,35 +105,27 @@ const AlertsTab = () => {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            {/* 啟用通知開關 - 移至最上面 */}
+            {/* Enable Notifications */}
             <FormField
               control={form.control}
               name="enableNotifications"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">
-                      Enable Notifications
-                    </FormLabel>
-                    <FormDescription>
-                      Notifications will be sent when resource usage exceeds the thresholds.
-                    </FormDescription>
+                    <FormLabel>Enable Notifications</FormLabel>
+                    <FormDescription>Notifications will be sent when resource usage exceeds thresholds.</FormDescription>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
             />
 
-            {/* 只有在啟用通知時才顯示警告設定 */}
             {isNotificationsEnabled && (
               <Collapsible open={isNotificationsEnabled}>
                 <CollapsibleContent className="space-y-4">
-                  {/* CPU使用率警告 */}
+                  {/* CPU */}
                   <FormField
                     control={form.control}
                     name="cpuUsage"
@@ -101,23 +133,15 @@ const AlertsTab = () => {
                       <FormItem>
                         <FormLabel>CPU Usage Alert Threshold (%)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            {...field}
-                            onChange={e => field.onChange(Number(e.target.value))}
-                            min={1}
-                            max={100}
-                          />
+                          <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} min={0} max={100} />
                         </FormControl>
-                        <FormDescription>
-                          Send an alert when CPU usage exceeds this percentage (1-100%).
-                        </FormDescription>
+                        <FormDescription>Alert when CPU usage exceeds this percentage (0-100%).</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
-                  {/* 磁碟使用率警告 */}
+
+                  {/* Disk */}
                   <FormField
                     control={form.control}
                     name="diskUsage"
@@ -125,23 +149,15 @@ const AlertsTab = () => {
                       <FormItem>
                         <FormLabel>Disk Usage Alert Threshold (%)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            {...field}
-                            onChange={e => field.onChange(Number(e.target.value))}
-                            min={1}
-                            max={100}
-                          />
+                          <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} min={0} max={100} />
                         </FormControl>
-                        <FormDescription>
-                          Send an alert when disk usage exceeds this percentage (1-100%).
-                        </FormDescription>
+                        <FormDescription>Alert when disk usage exceeds this percentage (0-100%).</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
-                  {/* 記憶體使用率警告 */}
+
+                  {/* Memory */}
                   <FormField
                     control={form.control}
                     name="memory"
@@ -149,23 +165,15 @@ const AlertsTab = () => {
                       <FormItem>
                         <FormLabel>Memory Usage Alert Threshold (%)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            {...field}
-                            onChange={e => field.onChange(Number(e.target.value))}
-                            min={1}
-                            max={100}
-                          />
+                          <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} min={0} max={100} />
                         </FormControl>
-                        <FormDescription>
-                          Send an alert when memory usage exceeds this percentage (1-100%).
-                        </FormDescription>
+                        <FormDescription>Alert when memory usage exceeds this percentage (0-100%).</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
-                  {/* 網路使用率警告 */}
+
+                  {/* Network */}
                   <FormField
                     control={form.control}
                     name="network"
@@ -173,17 +181,9 @@ const AlertsTab = () => {
                       <FormItem>
                         <FormLabel>Network Usage Alert Threshold (%)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            {...field}
-                            onChange={e => field.onChange(Number(e.target.value))}
-                            min={1}
-                            max={100}
-                          />
+                          <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} min={0} max={100} />
                         </FormControl>
-                        <FormDescription>
-                          Send an alert when network usage exceeds this percentage (1-100%).
-                        </FormDescription>
+                        <FormDescription>Alert when network usage exceeds this percentage (0-100%).</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -191,25 +191,13 @@ const AlertsTab = () => {
                 </CollapsibleContent>
               </Collapsible>
             )}
-            
+
             <div className="flex space-x-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleResetDefaults}
-              >
-                Reset to Defaults
-              </Button>
+              <Button type="button" variant="outline" onClick={handleResetDefaults}>Reset to Defaults</Button>
             </div>
 
-            {/* 保存按鈕 */}
             <div className="flex justify-end pt-4 border-t">
-              <Button 
-                type="submit"
-                onClick={form.handleSubmit(handleSubmit)}
-                style={{ backgroundColor: '#7B86AA' }}
-                className="hover:opacity-90"
-              >
+              <Button type="submit" style={{ backgroundColor: "#7B86AA" }} className="hover:opacity-90">
                 Save Settings
               </Button>
             </div>

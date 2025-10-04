@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,22 +53,13 @@ import {
 import { Plus, Trash2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { ipAccessSchema, type IpAccessSettings, type IpEntry } from "./settings";
+import axios from "axios";
+import type { Mode, GetIpResponse, PostIpRequest, DeleteIpRequest, PutIpRequest } from "./types";
 
 const IpAccessTab = () => {
   const { toast } = useToast();
-  const [ipEntries, setIpEntries] = useState<{
-    whitelist: IpEntry[];
-    blacklist: IpEntry[];
-  }>({
-    whitelist: [
-      { id: "1", name: "辦公室網路", ip: "192.168.1.0/24" },
-      { id: "2", name: "管理員IP", ip: "10.0.0.1" }
-    ],
-    blacklist: [
-      { id: "3", name: "惡意IP", ip: "192.168.100.1" }
-    ]
-  });
-
+  const [ipEntries, setIpEntries] = useState<{ whitelist: IpEntry[]; blacklist: IpEntry[] }>({ whitelist: [], blacklist: [] });
+  const [, setMode] = useState<Mode>("None");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newEntryName, setNewEntryName] = useState("");
   const [newEntryIp, setNewEntryIp] = useState("");
@@ -83,91 +74,95 @@ const IpAccessTab = () => {
       allowedIps: "",
       whitelist: [],
       blacklist: []
-    },
-  });
+    }
+  } as any); // Explicitly cast to avoid type mismatch
 
   const currentListType = form.watch("listType");
   const isRestrictionEnabled = form.watch("enableIpRestriction");
 
-  const handleSubmit = (values: IpAccessSettings) => {
-    console.log("IP Access Control Settings:", values);
-    toast({
-      title: "IP Access Control Saved",
-      description: "Your IP access control settings have been successfully updated",
-    });
+  // -------------------- Fetch IPs --------------------
+  const fetchIpList = async () => {
+    try {
+      const res = await axios.get<GetIpResponse>("/api/chm/setting/ip", { withCredentials: true });
+      setMode(res.data.Mode);
+      if (res.data.Lists) {
+        const whitelist: IpEntry[] = [];
+        const blacklist: IpEntry[] = [];
+        Object.entries(res.data.Lists).forEach(([did, entry]) => {
+          const item: IpEntry = { id: did, name: entry.Name, ip: entry.Ip };
+          if (res.data.Mode === "White") whitelist.push(item);
+          else if (res.data.Mode === "Black") blacklist.push(item);
+        });
+        setIpEntries({ whitelist, blacklist });
+      } else {
+        setIpEntries({ whitelist: [], blacklist: [] });
+      }
+    } catch (err) {
+      toast({ title: "Fetch Error", description: "Unable to retrieve IP list" });
+    }
   };
 
-  const handleAddIp = () => {
-    console.log("handleAddIp called with:", { name: newEntryName, ip: newEntryIp });
-    
-    // 清除之前的錯誤
-    setNameError("");
-    setIpError("");
-    
-    if (!newEntryName.trim()) {
-      console.log("Empty name field detected");
-      setNameError("Please enter a description name for the IP");
-      return;
-    }
+  useEffect(() => {
+    fetchIpList();
+  }, []);
 
-    if (!newEntryIp.trim()) {
-      console.log("Empty IP field detected");
-      setIpError("Please enter an IP address");
-      return;
-    }
+  // -------------------- Add IP --------------------
+  const handleAddIp = async () => {
+    setNameError(""); setIpError("");
+    if (!newEntryName.trim()) { setNameError("Please enter a description name"); return; }
+    if (!newEntryIp.trim()) { setIpError("Please enter an IP address"); return; }
 
-    // 驗證IP格式 - 更嚴格的驗證
-    const trimmedIp = newEntryIp.trim();
-    console.log("Validating IP:", trimmedIp);
-    
-    // IPv4 地址格式驗證 (包含CIDR支援)
     const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\/(?:[0-9]|[1-2][0-9]|3[0-2]))?$/;
-    
-    if (!ipRegex.test(trimmedIp)) {
-      console.log("IP validation failed for:", trimmedIp);
-      setIpError("Please enter a valid IPv4 address, e.g., 192.168.1.1 or 192.168.1.0/24");
-      return;
+    if (!ipRegex.test(newEntryIp.trim())) { setIpError("Invalid IPv4 format"); return; }
+
+    try {
+      const payload: PostIpRequest = {
+        Mode: currentListType === "whitelist" ? "White" : "Black",
+        Name: newEntryName.trim(),
+        Ip: newEntryIp.trim()
+      };
+      const res = await axios.post("/api/chm/setting/ip", payload, { withCredentials: true });
+      if (res.data.Type === "OK") {
+        toast({ title: "IP Added", description: `Added to ${currentListType}` });
+        fetchIpList();
+        setNewEntryName(""); setNewEntryIp(""); setShowAddDialog(false);
+      } else {
+        toast({ title: "Add Failed", description: res.data.Message });
+      }
+    } catch (err) {
+      toast({ title: "Add Failed", description: "Unable to add IP" });
     }
-    
-    console.log("IP validation passed");
-
-    const newEntry: IpEntry = {
-      id: Date.now().toString(),
-      name: newEntryName.trim(),
-      ip: newEntryIp.trim()
-    };
-
-    setIpEntries(prev => ({
-      ...prev,
-      [currentListType]: [...prev[currentListType], newEntry]
-    }));
-
-    setNewEntryName("");
-    setNewEntryIp("");
-    setNameError("");
-    setIpError("");
-    setShowAddDialog(false);
-
-    toast({
-      title: "IP Added",
-      description: `Successfully added IP to${currentListType === 'whitelist' ? 'Whitelist' : 'Blacklist'}`,
-    });
   };
 
-  const handleDeleteIp = (id: string) => {
-    setIpEntries(prev => ({
-      ...prev,
-      [currentListType]: prev[currentListType].filter(entry => entry.id !== id)
-    }));
-
-    toast({
-      title: "IP Deleted",
-      description: `The IP has been removed from the${currentListType === 'whitelist' ? 'whitelist' : 'Blacklist'}`,
-    });
+  // -------------------- Delete IP --------------------
+  const handleDeleteIp = async (id: string) => {
+    try {
+      const payload: DeleteIpRequest = { Mode: currentListType === "whitelist" ? "White" : "Black", Did: id };
+      const res = await axios.delete("/api/chm/setting/ip", { data: payload, withCredentials: true });
+      if (res.data.Type === "OK") {
+        toast({ title: "IP Deleted", description: `Removed from ${currentListType}` });
+        fetchIpList();
+      } else {
+        toast({ title: "Delete Failed", description: res.data.Message });
+      }
+    } catch (err) {
+      toast({ title: "Delete Failed", description: "Unable to delete IP" });
+    }
   };
 
-  const getCurrentEntries = () => {
-    return ipEntries[currentListType];
+  const getCurrentEntries = () => ipEntries[currentListType];
+
+  // -------------------- Save Settings (Mode Switch) --------------------
+  const handleSubmit = async (values: IpAccessSettings) => {
+    try {
+      const payload: PutIpRequest = { Mode: values.listType === "whitelist" ? "White" : "Black" };
+      const res = await axios.put("/api/chm/setting/ip", payload, { withCredentials: true });
+      if (res.data.Type === "OK") toast({ title: "Saved", description: res.data.Message });
+      else toast({ title: "Save Failed", description: res.data.Message });
+      fetchIpList();
+    } catch (err) {
+      toast({ title: "Save Failed", description: "Unable to save IP access settings" });
+    }
   };
 
   return (

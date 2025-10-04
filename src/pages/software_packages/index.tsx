@@ -38,11 +38,179 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Download, Trash2, RefreshCw, Package, Plus } from 'lucide-react';
+import { Search, Download, Trash2, RefreshCw, Plus } from 'lucide-react';
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import type { PageMeta } from '@/types';
+import axios from 'axios';
+import type { InstallRequest, DeleteRequest, ActionResponse } from './types';
+
+// interface Package {
+//   name: string;
+//   version: string;
+//   status: 'Installed' | 'Notinstall';
+// }
+
+// interface PC {
+//   uuid: string;
+//   name: string;
+//   packages: Record<string, Package>;
+// }
+
+const ITEMS_PER_PAGE = 20;
+
+const SoftwarePackagesPage = () => {
+  const isMobile = useIsMobile();
+  const [pcs, setPcs] = useState<PC[]>([]);
+  const [selectedPc, setSelectedPc] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showInstallDialog, setShowInstallDialog] = useState(false);
+  const [packageToInstall, setPackageToInstall] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [mobileDisplayCount, setMobileDisplayCount] = useState(ITEMS_PER_PAGE);
+  const [showUninstallDialog, setShowUninstallDialog] = useState(false);
+  const [packageToUninstall, setPackageToUninstall] = useState<{ key: string; name: string } | null>(null);
+
+  useEffect(() => {
+    fetchPCs();
+  }, []);
+
+  // -------------------- API --------------------
+  const fetchPCs = async () => {
+    setIsLoading(true);
+    try {
+      const res = await axios.get<{ Pcs: Record<string, { Packages: Record<string, { Version: string; Status: 'Installed' | 'Notinstall' }> }> }>('/api/software', { withCredentials: true });
+      const pcList: PC[] = Object.entries(res.data.Pcs).map(([uuid, pc]) => ({
+        uuid,
+        name: `PC-${uuid}`,
+        packages: Object.entries(pc.Packages).reduce((acc, [key, pkg]) => {
+          acc[key] = { name: key, version: pkg.Version, status: pkg.Status };
+          return acc;
+        }, {} as Record<string, Package>)
+      }));
+      setPcs(pcList);
+      if (pcList.length > 0) setSelectedPc(pcList[0].uuid);
+    } catch (error) {
+      console.error('Error fetching PCs:', error);
+      toast.error('Failed to fetch PCs');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUninstallPackage = async (packageKey: string) => {
+    if (!selectedPc || !packageToUninstall) return;
+    setIsLoading(true);
+    try {
+      const payload: DeleteRequest = { uuid: [selectedPc], Package: [packageKey] };
+      const res = await axios.delete<ActionResponse>('/api/software', { data: payload, withCredentials: true });
+      const installed = res.data.Packages[packageKey]?.Installed || [];
+      setPcs(prev => prev.map(pc => pc.uuid === selectedPc ? {
+        ...pc,
+        packages: {
+          ...pc.packages,
+          ...installed.reduce((acc, name) => {
+            const key = Object.keys(pc.packages).find(k => pc.packages[k].name === name) || name;
+            acc[key] = { ...pc.packages[key], status: 'Notinstall' };
+            return acc;
+          }, {} as Record<string, Package>)
+        }
+      } : pc));
+      toast.success('移除完成', { description: installed.length ? `成功移除 ${installed.join(', ')}` : '套件移除失敗' });
+    } catch (error) {
+      console.error(error);
+      toast.error('移除失敗');
+    } finally {
+      setIsLoading(false);
+      setShowUninstallDialog(false);
+      setPackageToUninstall(null);
+    }
+  };
+
+  const handleUpdatePackage = async (packageKey: string) => {
+    if (!selectedPc) return;
+    setIsLoading(true);
+    try {
+      // 假設後端同樣用 POST /api/software 安裝最新版本
+      const payload: InstallRequest = { uuid: [selectedPc], Packages: [packageKey] };
+      const res = await axios.post<ActionResponse>('/api/software', payload, { withCredentials: true });
+      const installed = res.data.Packages[packageKey]?.Installed || [];
+
+      setPcs(prev => prev.map(pc => pc.uuid === selectedPc ? {
+        ...pc,
+        packages: {
+          ...pc.packages,
+          ...installed.reduce((acc, name) => {
+            const key = Object.keys(pc.packages).find(k => pc.packages[k].name === name) || name;
+            const oldVersion = pc.packages[key].version.split('.');
+            oldVersion[2] = String((parseInt(oldVersion[2]) || 0) + 1);
+            acc[key] = { ...pc.packages[key], version: oldVersion.join('.') };
+            return acc;
+          }, {} as Record<string, Package>)
+        }
+      } : pc));
+      toast.success('更新完成', { description: installed.length ? `成功更新 ${installed.join(', ')}` : '更新失敗' });
+    } catch (error) {
+      console.error(error);
+      toast.error('更新失敗');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInstallCustomPackage = async () => {
+    if (!packageToInstall.trim()) return;
+    try {
+      setIsLoading(true);
+      const newKey = packageToInstall.toLowerCase().replace(/\s+/g, '-');
+      const payload: InstallRequest = { uuid: [selectedPc], Packages: [packageToInstall] };
+      await axios.post<ActionResponse>('/api/software', payload, { withCredentials: true });
+      setPcs(prev => prev.map(pc => pc.uuid === selectedPc ? {
+        ...pc,
+        packages: {
+          ...pc.packages,
+          [newKey]: { name: packageToInstall, version: '1.0.0', status: 'Installed' }
+        }
+      } : pc));
+      toast.success('安裝完成', { description: `成功安裝 ${packageToInstall}` });
+      setPackageToInstall('');
+      setShowInstallDialog(false);
+    } catch (error) {
+      console.error(error);
+      toast.error('安裝失敗');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // -------------------- 分頁/搜尋 --------------------
+  const selectedPcData = pcs.find(pc => pc.uuid === selectedPc);
+  const installedPackages = selectedPcData
+    ? Object.entries(selectedPcData.packages)
+        .filter(([, pkg]) => pkg.status === 'Installed' && pkg.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    : [];
+
+  const totalPages = Math.ceil(installedPackages.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+
+  const currentPackages = isMobile
+    ? installedPackages.slice(0, mobileDisplayCount)
+    : installedPackages.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setMobileDisplayCount(ITEMS_PER_PAGE);
+  }, [searchTerm, selectedPc]);
+
+  const handleLoadMore = () => setMobileDisplayCount(prev => prev + ITEMS_PER_PAGE);
+
+  const confirmUninstallPackage = (packageKey: string, packageName: string) => {
+    setPackageToUninstall({ key: packageKey, name: packageName });
+    setShowUninstallDialog(true);
+  };
 
 interface Package {
   name: string;
@@ -55,295 +223,6 @@ interface PC {
   name: string;
   packages: Record<string, Package>;
 }
-
-const ITEMS_PER_PAGE = 20; // 每頁顯示20個項目
-
-const SoftwarePackagesPage = () => {
-  const isMobile = useIsMobile();
-  const [pcs, setPcs] = useState<PC[]>([]);
-  const [selectedPc, setSelectedPc] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showInstallDialog, setShowInstallDialog] = useState(false);
-  const [packageToInstall, setPackageToInstall] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [mobileDisplayCount, setMobileDisplayCount] = useState(ITEMS_PER_PAGE); // 手機版顯示數量
-  const [showUninstallDialog, setShowUninstallDialog] = useState(false);
-  const [packageToUninstall, setPackageToUninstall] = useState<{ key: string; name: string } | null>(null);
-
-  // Mock data
-  useEffect(() => {
-    fetchPCs();
-  }, []);
-
-  const fetchPCs = async () => {
-    setIsLoading(true);
-    try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Generate more mock data to simulate large package lists
-      const generatePackages = (baseCount: number) => {
-        const packages: Record<string, Package> = {};
-        const packageNames = [
-          'Node.js', 'Python', 'Docker', 'Visual Studio Code', 'Git', 'MySQL', 'PostgreSQL',
-          'MongoDB', 'Redis', 'Nginx', 'Apache', 'PHP', 'Java', 'Maven', 'Gradle',
-          'IntelliJ IDEA', 'Eclipse', 'Postman', 'Chrome', 'Firefox', 'Slack', 'Discord',
-          'Zoom', 'Teams', 'Office 365', 'Adobe Photoshop', 'Adobe Illustrator', 'Figma',
-          'Sketch', 'Blender', 'Unity', 'Unreal Engine', 'Steam', 'Epic Games Launcher',
-          'VLC', 'Spotify', 'iTunes', 'WhatsApp', 'Telegram', 'Signal', 'Android Studio',
-          'Xcode', 'Flutter', 'React Native', 'Expo', 'Webpack', 'Vite', 'Rollup',
-          'ESLint', 'Prettier', 'TypeScript', 'Babel', 'Jest', 'Cypress', 'Playwright',
-          'Kubernetes', 'Terraform', 'AWS CLI', 'Azure CLI', 'Google Cloud SDK',
-          'Vagrant', 'VirtualBox', 'VMware', 'Parallels', 'WSL', 'Homebrew', 'Chocolatey',
-          'npm', 'yarn', 'pnpm', 'pip', 'conda', 'Ruby', 'Rails', 'Django', 'Flask',
-          'Laravel', 'Symfony', 'Spring Boot', 'Express.js', 'Fastify', 'Koa.js',
-          'Angular', 'Vue.js', 'Svelte', 'Next.js', 'Nuxt.js', 'Gatsby', 'Remix',
-          'Tailwind CSS', 'Bootstrap', 'Material-UI', 'Ant Design', 'Chakra UI',
-          'Styled Components', 'Emotion', 'SASS', 'Less', 'PostCSS', 'GraphQL',
-          'Apollo', 'Prisma', 'Sequelize', 'TypeORM', 'Mongoose', 'Supabase',
-          'Firebase', 'Vercel', 'Netlify', 'Heroku', 'DigitalOcean', 'Cloudflare'
-        ];
-
-        for (let i = 0; i < baseCount; i++) {
-          const packageName = packageNames[i % packageNames.length];
-          const suffix = i >= packageNames.length ? ` ${Math.floor(i / packageNames.length) + 1}` : '';
-          const key = `pkg${i}`;
-          packages[key] = {
-            name: `${packageName}${suffix}`,
-            version: `${Math.floor(Math.random() * 5) + 1}.${Math.floor(Math.random() * 10)}.${Math.floor(Math.random() * 10)}`,
-            status: Math.random() > 0.3 ? 'Installed' : 'Notinstall'
-          };
-        }
-        return packages;
-      };
-
-      const mockData: PC[] = [
-        {
-          uuid: "pc-001",
-          name: "工作站-001",
-          packages: generatePackages(150) // 生成150個套件
-        },
-        {
-          uuid: "pc-002",
-          name: "工作站-002",
-          packages: generatePackages(120) // 生成120個套件
-        }
-      ];
-      
-      setPcs(mockData);
-      if (mockData.length > 0) {
-        setSelectedPc(mockData[0].uuid);
-      }
-    } catch (error) {
-      console.error("Error fetching PCs:", error);
-      toast.error("Failed to fetch PCs", {
-        description: "Unable to load PC list, please try again later"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const selectedPcData = pcs.find(pc => pc.uuid === selectedPc);
-  
-  // Filter only installed packages and apply search
-  const installedPackages = selectedPcData ? 
-    Object.entries(selectedPcData.packages).filter(([, pkg]) =>
-      pkg.status === 'Installed' && 
-      pkg.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ) : [];
-
-  // Calculate pagination for desktop
-  const totalPages = Math.ceil(installedPackages.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  
-  // For mobile: show first N items based on mobileDisplayCount
-  // For desktop: show current page items
-  const currentPackages = isMobile 
-    ? installedPackages.slice(0, mobileDisplayCount)
-    : installedPackages.slice(startIndex, endIndex);
-
-  // Reset when search term or selected PC changes
-  useEffect(() => {
-    setCurrentPage(1);
-    setMobileDisplayCount(ITEMS_PER_PAGE); // 重置手機版顯示數量
-  }, [searchTerm, selectedPc]);
-
-  const handleLoadMore = () => {
-    setMobileDisplayCount(prev => prev + ITEMS_PER_PAGE);
-  };
-//TODO: 
-  // const handleInstallPackage = async (packageKey: string) => {
-  //   try {
-  //     setIsLoading(true);
-      
-  //     // Mock API call
-  //     await new Promise(resolve => setTimeout(resolve, 1500));
-      
-  //     // Mock response - simulate finding similar package if exact not found
-  //     const foundSimilar = Math.random() > 0.3; // 70% chance of finding similar
-  //     const actualInstalled = foundSimilar ? packageKey : `${packageKey}-community`;
-      
-  //     // Update local state
-  //     setPcs(prevPcs => prevPcs.map(pc => 
-  //       pc.uuid === selectedPc ? {
-  //         ...pc,
-  //         packages: {
-  //           ...pc.packages,
-  //           [packageKey]: {
-  //             ...pc.packages[packageKey],
-  //             status: 'Installed'
-  //           }
-  //         }
-  //       } : pc
-  //     ));
-      
-  //     toast.success("安裝完成", {
-  //       description: foundSimilar 
-  //         ? `成功安裝 ${actualInstalled}`
-  //         : `找不到指定套件，已安裝類似套件 ${actualInstalled}`
-  //     });
-  //   } catch (error) {
-  //     console.error("Error installing package:", error);
-  //     toast.error("安裝失敗", {
-  //       description: "套件安裝過程中發生錯誤"
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  const confirmUninstallPackage = (packageKey: string, packageName: string) => {
-    setPackageToUninstall({ key: packageKey, name: packageName });
-    setShowUninstallDialog(true);
-  };
-
-  const handleUninstallPackage = async (packageKey: string) => {
-    if (!packageToUninstall) return;
-    
-    try {
-      setIsLoading(true);
-      setShowUninstallDialog(false);
-
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update local state
-      setPcs(prevPcs => prevPcs.map(pc => 
-        pc.uuid === selectedPc ? {
-          ...pc,
-          packages: {
-            ...pc.packages,
-            [packageKey]: {
-              ...pc.packages[packageKey],
-              status: 'Notinstall'
-            }
-          }
-        } : pc
-      ));
-      
-      toast.success("Uninstallation complete", {
-        description: `Successfully removed ${selectedPcData?.packages[packageKey].name}`
-      });
-      setPackageToUninstall(null);
-    } catch (error) {
-      console.error("Error uninstalling package:", error);
-      toast.error("Uninstallation failed", {
-        description: "An error occurred during package removal"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUpdatePackage = async (packageKey: string) => {
-    try {
-      setIsLoading(true);
-      
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      // Mock version update
-      const currentPkg = selectedPcData?.packages[packageKey];
-      if (currentPkg) {
-        const versionParts = currentPkg.version.split('.');
-        if (versionParts.length >= 3) {
-          versionParts[2] = String(parseInt(versionParts[2]) + 1);
-          const newVersion = versionParts.join('.');
-          
-          // Update local state
-          setPcs(prevPcs => prevPcs.map(pc => 
-            pc.uuid === selectedPc ? {
-              ...pc,
-              packages: {
-                ...pc.packages,
-                [packageKey]: {
-                  ...pc.packages[packageKey],
-                  version: newVersion
-                }
-              }
-            } : pc
-          ));
-        }
-      }
-      
-      toast.success("Update complete", {
-        description: `Successfully updated ${currentPkg?.name}`
-      });
-    } catch (error) {
-      console.error("Error updating package:", error);
-      toast.error("Update failed", {
-        description: "An error occurred during package update"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleInstallCustomPackage = async () => {
-    if (!packageToInstall.trim()) return;
-    
-    try {
-      setIsLoading(true);
-      
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const newPackageKey = packageToInstall.toLowerCase().replace(/\s+/g, '-');
-      
-      // Add to local state
-      setPcs(prevPcs => prevPcs.map(pc => 
-        pc.uuid === selectedPc ? {
-          ...pc,
-          packages: {
-            ...pc.packages,
-            [newPackageKey]: {
-              name: packageToInstall,
-              version: "1.0.0",
-              status: 'Installed'
-            }
-          }
-        } : pc
-      ));
-      
-      setShowInstallDialog(false);
-      setPackageToInstall('');
-      
-      toast.success("Installation complete", {
-        description: `Successfully installed ${packageToInstall}`
-      });
-    } catch (error) {
-      console.error("Error installing custom package:", error);
-      toast.error("Installation failed", {
-        description: "An error occurred during package installation"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const renderPagination = () => {
     // 只在桌面版顯示分頁
     if (isMobile || totalPages <= 1) return null;
@@ -455,12 +334,11 @@ const SoftwarePackagesPage = () => {
 
   return (
       <div className="container mx-auto py-6 px-4">
-      <div className="bg-[#A8AEBD] py-3 mb-3">
-        <h1 className="text-2xl font-extrabold text-center text-[#E6E6E6]">
-            Software Packages
-        </h1>
-      </div>
-
+        <div className="bg-[#A8AEBD] py-1.5 mb-6">
+          <h1 className="text-4xl font-extrabold text-center text-[#E6E6E6]">
+                Software Packages
+          </h1>
+        </div>
 
       <div className="space-y-6">
         {/* PC 選擇和搜尋 */}

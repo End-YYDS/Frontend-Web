@@ -1,5 +1,5 @@
 //TODO: 選擇電腦請依照後端
-
+// 只有API 沒接上
 import { useState, useEffect } from 'react';
 import { 
   Tabs, 
@@ -60,6 +60,180 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import type { PageMeta } from '@/types';
+// networkApi.ts
+import axios from 'axios';
+import type {
+  GetAllNetResponse,
+  CreateNetRequest,
+  DeleteNetRequest,
+  PatchNetRequest,
+  PutNetRequest,
+  ActionNetRequest,
+  GetAllRouteResponse,
+  CreateRouteRequest,
+  DeleteRouteRequest,
+  PatchRouteRequest,
+  PutRouteRequest,
+  GetAllDnsResponse,
+  PatchHostnameRequest,
+  PutDnsRequest,
+} from './types';
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  message?: string;
+}
+
+export const networkApi = {
+  // ---------------------------
+  // Network Interface
+  // ---------------------------
+
+  getAllNetworks: async (): Promise<ApiResponse<GetAllNetResponse>> => {
+    try {
+      const res = await axios.get<GetAllNetResponse>('/api/network/net', { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to fetch network interfaces' };
+    }
+  },
+
+  createNetwork: async (data: CreateNetRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.post('/api/network/net', data, { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to create network interface' };
+    }
+  },
+
+  deleteNetwork: async (data: DeleteNetRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.delete('/api/network/net', { data, withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to delete network interface' };
+    }
+  },
+
+  patchNetwork: async (data: PatchNetRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.patch('/api/network/net', data, { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to update network interface' };
+    }
+  },
+
+  putNetwork: async (data: PutNetRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.put('/api/network/net', data, { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to replace network interface' };
+    }
+  },
+
+  actionNetworkUp: async (data: ActionNetRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.post('/api/network/net/action/up', data, { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to activate network interface' };
+    }
+  },
+
+  actionNetworkDown: async (data: ActionNetRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.post('/api/network/net/action/down', data, { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to deactivate network interface' };
+    }
+  },
+
+  // ---------------------------
+  // Routing / Gateways
+  // ---------------------------
+
+  getAllRoutes: async (): Promise<ApiResponse<GetAllRouteResponse>> => {
+    try {
+      const res = await axios.get<GetAllRouteResponse>('/api/network/route', { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to fetch routing table' };
+    }
+  },
+
+  createRoute: async (data: CreateRouteRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.post('/api/network/route', data, { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to create route' };
+    }
+  },
+
+  deleteRoute: async (data: DeleteRouteRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.delete('/api/network/route', { data, withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to delete route' };
+    }
+  },
+
+  patchRoute: async (data: PatchRouteRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.patch('/api/network/route', data, { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to update route' };
+    }
+  },
+
+  putRoute: async (data: PutRouteRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.put('/api/network/route', data, { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to replace route' };
+    }
+  },
+
+  // ---------------------------
+  // Hostname / DNS
+  // ---------------------------
+
+  getAllDns: async (): Promise<ApiResponse<GetAllDnsResponse>> => {
+    try {
+      const res = await axios.get<GetAllDnsResponse>('/api/network/dns', { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to fetch DNS information' };
+    }
+  },
+
+  patchHostname: async (data: PatchHostnameRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.patch('/api/network/dns', data, { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to update hostname' };
+    }
+  },
+
+  putDns: async (data: PutDnsRequest): Promise<ApiResponse> => {
+    try {
+      const res = await axios.put('/api/network/dns', data, { withCredentials: true });
+      return { success: true, data: res.data };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Failed to update DNS server' };
+    }
+  },
+};
+
 
 // Validation schemas
 const ipAddressRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -408,11 +582,12 @@ const NetworkConfigurationPage = () => {
 
   return (
       <div className="container mx-auto py-6 px-4">
-        <div className="bg-[#A8AEBD] py-3 mb-3">
-        <h1 className="text-2xl font-extrabold text-center text-[#E6E6E6]">
-          Network Configuration
-        </h1>
-      </div>
+        <div className="bg-[#A8AEBD] py-1.5 mb-6">
+          <h1 className="text-4xl font-extrabold text-center text-[#E6E6E6]">
+                Network Configuration
+          </h1>
+        </div>
+      
 
       {/* 電腦選擇 */}
       <Card className="mb-6">
