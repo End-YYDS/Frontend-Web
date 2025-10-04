@@ -1,5 +1,5 @@
 //TODO: 選擇電腦請依照後端
-// 只有API 沒接上
+
 import { useState, useEffect } from 'react';
 import { 
   Tabs, 
@@ -60,180 +60,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import type { PageMeta } from '@/types';
-// networkApi.ts
-import axios from 'axios';
-import type {
-  GetAllNetResponse,
-  CreateNetRequest,
-  DeleteNetRequest,
-  PatchNetRequest,
-  PutNetRequest,
-  ActionNetRequest,
-  GetAllRouteResponse,
-  CreateRouteRequest,
-  DeleteRouteRequest,
-  PatchRouteRequest,
-  PutRouteRequest,
-  GetAllDnsResponse,
-  PatchHostnameRequest,
-  PutDnsRequest,
-} from './types';
 
-interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-}
+import type { 
+  GetAllNetResponse, 
+  GetAllRouteResponse, 
+  GetAllDnsResponse, 
+  NetworkItem, 
+  RouteItem, 
+  PcDns, 
+  NicStatus, 
+  NicType 
+} from "./types";
+import type { PutNetRequest, PatchNetRequest } from "./types";
+import type { ActionNetRequest } from "./types";
+import type { CreateRouteRequest, PutRouteRequest, PatchRouteRequest } from "./types";
+import type { DeleteRouteRequest } from "./types";
+import type { PutDnsRequest, PatchHostnameRequest } from "./types";
 
-export const networkApi = {
-  // ---------------------------
-  // Network Interface
-  // ---------------------------
-
-  getAllNetworks: async (): Promise<ApiResponse<GetAllNetResponse>> => {
-    try {
-      const res = await axios.get<GetAllNetResponse>('/api/network/net', { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to fetch network interfaces' };
-    }
-  },
-
-  createNetwork: async (data: CreateNetRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.post('/api/network/net', data, { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to create network interface' };
-    }
-  },
-
-  deleteNetwork: async (data: DeleteNetRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.delete('/api/network/net', { data, withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to delete network interface' };
-    }
-  },
-
-  patchNetwork: async (data: PatchNetRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.patch('/api/network/net', data, { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to update network interface' };
-    }
-  },
-
-  putNetwork: async (data: PutNetRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.put('/api/network/net', data, { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to replace network interface' };
-    }
-  },
-
-  actionNetworkUp: async (data: ActionNetRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.post('/api/network/net/action/up', data, { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to activate network interface' };
-    }
-  },
-
-  actionNetworkDown: async (data: ActionNetRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.post('/api/network/net/action/down', data, { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to deactivate network interface' };
-    }
-  },
-
-  // ---------------------------
-  // Routing / Gateways
-  // ---------------------------
-
-  getAllRoutes: async (): Promise<ApiResponse<GetAllRouteResponse>> => {
-    try {
-      const res = await axios.get<GetAllRouteResponse>('/api/network/route', { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to fetch routing table' };
-    }
-  },
-
-  createRoute: async (data: CreateRouteRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.post('/api/network/route', data, { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to create route' };
-    }
-  },
-
-  deleteRoute: async (data: DeleteRouteRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.delete('/api/network/route', { data, withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to delete route' };
-    }
-  },
-
-  patchRoute: async (data: PatchRouteRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.patch('/api/network/route', data, { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to update route' };
-    }
-  },
-
-  putRoute: async (data: PutRouteRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.put('/api/network/route', data, { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to replace route' };
-    }
-  },
-
-  // ---------------------------
-  // Hostname / DNS
-  // ---------------------------
-
-  getAllDns: async (): Promise<ApiResponse<GetAllDnsResponse>> => {
-    try {
-      const res = await axios.get<GetAllDnsResponse>('/api/network/dns', { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to fetch DNS information' };
-    }
-  },
-
-  patchHostname: async (data: PatchHostnameRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.patch('/api/network/dns', data, { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to update hostname' };
-    }
-  },
-
-  putDns: async (data: PutDnsRequest): Promise<ApiResponse> => {
-    try {
-      const res = await axios.put('/api/network/dns', data, { withCredentials: true });
-      return { success: true, data: res.data };
-    } catch (error: any) {
-      return { success: false, message: error.message || 'Failed to update DNS server' };
-    }
-  },
-};
-
+import axios from "axios";
 
 // Validation schemas
 const ipAddressRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -331,115 +175,183 @@ const NetworkConfigurationPage = () => {
   const [editingRoute, setEditingRoute] = useState<Route | null>(null);
   const [showDeleteRouteDialog, setShowDeleteRouteDialog] = useState(false);
   const [routeToDelete, setRouteToDelete] = useState<{ id: string; destination: string } | null>(null);
+  const [originalDnsConfig, setOriginalDnsConfig] = useState<DNSConfig | null>(null);
 
   // Mock data
   useEffect(() => {
     fetchNetworkData();
   }, []);
 
+  interface NetworkInterface {
+    id: string;
+    name: string;
+    ipv4: string;
+    netmask: string;
+    mac: string;
+    gateway: string;
+    mtu: number;
+    status: NicStatus;
+    dhcp: boolean;
+    type: 'physical' | 'virtual';
+  }
+
+  interface Route {
+    id: string;
+    destinationNetwork: string;
+    nextHop: string;
+    dev: string;
+    metric: number;
+    src: string;
+  }
+
+  interface DNSConfig {
+    hostname: string;
+    dns: {
+      primary: string;
+      secondary: string;
+    };
+  }
+
   const fetchNetworkData = async () => {
+    if (!selectedComputer) return;
     setIsLoading(true);
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockComputers: Computer[] = [
-        { id: 'pc1', name: 'Server-001', ip: '192.168.1.100', status: 'online' },
-        { id: 'pc2', name: 'Server-002', ip: '192.168.1.101', status: 'online' },
-        { id: 'pc3', name: 'Workstation-001', ip: '192.168.1.102', status: 'offline' },
-      ];
+      // --------- 取得網路介面 ---------
+      const netRes = await axios.get<GetAllNetResponse>("/api/network/net");
+      const pcs = netRes.data.pcs || {};
+      const pcNetworks = pcs[selectedComputer]?.networks || {};
 
-      const mockInterfaces: NetworkInterface[] = [
-        {
-          id: 'eth0',
-          name: 'eth0',
-          ipv4: '192.168.1.100',
-          netmask: '255.255.255.0',
-          mac: '00:11:22:33:44:55',
-          gateway: '192.168.1.1',
-          mtu: 1500,
-          status: 'Up',
-          dhcp: true,
-          type: 'physical'
-        },
-        {
-          id: 'eth1',
-          name: 'eth1',
-          ipv4: '10.0.0.100',
-          netmask: '255.255.255.0',
-          mac: '00:11:22:33:44:66',
-          gateway: '10.0.0.1',
-          mtu: 1500,
-          status: 'Down',
-          dhcp: false,
-          type: 'physical'
-        },
-        {
-          id: 'br0',
-          name: 'br0',
-          ipv4: '172.16.0.1',
-          netmask: '255.255.255.0',
-          mac: '00:11:22:33:44:77',
-          gateway: '172.16.0.254',
-          mtu: 1500,
-          status: 'Up',
-          dhcp: false,
-          type: 'virtual'
-        }
-      ];
+      const interfacesData: NetworkInterface[] = Object.entries(pcNetworks).map(
+        ([nid, net]: [string, NetworkItem]) => ({
+          id: nid,
+          name: net.nic_type + "-" + nid, // 原本沒有 Name，使用 nic_type+nid
+          ipv4: net.ipv4,
+          netmask: net.netmask,
+          mac: net.mac,
+          gateway: "", // 從 route 或其他 API 補
+          mtu: net.mtu,
+          status: net.status,
+          dhcp: false, // 可從其他 API 判斷
+          type: net.nic_type.toLowerCase() as 'physical' | 'virtual',
+        })
+      );
 
-      const mockRoutes: Route[] = [
-        {
-          id: 'route1',
-          destinationNetwork: '0.0.0.0/0',
-          nextHop: '192.168.1.1',
-          dev: 'eth0',
-          metric: 100,
-          src: '192.168.1.100'
-        },
-        {
-          id: 'route2',
-          destinationNetwork: '192.168.1.0/24',
-          nextHop: '0.0.0.0',
-          dev: 'eth0',
-          metric: 100,
-          src: '192.168.1.100'
-        }
-      ];
+      // --------- 取得路由 ---------
+      const routeRes = await axios.get<GetAllRouteResponse>("/api/network/route");
+      const routePcs = routeRes.data.Pcs || {};
+      const routeDataRaw = routePcs[selectedComputer]?.Routes || {};
 
-      const mockDNS: DNSConfig = {
-        hostname: 'server-001',
+      const routesData: Route[] = Object.entries(routeDataRaw).map(
+        ([dest, r]: [string, RouteItem]) => ({
+          id: dest,
+          destinationNetwork: dest,
+          nextHop: r.Via,
+          dev: r.Dev,
+          metric: r.Metric,
+          src: r.Src,
+        })
+      );
+
+      // --------- 取得 DNS / Hostname ---------
+      const dnsRes = await axios.get<GetAllDnsResponse>("/api/network/dns");
+      const dnsPcs = dnsRes.data.Pcs || {};
+      const dnsData: PcDns = dnsPcs[selectedComputer] || { Hostname: "", DNS: { Primary: "", Secondary: "" } };
+
+      const dnsConfigData: DNSConfig = {
+        hostname: dnsData.Hostname,
         dns: {
-          primary: '8.8.8.8',
-          secondary: '8.8.4.4'
-        }
+          primary: dnsData.DNS.Primary,
+          secondary: dnsData.DNS.Secondary,
+        },
       };
 
-      setComputers(mockComputers);
-      setInterfaces(mockInterfaces);
-      setRoutes(mockRoutes);
-      setDnsConfig(mockDNS);
-      if (mockComputers.length > 0) {
-        setSelectedComputer(mockComputers[0].id);
-      }
-    } catch (error) {
-      console.error("Error fetching network data:", error);
-      toast.error("Failed to fetch network data. Please try again later.");
+      // --------- 更新 state ---------
+      setInterfaces(interfacesData);
+      setRoutes(routesData);
+      setDnsConfig(dnsConfigData);
+      setOriginalDnsConfig(dnsConfigData); // <- 存原始值
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch network data.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSaveInterface = async (interfaceData: Partial<NetworkInterface>) => {
+    if (!editingInterface) return;
+
     try {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 800));
 
-      if (editingInterface) {
-        setInterfaces(prev => prev.map(iface => 
-          iface.id === editingInterface.id ? { ...iface, ...interfaceData } : iface
-        ));
+      const Nid = editingInterface.id;
+
+      // 組裝 PUT 或 PATCH 請求
+      // 若完整欄位都提供，使用 PUT
+      if (
+        interfaceData.ipv4 &&
+        interfaceData.netmask &&
+        interfaceData.mac &&
+        interfaceData.mtu !== undefined &&
+        interfaceData.status &&
+        interfaceData.type
+      ) {
+        const putReq: PutNetRequest = {
+          Nid,
+          Type: interfaceData.type.toLowerCase() as NicType,
+          Ipv4: interfaceData.ipv4,
+          Netmask: interfaceData.netmask,
+          Mac: interfaceData.mac,
+          Broadcast: "", // 若需要可補入
+          Mtu: interfaceData.mtu,
+          Status: interfaceData.status as NicStatus,
+        };
+        await axios.put(`/api/network/net`, putReq);
+        toast.success(`Interface updated successfully: ${interfaceData.name}`);
+      } else {
+        // 單欄更新用 PATCH
+        const opKeys = Object.keys(interfaceData) as (keyof Partial<NetworkInterface>)[];
+        for (const key of opKeys) {
+          let op: PatchNetRequest["op"] | null = null;
+
+          switch (key) {
+            case "ipv4":
+              op = { Ipv4: interfaceData.ipv4! };
+              break;
+            case "netmask":
+              op = { Netmask: interfaceData.netmask! };
+              break;
+            case "mac":
+              op = { Mac: interfaceData.mac! };
+              break;
+            case "mtu":
+              op = { Mtu: interfaceData.mtu! };
+              break;
+            case "status":
+              op = { Status: interfaceData.status as NicStatus };
+              break;
+            case "type":
+              op = { Type: (interfaceData.type ?? '').toLowerCase() as NicType };
+              break;
+            default:
+              break;
+          }
+
+          if (op) {
+            await axios.patch(`/api/network/net`, { Nid, op });
+          }
+        }
+
         toast.success(`Interface updated successfully: ${interfaceData.name}`);
       }
+
+      // 更新前端 state
+      setInterfaces(prev =>
+        prev.map(iface =>
+          iface.id === Nid ? { ...iface, ...interfaceData } : iface
+        )
+      );
 
       setShowInterfaceDialog(false);
       setEditingInterface(null);
@@ -454,16 +366,32 @@ const NetworkConfigurationPage = () => {
   const handleToggleInterface = async (interfaceId: string) => {
     try {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
 
-      setInterfaces(prev => prev.map(iface => 
-        iface.id === interfaceId 
-          ? { ...iface, status: iface.status === 'Up' ? 'Down' : 'Up' }
-          : iface
-      ));
-
+      // 取得要操作的介面
       const iface = interfaces.find(i => i.id === interfaceId);
-      toast.success(`Network interface ${iface?.status === 'Up' ? 'stopped' : 'started'} successfully: ${iface?.status === 'Up' ? 'Stopped' : 'Started'} interface ${iface?.name}`);
+      if (!iface) return;
+
+      const actionUrl = iface.status === "Up" 
+        ? `/api/network/net/action/down` 
+        : `/api/network/net/action/up`;
+
+      const payload: ActionNetRequest = { Nid: interfaceId };
+      const res = await axios.post(actionUrl, payload);
+
+      if (res.data.Type === "OK") {
+        // 更新前端狀態
+        setInterfaces(prev =>
+          prev.map(i =>
+            i.id === interfaceId 
+              ? { ...i, status: i.status === "Up" ? "Down" : "Up" }
+              : i
+          )
+        );
+
+        toast.success(`Network interface ${iface.name} ${iface.status === "Up" ? "stopped" : "started"} successfully`);
+      } else {
+        toast.error(`Failed to ${iface.status === "Up" ? "stop" : "start"} interface: ${res.data.Message}`);
+      }
     } catch (error) {
       console.error("Error toggling interface:", error);
       toast.error("Operation failed: Unable to toggle network interface status");
@@ -471,6 +399,7 @@ const NetworkConfigurationPage = () => {
       setIsLoading(false);
     }
   };
+
 //TODO: 
   // const handleDeleteInterface = async (interfaceId: string) => {
   //   try {
@@ -490,26 +419,100 @@ const NetworkConfigurationPage = () => {
   // };
 
   const handleSaveRoute = async (routeData: Partial<Route>) => {
+    if (!routeData.destinationNetwork) {
+      toast.error("Destination network is required");
+      return;
+    }
+
     try {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 800));
-
       if (editingRoute) {
-        setRoutes(prev => prev.map(route => 
-          route.id === editingRoute.id ? { ...route, ...routeData } : route
-        ));
-        toast.success(`Route updated successfully:  ${routeData.destinationNetwork}`);
-      } else {
-        const newRoute: Route = {
-          id: `route_${Date.now()}`,
-          destinationNetwork: routeData.destinationNetwork || '',
-          nextHop: routeData.nextHop || '',
-          dev: routeData.dev || '',
-          metric: routeData.metric || 100,
-          src: routeData.src || ''
+        // 判斷是否只修改單一欄位
+        const singleFieldKeys: (keyof Route)[] = ["nextHop", "dev", "metric", "src"];
+        const modifiedFields = singleFieldKeys.filter(key => key in routeData);
+
+        if (modifiedFields.length === 1) {
+          // 單欄更新 (PATCH)
+          const field = modifiedFields[0];
+          const payload: PatchRouteRequest = {
+            Nid: editingRoute.id,
+            Destination: editingRoute.destinationNetwork,
+            Type: field === "nextHop" ? "Via"
+                : field === "dev" ? "Dev"
+                : field === "metric" ? "Metric"
+                : "Src",
+            [field === "nextHop" ? "Via" :
+            field === "dev" ? "Dev" :
+            field === "metric" ? "Metric" : "Src"]: routeData[field]!
+          } as PatchRouteRequest;
+
+          const res = await axios.patch("/api/network/route", payload);
+
+          if (res.data.Type === "OK") {
+            setRoutes(prev =>
+              prev.map(route =>
+                route.id === editingRoute.id ? { ...route, ...routeData } : route
+              )
+            );
+            toast.success(`Route field updated successfully: ${field}`);
+          } else {
+            toast.error(`Failed to update route: ${res.data.Message}`);
+          }
+
+        } else {
+          // 整筆更新 (PUT)
+          const payload: PutRouteRequest = {
+            Destination: routeData.destinationNetwork || editingRoute.destinationNetwork,
+            Via: routeData.nextHop || editingRoute.nextHop,
+            Dev: routeData.dev || editingRoute.dev,
+            Proto: "static",
+            Metric: routeData.metric || 100,
+            Scope: "global",
+            Src: routeData.src || editingRoute.src,
+          };
+
+          const res = await axios.put("/api/network/route", payload);
+
+          if (res.data.Type === "OK") {
+            setRoutes(prev =>
+              prev.map(route =>
+                route.id === editingRoute.id ? { ...route, ...routeData } : route
+              )
+            );
+            toast.success(`Route updated successfully: ${payload.Destination}`);
+          } else {
+            toast.error(`Failed to update route: ${res.data.Message}`);
+          }
+        }
+
+      }else {
+        // 新增
+        const payload: CreateRouteRequest = {
+          Destination: routeData.destinationNetwork!,
+          Via: routeData.nextHop || "",
+          Dev: routeData.dev || "",
+          Proto: "static", // 可依需求修改
+          Metric: routeData.metric || 100,
+          Scope: "global", // 可依需求修改
+          Src: routeData.src || "",
         };
-        setRoutes(prev => [...prev, newRoute]);
-        toast.success(`Route added successfully:${newRoute.destinationNetwork}`);
+
+        const res = await axios.post("/api/network/route", payload);
+
+        if (res.data.Type === "OK") {
+          const newRoute: Route = {
+            id: `route_${Date.now()}`,
+            destinationNetwork: routeData.destinationNetwork!,
+            nextHop: routeData.nextHop || "",
+            dev: routeData.dev || "",
+            metric: routeData.metric || 100,
+            src: routeData.src || "",
+          };
+          setRoutes(prev => [...prev, newRoute]);
+          toast.success(`Route added successfully: ${newRoute.destinationNetwork}`);
+        } else {
+          toast.error(`Failed to add route: ${res.data.Message}`);
+        }
       }
 
       setShowRouteDialog(false);
@@ -521,6 +524,7 @@ const NetworkConfigurationPage = () => {
       setIsLoading(false);
     }
   };
+
 
   // const handleDeleteRoute = async (routeId: string) => {
   //   try {
@@ -546,15 +550,24 @@ const NetworkConfigurationPage = () => {
 
   const handleDeleteRoute = async () => {
     if (!routeToDelete) return;
-    
+
     try {
       setIsLoading(true);
       setShowDeleteRouteDialog(false);
-      await new Promise(resolve => setTimeout(resolve, 500));
 
-      setRoutes(prev => prev.filter(r => r.id !== routeToDelete.id));
-      
-      toast.success(`Route deleted successfully: ${routeToDelete.destination}`);
+      const payload: DeleteRouteRequest = {
+        Destination: routeToDelete.destination,
+      };
+
+      const res = await axios.delete("/api/network/route", { data: payload });
+
+      if (res.data.Type === "OK") {
+        setRoutes(prev => prev.filter(r => r.id !== routeToDelete.id));
+        toast.success(`Route deleted successfully: ${routeToDelete.destination}`);
+      } else {
+        toast.error(`Failed to delete route: ${res.data.Message}`);
+      }
+
       setRouteToDelete(null);
     } catch (error) {
       console.error("Error deleting route:", error);
@@ -565,18 +578,47 @@ const NetworkConfigurationPage = () => {
   };
 
   const handleSaveDNS = async () => {
-    try {
-      setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 800));
+  if (!selectedComputer || !dnsConfig) return;
 
-      toast.success("DNS settings saved successfully");
-    } catch (error) {
-      console.error("Error saving DNS:", error);
-      toast.error("Failed to save DNS settings");
-    } finally {
-      setIsLoading(false);
+  try {
+    setIsLoading(true);
+
+    // 1️⃣ 如果 Hostname 有修改，先做 PATCH
+    if (dnsConfig.hostname !== originalDnsConfig?.hostname) {
+      const patchPayload = {
+        Uuid: selectedComputer,
+        // 如果 API 需要新的 Hostname，可在此加:
+        // Hostname: dnsConfig.hostname
+      };
+
+      const patchRes = await axios.patch("/api/network/dns", patchPayload);
+      if (patchRes.data.Type === "OK") {
+        toast.success("Hostname updated successfully");
+      } else {
+        toast.error(`Failed to update hostname: ${patchRes.data.Message}`);
+      }
     }
-  };
+
+    // 2️⃣ 修改 DNS Server (PUT)
+    const putPayload: PutDnsRequest = {
+      Primary: dnsConfig.dns.primary,
+      Secondary: dnsConfig.dns.secondary || originalDnsConfig?.dns.secondary || "",
+    };
+
+    const putRes = await axios.put("/api/network/dns", putPayload);
+    if (putRes.data.Type === "OK") {
+      toast.success("DNS settings saved successfully");
+    } else {
+      toast.error(`Failed to save DNS: ${putRes.data.Message}`);
+    }
+
+  } catch (error) {
+    console.error("Error saving DNS:", error);
+    toast.error("Failed to save DNS settings");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const selectedComputerData = computers.find(pc => pc.id === selectedComputer);
 
