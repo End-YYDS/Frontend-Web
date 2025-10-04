@@ -132,32 +132,32 @@ const CronManagement = () => {
     });
   };
 
-  const buildScheduleFromCustom = () => {
-    const parts = [];
-    if (newJob.minute && newJob.minute !== 'none') parts.push(`Every ${newJob.minute} minutes`);
-    if (newJob.hour && newJob.hour !== 'none') parts.push(`Every ${newJob.hour} hours`);
-    if (newJob.date && newJob.date !== 'none') parts.push(`Day ${newJob.date} of the month`);
-    if (newJob.month && newJob.month !== 'none') parts.push(`Every ${newJob.month} months`);
-    if (newJob.week && newJob.week !== 'none') parts.push(`Every ${newJob.week} of the week`);
-    return parts.join(', ') || 'Custom schedule';
-  };
+  // const buildScheduleFromCustom = () => {
+  //   const parts = [];
+  //   if (newJob.minute && newJob.minute !== 'none') parts.push(`Every ${newJob.minute} minutes`);
+  //   if (newJob.hour && newJob.hour !== 'none') parts.push(`Every ${newJob.hour} hours`);
+  //   if (newJob.date && newJob.date !== 'none') parts.push(`Day ${newJob.date} of the month`);
+  //   if (newJob.month && newJob.month !== 'none') parts.push(`Every ${newJob.month} months`);
+  //   if (newJob.week && newJob.week !== 'none') parts.push(`Every ${newJob.week} of the week`);
+  //   return parts.join(', ') || 'Custom schedule';
+  // };
 
-  const buildScheduleString = () => {
-    if (newJob.scheduleType === 'quick' && newJob.quickSchedule) {
-      switch (newJob.quickSchedule) {
-        case 'Startup': return 'Startup';
-        case 'Hourly': return 'Hourly';
-        case 'Daily': return 'Daily';
-        case 'Weekly': return 'Weekly';
-        case 'Monthly': return 'Monthly';
-        case 'Yearly': return 'Yearly';
-        default: return newJob.quickSchedule;
-      }
-    } else if (newJob.scheduleType === 'custom') {
-      return buildScheduleFromCustom();
-    }
-    return '';
-  };
+  // const buildScheduleString = () => {
+  //   if (newJob.scheduleType === 'quick' && newJob.quickSchedule) {
+  //     switch (newJob.quickSchedule) {
+  //       case 'Startup': return 'Startup';
+  //       case 'Hourly': return 'Hourly';
+  //       case 'Daily': return 'Daily';
+  //       case 'Weekly': return 'Weekly';
+  //       case 'Monthly': return 'Monthly';
+  //       case 'Yearly': return 'Yearly';
+  //       default: return newJob.quickSchedule;
+  //     }
+  //   } else if (newJob.scheduleType === 'custom') {
+  //     return buildScheduleFromCustom();
+  //   }
+  //   return '';
+  // };
 
   const handleCloseDialog = () => {
     if (editingJob) setEditingJob(null);
