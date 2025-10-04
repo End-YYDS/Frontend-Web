@@ -134,22 +134,22 @@ interface NetworkInterface {
   type: 'physical' | 'virtual';
 }
 
-interface Route {
-  id: string;
-  destinationNetwork: string;
-  nextHop: string;
-  dev: string;
-  metric: number;
-  src: string;
-}
+// interface Route {
+//   id: string;
+//   destinationNetwork: string;
+//   nextHop: string;
+//   dev: string;
+//   metric: number;
+//   src: string;
+// }
 
-interface DNSConfig {
-  hostname: string;
-  dns: {
-    primary: string;
-    secondary: string;
-  };
-}
+// interface DNSConfig {
+//   hostname: string;
+//   dns: {
+//     primary: string;
+//     secondary: string;
+//   };
+// }
 
 interface Computer {
   id: string;
@@ -161,7 +161,7 @@ interface Computer {
 const NetworkConfigurationPage = () => {
   const [activeTab, setActiveTab] = useState("interfaces");
   const [selectedComputer, setSelectedComputer] = useState<string>('');
-  const [computers, setComputers] = useState<Computer[]>([]);
+  const [computers,] = useState<Computer[]>([]);
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [dnsConfig, setDnsConfig] = useState<DNSConfig>({
@@ -585,10 +585,8 @@ const NetworkConfigurationPage = () => {
 
     // 1️⃣ 如果 Hostname 有修改，先做 PATCH
     if (dnsConfig.hostname !== originalDnsConfig?.hostname) {
-      const patchPayload = {
-        Uuid: selectedComputer,
-        // 如果 API 需要新的 Hostname，可在此加:
-        // Hostname: dnsConfig.hostname
+      const patchPayload: PatchHostnameRequest = {
+        Uuid: selectedComputer, // 你的 API 只需要 Uuid，如果 API 支援改 Hostname，可加 Hostname 欄位
       };
 
       const patchRes = await axios.patch("/api/network/dns", patchPayload);
