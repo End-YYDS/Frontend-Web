@@ -15,8 +15,9 @@ import {
   AlertDialogCancel,
   AlertDialogAction
 } from "@/components/ui/alert-dialog";
+import axios from 'axios';
 
-interface Member {
+export interface Member {
   id: string;
   name: string;
   avatar?: string;
@@ -38,47 +39,47 @@ interface ApiResponse {
 }
 
 // ===== 虛擬資料 (mock data, 已註解) =====
-const mockUsers: Member[] = [
-  { id: '1', name: 'Helena', avatar: '/placeholder.svg' },
-  { id: '2', name: 'Oscar', avatar: '/placeholder.svg' },
-  { id: '3', name: 'Daniel', avatar: '/placeholder.svg' },
-  { id: '4', name: 'Alice', avatar: '/placeholder.svg' },
-  { id: '5', name: 'Bob', avatar: '/placeholder.svg' },
-  { id: '6', name: 'Charlie', avatar: '/placeholder.svg' },
-];
+// const mockUsers: Member[] = [
+//   { id: '1', name: 'Helena', avatar: '/placeholder.svg' },
+//   { id: '2', name: 'Oscar', avatar: '/placeholder.svg' },
+//   { id: '3', name: 'Daniel', avatar: '/placeholder.svg' },
+//   { id: '4', name: 'Alice', avatar: '/placeholder.svg' },
+//   { id: '5', name: 'Bob', avatar: '/placeholder.svg' },
+//   { id: '6', name: 'Charlie', avatar: '/placeholder.svg' },
+// ];
 
-const mockRoles: Role[] = [
-  { 
-    id: 'role-0',
-    name: 'role1',
-    color: '#E5E7EB',
-    permissions: 3, 
-    members: [mockUsers[0], mockUsers[1]],
-    memberCount: 2
-  },
-  { 
-    id: 'role-1',
-    name: 'role2',
-    color: '#F59E0B',
-    permissions: 7,
-    members: [mockUsers[2]],
-    memberCount: 1
-  },
-  { 
-    id: 'role-2',
-    name: 'role3',
-    color: '#3B82F6',
-    permissions: 15,
-    members: [mockUsers[3], mockUsers[4], mockUsers[5]],
-    memberCount: 3
-  },
-];
+// const mockRoles: Role[] = [
+//   { 
+//     id: 'role-0',
+//     name: 'role1',
+//     color: '#E5E7EB',
+//     permissions: 3, 
+//     members: [mockUsers[0], mockUsers[1]],
+//     memberCount: 2
+//   },
+//   { 
+//     id: 'role-1',
+//     name: 'role2',
+//     color: '#F59E0B',
+//     permissions: 7,
+//     members: [mockUsers[2]],
+//     memberCount: 1
+//   },
+//   { 
+//     id: 'role-2',
+//     name: 'role3',
+//     color: '#3B82F6',
+//     permissions: 15,
+//     members: [mockUsers[3], mockUsers[4], mockUsers[5]],
+//     memberCount: 3
+//   },
+// ];
 
 // ---------- API Functions ----------
 const fetchAllUsers = async (): Promise<Member[]> => {
   try {
-    const res = await fetch('/api/chm/role/users', { method: 'GET' });
-    const data = await res.json();
+    const res = await axios.get('/api/chm/role/users');
+    const data = res.data;
     return Object.entries(data.Users).map(([uid, name]) => ({
       id: uid,
       name: String(name),
@@ -87,30 +88,28 @@ const fetchAllUsers = async (): Promise<Member[]> => {
   } catch (err) {
     console.error(err);
     toast.error('Failed to fetch users');
-    // return []; // 虛擬資料改為 fallback mockUsers
-    return mockUsers; // TODO: 刪除
+    return []; // fallback: empty array
   }
 };
 
 const fetchAllRoles = async (usersList: Member[]): Promise<Role[]> => {
   try {
-    const res = await fetch('/api/chm/role', { method: 'GET' });
-    const data = await res.json();
+    const res = await axios.get('/api/chm/role');
+    const data = res.data;
     return data.Roles.map((r: any, idx: number) => ({
       id: `role-${idx}`,
       name: String(r.RoleName),
       color: String(r.Color),
       permissions: Number(r.Permissions),
       members: r.Members
-        .map((uid: string) => usersList.find((u: Member) => u.id === String(uid)))
+        .map((uid: string) => usersList.find(u => u.id === String(uid)))
         .filter((u: Member | undefined): u is Member => u !== undefined),
       memberCount: r.Length
     }));
   } catch (err) {
     console.error(err);
     toast.error('Failed to fetch roles');
-    // return []; // 虛擬資料改為 fallback mockRoles
-    return mockRoles; // TODO: 刪除
+    return []; // fallback: empty array
   }
 };
 
@@ -123,12 +122,8 @@ const createRole = async (role: Role): Promise<ApiResponse> => {
       Members: role.members.map(m => Number(m.id)),
       Length: role.members.length
     };
-    const res = await fetch('/api/chm/role', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    return await res.json();
+    const res = await axios.post('/api/chm/role', body);
+    return res.data;
   } catch (err) {
     console.error(err);
     toast.error('Failed to create role');
@@ -138,12 +133,8 @@ const createRole = async (role: Role): Promise<ApiResponse> => {
 
 const deleteRoleApi = async (roleName: string): Promise<ApiResponse> => {
   try {
-    const res = await fetch('/api/chm/role', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ RoleName: roleName })
-    });
-    return await res.json();
+    const res = await axios.delete('/api/chm/role', { data: { RoleName: roleName } });
+    return res.data;
   } catch (err) {
     console.error(err);
     toast.error('Failed to delete role');
@@ -153,15 +144,11 @@ const deleteRoleApi = async (roleName: string): Promise<ApiResponse> => {
 
 const updateRoleMembers = async (roleName: string, members: Member[]): Promise<ApiResponse> => {
   try {
-    const res = await fetch('/api/chm/role', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        RoleName: roleName,
-        Members: members.map(m => Number(m.id))
-      })
+    const res = await axios.put('/api/chm/role', {
+      RoleName: roleName,
+      Members: members.map(m => Number(m.id))
     });
-    return await res.json();
+    return res.data;
   } catch (err) {
     console.error(err);
     toast.error('Failed to update role members');
@@ -171,16 +158,12 @@ const updateRoleMembers = async (roleName: string, members: Member[]): Promise<A
 
 const updateRolePermissions = async (role: Role): Promise<ApiResponse> => {
   try {
-    const res = await fetch('/api/chm/role', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        RoleName: role.name,
-        Permissions: role.permissions,
-        Color: role.color
-      })
+    const res = await axios.patch('/api/chm/role', {
+      RoleName: role.name,
+      Permissions: role.permissions,
+      Color: role.color
     });
-    return await res.json();
+    return res.data;
   } catch (err) {
     console.error(err);
     toast.error('Failed to update role permissions');
@@ -209,10 +192,10 @@ export function RolesContent() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const users = await fetchAllUsers(); // 連後端
+        const users = await fetchAllUsers();
         setAllUsers(users);
 
-        const rolesData = await fetchAllRoles(users); // 連後端
+        const rolesData = await fetchAllRoles(users);
         setRoles(rolesData);
       } catch (err) {
         console.error(err);

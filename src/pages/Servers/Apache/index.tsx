@@ -8,13 +8,10 @@ const index = () => {
   const [selectedComputer, setSelectedComputer] = useState<string | null>(null);
   return (
     <div className="max-w-4xl mx-auto py-8 px-6">
-      <div className="text-center mb-8">
-          <h1 
-          className="text-4xl font-bold mb-2" 
-          style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
-          >
-            Apache Webserver
-          </h1>
+      <div className="bg-[#A8AEBD] py-1.5 mb-6">
+        <h1 className="text-4xl font-extrabold text-center text-[#E6E6E6]">
+          Apache Webserver
+        </h1>
       </div>
       <ServerContent 
         selectedServer={null} // Replace with actual server ID after finish Sidebar

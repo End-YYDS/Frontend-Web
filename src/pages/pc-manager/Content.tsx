@@ -439,19 +439,17 @@ const handleAddGroup = async () => {
 ];
 
 
+
   return (
     <div className="min-h-screen bg-gradient-to-br">   
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto py-8 px-6">
-        <div className="text-center mb-8">
-          <h1 
-            className="text-4xl font-bold mb-2" 
-            style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
-          >
-            PC Manager
-          </h1>
-        </div>
+        <div className="bg-[#A8AEBD] py-1.5 mb-6">
+        <h1 className="text-4xl font-extrabold text-center text-[#E6E6E6]">
+          PC Manager
+        </h1>
+      </div>
       {/* 系統管理區塊 */}
       <div className="space-y-4">
       <Card>

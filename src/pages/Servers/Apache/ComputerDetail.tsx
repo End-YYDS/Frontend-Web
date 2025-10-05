@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -73,14 +74,8 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const fetchServerStatus = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/server/apache", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ Uuid: computerId })
-      });
-      if (!res.ok) throw new Error("Network error");
-      const data: ServerStatus = await res.json();
-      setServerStatus(data);
+      const res = await axios.get<ServerStatus>("/api/server/apache", { params: { Uuid: computerId } });
+      setServerStatus(res.data);
     } catch (e) {
       console.error("Fetch server status failed:", e);
       toast({ title: "Error", description: "Failed to fetch server status", variant: "destructive" });
@@ -97,18 +92,12 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const performAction = async (action: "start"|"stop"|"restart") => {
     setActionLoading(action);
     try {
-      const res = await fetch(`/api/server/apache/action/${action}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ Uuid: computerId })
-      });
-      if (!res.ok) throw new Error("Network error");
-      const data: ActionResponse = await res.json();
-      if (data.Type === "OK") {
+      const res = await axios.post<ActionResponse>(`/api/server/apache/action/${action}`, { Uuid: computerId });
+      if (res.data.Type === "OK") {
         toast({ title: "Success", description: `Server ${action} succeeded` });
         fetchServerStatus();
       } else {
-        toast({ title: "Error", description: data.Message, variant: "destructive" });
+        toast({ title: "Error", description: res.data.Message, variant: "destructive" });
       }
     } catch (e) {
       console.error(`${action} failed`, e);

@@ -1,26 +1,47 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { MagnifyingGlassIcon, PlusIcon, UserIcon } from '@heroicons/react/24/outline';
+import axios from 'axios';
 
-interface Member {
+export interface Member {
   id: string;
   name: string;
   avatar?: string;
 }
 
 interface AddMemberDialogProps {
-  allUsers: Member[];
   members: Member[];
   onAddMember: (user: Member) => void;
 }
 
-export function AddMemberDialog({ allUsers, members, onAddMember }: AddMemberDialogProps) {
+export function AddMemberDialog({ members, onAddMember }: AddMemberDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [allUsers, setAllUsers] = useState<Member[]>([]);
   const [searchAllUsers, setSearchAllUsers] = useState('');
 
-  const availableUsers = allUsers.filter(user => 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchUsers = async () => {
+      try {
+        const res = await axios.get('/api/chm/role/users');
+        const users: Member[] = Object.entries(res.data.Users).map(([id, name]) => ({
+          id,
+          name: String(name),
+          avatar: '/placeholder.svg'
+        }));
+        setAllUsers(users);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchUsers();
+  }, [isOpen]);
+
+  const availableUsers = allUsers.filter(user =>
     !members.find(m => m.id === user.id) &&
     user.name.toLowerCase().includes(searchAllUsers.toLowerCase())
   );

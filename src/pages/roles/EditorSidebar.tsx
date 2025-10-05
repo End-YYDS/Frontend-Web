@@ -1,13 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
-interface Member {
+export interface Member {
   id: string;
   name: string;
   avatar?: string;
 }
 
-interface Role {
+export interface Role {
   id: string;
   name: string;
   color: string;
@@ -16,7 +16,7 @@ interface Role {
   members: Member[];
 }
 
-interface RoleEditorSidebarProps {
+export interface RoleEditorSidebarProps {
   roleName: string;
   selectedColor: string;
   currentRole: Role;

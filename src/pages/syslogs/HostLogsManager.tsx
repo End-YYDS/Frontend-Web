@@ -11,6 +11,7 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Search, Filter, Download, ChevronDown, ChevronRight, Server } from 'lucide-react';
 // import { format } from 'date-fns';
 // import { cn } from '@/lib/utils';
+import axios from 'axios';
 
 // -------------------- Type 定義 --------------------
 interface LogEntry {
@@ -36,15 +37,15 @@ export const HostLogsManager = () => {
   const [selectedLogs, setSelectedLogs] = useState<string[]>([]);
   const [expandedLogs, setExpandedLogs] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [filterValues, ] = useState({ month: '', timeRange: '', type: '' });
-  const [filterEnabled, ] = useState({ month: false, date: false, timeRange: false, type: false });
-  const [selectedDate, ] = useState<Date>();
+  // const [filterValues, ] = useState({ month: '', timeRange: '', type: '' });
+  // const [filterEnabled, ] = useState({ month: false, date: false, timeRange: false, type: false });
+  // const [selectedDate, ] = useState<Date>();
 
   // -------------------- Helper --------------------
-  const getMonthName = (monthNumber: string) => {
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    return months[parseInt(monthNumber)-1];
-  };
+  // const getMonthName = (monthNumber: string) => {
+  //   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  //   return months[parseInt(monthNumber)-1];
+  // };
 
   // const checkTimeRange = (time: string, range: string) => {
   //   const hour = parseInt(time.split(':')[0]);
@@ -80,10 +81,9 @@ export const HostLogsManager = () => {
   // -------------------- API --------------------
   const fetchPcs = async () => {
     try {
-      const res = await fetch('/api/logs/pc/all');
-      if (!res.ok) throw new Error('Failed to fetch PCs');
-      const data = await res.json();
-      const pcsData: PcEntry[] = Object.values(data.Pcs);
+      const res = await axios.get('/api/logs/pc/all');
+      const data = res.data;
+      const pcsData: PcEntry[] = Object.entries(data.Pcs).map(([uuid]) => ({ uuid }));
       setPcs(pcsData);
     } catch (err) {
       console.error('Failed to fetch PCs:', err);
@@ -93,16 +93,8 @@ export const HostLogsManager = () => {
   const fetchLogs = async (uuid: string) => {
     if (!uuid) return;
     try {
-      // 如果有任何過濾條件，使用 query API
-      let url = `/api/logs/pc?Uuid=${uuid}`;
-      if (filterEnabled.month) url = `/api/logs/pc/query?Uuid=${uuid}&Search=Month&Parameter=${getMonthName(filterValues.month)}`;
-      else if (filterEnabled.timeRange) url = `/api/logs/pc/query?Uuid=${uuid}&Search=Time&Parameter=${filterValues.timeRange}`;
-      else if (filterEnabled.type) url = `/api/logs/pc/query?Uuid=${uuid}&Search=Type&Parameter=${filterValues.type}`;
-      else if (filterEnabled.date && selectedDate) url = `/api/logs/pc/query?Uuid=${uuid}&Search=Day&Parameter=${selectedDate.getDate().toString()}`;
-
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Failed to fetch logs');
-      const data = await res.json();
+      const res = await axios.get(`/api/logs/pc?Uuid=${uuid}`);
+      const data = res.data;
       const logsData: LogEntry[] = Object.entries(data.Logs).map(([id, log]: any) => ({ id, ...log }));
       setLogs(logsData);
     } catch (err) {
@@ -111,21 +103,18 @@ export const HostLogsManager = () => {
     }
   };
 
-  useEffect(()=>{ fetchPcs(); }, []);
-  useEffect(()=>{ fetchLogs(selectedPc); }, [selectedPc, filterValues, filterEnabled, selectedDate]);
+  useEffect(() => { fetchPcs(); }, []);
+  useEffect(() => { fetchLogs(selectedPc); }, [selectedPc]);
 
-  // -------------------- Log 操作 --------------------
   const toggleLogExpansion = (logId: string) => {
-    setExpandedLogs(prev => prev.includes(logId) ? prev.filter(id=>id!==logId) : [...prev, logId]);
+    setExpandedLogs(prev => prev.includes(logId) ? prev.filter(id => id !== logId) : [...prev, logId]);
   };
-
   const toggleLogSelection = (logId: string) => {
-    setSelectedLogs(prev => prev.includes(logId) ? prev.filter(id=>id!==logId) : [...prev, logId]);
+    setSelectedLogs(prev => prev.includes(logId) ? prev.filter(id => id !== logId) : [...prev, logId]);
   };
-
   const selectAllLogs = () => {
-    if (selectedLogs.length===logs.length) setSelectedLogs([]);
-    else setSelectedLogs(logs.map(log=>log.id));
+    if (selectedLogs.length === logs.length) setSelectedLogs([]);
+    else setSelectedLogs(logs.map(log => log.id));
   };
 
   // -------------------- JSX --------------------

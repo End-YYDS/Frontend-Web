@@ -26,10 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import axios from 'axios';
+// 從 types.ts 引入型別
+import type { PcProcess, GetAllProcessResponse, OneProcessRequest, OneProcessResponse, ActionRequest } from './types';
 
 interface Process {
-  status: boolean;
-  boot: boolean;
+  Status: boolean;
+  Boot: boolean;
 }
 
 interface Computer {
@@ -39,43 +42,43 @@ interface Computer {
   length: number;
 }
 
-interface ProcessData {
-  pcs: Record<string, Computer>;
-  length: number;
-}
+// interface ProcessData {
+//   pcs: Record<string, Computer>;
+//   length: number;
+// }
 
-// 模擬資料
-const mockData: ProcessData = {
-  pcs: {
-    'PC-001': {
-      uuid: 'PC-001',
-      hostname: 'Workstation-01',
-      length: 5,
-      processes: {
-        'chrome.exe': { status: true, boot: true },
-        'explorer.exe': { status: true, boot: true },
-        'notepad.exe': { status: false, boot: false },
-        'discord.exe': { status: true, boot: true },
-        'vscode.exe': { status: false, boot: true },
-      }
-    },
-    'PC-002': {
-      uuid: 'PC-002',
-      hostname: 'Workstation-02',
-      length: 4,
-      processes: {
-        'chrome.exe': { status: true, boot: true },
-        'explorer.exe': { status: false, boot: true },
-        'notepad.exe': { status: false, boot: false },
-        'zoom.exe': { status: true, boot: true },
-      }
-    },
-  },
-  length: 2
-};
+// 模擬資料（保留作為 fallback）
+// const mockData: { pcs: Record<string, Computer>; length: number } = {
+//   pcs: {
+//     'PC-001': {
+//       uuid: 'PC-001',
+//       hostname: 'Workstation-01',
+//       length: 5,
+//       processes: {
+//         'chrome.exe': { Status: true, Boot: true },
+//         'explorer.exe': { Status: true, Boot: true },
+//         'notepad.exe': { Status: false, Boot: false },
+//         'discord.exe': { Status: true, Boot: true },
+//         'vscode.exe': { Status: false, Boot: true },
+//       }
+//     },
+//     'PC-002': {
+//       uuid: 'PC-002',
+//       hostname: 'Workstation-02',
+//       length: 4,
+//       processes: {
+//         'chrome.exe': { Status: true, Boot: true },
+//         'explorer.exe': { Status: false, Boot: true },
+//         'notepad.exe': { Status: false, Boot: false },
+//         'zoom.exe': { Status: true, Boot: true },
+//       }
+//     },
+//   },
+//   length: 2
+// };
 
 export const ProcessManager = () => {
-  const [processData, setProcessData] = useState<ProcessData | null>(mockData);
+  const [processData, setProcessData] = useState<{ pcs: Record<string, Computer>; length: number } | null>(null);
   const [selectedComputer, setSelectedComputer] = useState<Computer | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,30 +89,24 @@ export const ProcessManager = () => {
   const fetchAllProcesses = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/process/all');
-      if (!res.ok) throw new Error('API fetch failed');
-      const data = await res.json();
+      const res = await axios.get<GetAllProcessResponse>('/api/process/all');
+      const data = res.data;
 
       const pcs: Record<string, Computer> = {};
-      Object.entries(data.Pcs).forEach(([uuid, pc]: any) => {
+      Object.entries(data.Pcs).forEach(([uuid, pc]) => {
         pcs[uuid] = {
           uuid,
-          hostname: pc.Hostname,
-          processes: Object.fromEntries(
-            Object.entries(pc.Process).map(([name, p]: any) => [
-              name,
-              { status: p.Status, boot: p.Boot }
-            ])
-          ),
-          length: pc.Length
+          hostname: (pc as PcProcess).Hostname,
+          processes: (pc as PcProcess).Process,
+          length: (pc as PcProcess).Length
         };
       });
 
       setProcessData({ pcs, length: data.Length });
     } catch (err) {
-      console.warn('Using mock data due to API error:', err);
-      toast({ title: "Notice", description: "Using mock data", variant: "default" });
-      setProcessData(mockData); // 使用模擬資料
+      console.error('Failed to fetch process data:', err);
+      toast({ title: "Error", description: "Failed to fetch process data", variant: "destructive" });
+      setProcessData(null);
     } finally {
       setLoading(false);
     }
@@ -118,18 +115,13 @@ export const ProcessManager = () => {
   // 取得單一電腦的 Process
   const fetchOneComputerProcesses = async (uuid: string) => {
     try {
-      const res = await fetch('/api/process/one', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Uuid: uuid })
-      });
-      if (!res.ok) throw new Error('API fetch failed');
-      const data = await res.json();
+      const reqData: OneProcessRequest = { Uuid: uuid };
+      const res = await axios.post<OneProcessResponse>('/api/process/one', reqData);
+      const data = res.data;
+
       if (processData) {
         const newProcessData = { ...processData };
-        newProcessData.pcs[uuid].processes = Object.fromEntries(
-          Object.entries(data.Process).map(([name, p]: any) => [name, { status: p.Status, boot: p.Boot }])
-        );
+        newProcessData.pcs[uuid].processes = data.Process;
         setProcessData(newProcessData);
 
         if (selectedComputer && selectedComputer.uuid === uuid) {
@@ -137,8 +129,8 @@ export const ProcessManager = () => {
         }
       }
     } catch (err) {
-      console.warn('Using existing data/mock data due to API error:', err);
-      toast({ title: "Notice", description: "Failed to fetch computer processes, using mock/existing data", variant: "default" });
+      console.error('Failed to fetch single computer processes:', err);
+      toast({ title: "Error", description: "Failed to fetch computer processes", variant: "destructive" });
     }
   };
 
@@ -155,7 +147,6 @@ export const ProcessManager = () => {
         disable: '/api/process/action/disable'
       };
       const url = apiMap[action];
-
       if (!url) throw new Error(`Unknown action: ${action}`);
 
       // **先更新本地狀態，假設 API 成功**
@@ -163,10 +154,10 @@ export const ProcessManager = () => {
         const newProcessData = { ...processData };
         const process = newProcessData.pcs[uuid].processes[processName];
 
-        if (action === 'start') process.status = true;
-        else if (action === 'stop') process.status = false;
-        else if (action === 'start_enable') process.boot = true;
-        else if (action === 'stop_disable') process.boot = false;
+        if (action === 'start') process.Status = true;
+        else if (action === 'stop') process.Status = false;
+        else if (action === 'start_enable') process.Boot = true;
+        else if (action === 'stop_disable') process.Boot = false;
 
         setProcessData(newProcessData);
         if (selectedComputer && selectedComputer.uuid === uuid) {
@@ -175,22 +166,17 @@ export const ProcessManager = () => {
       }
 
       // 實際呼叫 API
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Uuid: uuid, Process: processName })
-      });
-      if (!res.ok) throw new Error('API action failed');
-      const result = await res.json();
+      const reqData: ActionRequest = { Uuid: uuid, Process: processName };
+      const res = await axios.post(url, reqData);
 
-      if (result.Type === 'OK') {
+      if (res.data.Type === 'OK') {
         toast({ title: "Action Completed", description: `${action} sent to ${processName}` });
       } else {
-        toast({ title: "Error", description: result.Message, variant: "destructive" });
+        toast({ title: "Error", description: res.data.Message, variant: "destructive" });
       }
     } catch (error) {
-      console.warn('API failed, local state may be inconsistent', error);
-      toast({ title: "Notice", description: "Action simulated with mock data", variant: "default" });
+      console.error('API action failed', error);
+      toast({ title: "Error", description: "Failed to perform action", variant: "destructive" });
     }
   };
 
@@ -204,7 +190,7 @@ export const ProcessManager = () => {
 
   const getComputerStats = (computer: Computer) => {
     const total = Object.keys(computer.processes).length;
-    const running = Object.values(computer.processes).filter(p => p.status).length;
+    const running = Object.values(computer.processes).filter(p => p.Status).length;
     const stopped = total - running;
     return { total, running, stopped };
   };
@@ -348,13 +334,13 @@ export const ProcessManager = () => {
                   </Card>
                   <Card className="p-4 text-center bg-green-50">
                     <div className="text-2xl font-bold text-green-600">
-                      {Object.values(selectedComputer.processes).filter(p => p.status).length}
+                      {Object.values(selectedComputer.processes).filter(p => p.Status).length}
                     </div>
                     <div className="text-sm text-gray-500">Running</div>
                   </Card>
                   <Card className="p-4 text-center bg-red-50">
                     <div className="text-2xl font-bold text-red-600">
-                      {Object.values(selectedComputer.processes).filter(p => !p.status).length}
+                      {Object.values(selectedComputer.processes).filter(p => !p.Status).length}
                     </div>
                     <div className="text-sm text-gray-500">Stopped</div>
                   </Card>
@@ -393,12 +379,12 @@ export const ProcessManager = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={process.status ? "default" : "secondary"}>
-                              {process.status ? "Running" : "Stopped"}
+                            <Badge variant={process.Status ? "default" : "secondary"}>
+                              {process.Status ? "Running" : "Stopped"}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {process.boot ? (
+                            {process.Boot ? (
                               <Badge variant="outline" className="text-green-600">Enabled</Badge>
                             ) : (
                               <Badge variant="outline" className="text-gray-500">Disabled</Badge>
@@ -406,7 +392,7 @@ export const ProcessManager = () => {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end space-x-1">
-                              {!process.status ? (
+                              {!process.Status ? (
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -427,7 +413,7 @@ export const ProcessManager = () => {
                                   Stop
                                 </Button>
                               )}
-                              {!process.boot ? (
+                              {!process.Boot ? (
                                 <Button
                                   size="sm"
                                   variant="outline"

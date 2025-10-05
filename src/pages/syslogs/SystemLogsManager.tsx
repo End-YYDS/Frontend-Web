@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Search, Filter, Download, ChevronDown, ChevronRight, X, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import axios from 'axios';
 
 interface LogEntry {
   id: string;
@@ -23,87 +24,72 @@ interface LogEntry {
 }
 
 // === 虛擬資料 (Mock Data) TODO: 刪除 ===
-const mockSystemLogs: LogEntry[] = [
-  {
-    id: '1',
-    date: 'December 24',
-    time: '14:30',
-    direction: 'in',
-    type: 'INFO',
-    message: 'User authentication successful for user john.doe@exampl...',
-    fullMessage: 'User authentication successful for user john.doe@example.com from IP address 192.168.1.100. Session token issued with 8-hour expiration.'
-  },
-  {
-    id: '2',
-    date: 'December 24',
-    time: '14:25',
-    direction: 'out',
-    type: 'ERROR',
-    message: 'Failed to connect to external service at endpoint https://a...',
-    fullMessage: 'Failed to connect to external service at endpoint https://api.external-service.com/v1/data. Connection timeout after 30 seconds. Retrying in 60 seconds.'
-  },
-  {
-    id: '3',
-    date: 'December 24',
-    time: '14:20',
-    direction: 'in',
-    type: 'INFO',
-    message: 'Service health check completed successfully. All microsev...',
-    fullMessage: 'Service health check completed successfully. All microservices are operational. Database connections: 45/100, Memory usage: 68%, CPU usage: 42%.'
-  },
-  {
-    id: '4',
-    date: 'December 24',
-    time: '14:15',
-    direction: 'out',
-    type: 'WARNING',
-    message: 'Database query execution time exceeded 5 seconds for t...',
-    fullMessage: 'Database query execution time exceeded 5 seconds for transaction ID: TXN-2024-001234. Query: SELECT * FROM large_table WHERE complex_condition. Consider optimizing this query.'
-  }
-];
+// const mockSystemLogs: LogEntry[] = [
+//   {
+//     id: '1',
+//     date: 'December 24',
+//     time: '14:30',
+//     direction: 'in',
+//     type: 'INFO',
+//     message: 'User authentication successful for user john.doe@exampl...',
+//     fullMessage: 'User authentication successful for user john.doe@example.com from IP address 192.168.1.100. Session token issued with 8-hour expiration.'
+//   },
+//   {
+//     id: '2',
+//     date: 'December 24',
+//     time: '14:25',
+//     direction: 'out',
+//     type: 'ERROR',
+//     message: 'Failed to connect to external service at endpoint https://a...',
+//     fullMessage: 'Failed to connect to external service at endpoint https://api.external-service.com/v1/data. Connection timeout after 30 seconds. Retrying in 60 seconds.'
+//   },
+//   {
+//     id: '3',
+//     date: 'December 24',
+//     time: '14:20',
+//     direction: 'in',
+//     type: 'INFO',
+//     message: 'Service health check completed successfully. All microsev...',
+//     fullMessage: 'Service health check completed successfully. All microservices are operational. Database connections: 45/100, Memory usage: 68%, CPU usage: 42%.'
+//   },
+//   {
+//     id: '4',
+//     date: 'December 24',
+//     time: '14:15',
+//     direction: 'out',
+//     type: 'WARNING',
+//     message: 'Database query execution time exceeded 5 seconds for t...',
+//     fullMessage: 'Database query execution time exceeded 5 seconds for transaction ID: TXN-2024-001234. Query: SELECT * FROM large_table WHERE complex_condition. Consider optimizing this query.'
+//   }
+// ];
 
 export const SystemLogsManager = () => {
-  const [logs, setLogs] = useState<typeof mockSystemLogs>([]); // TODO: 刪除 mockSystemLogs，改成 LogEntry[]
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLogs, setSelectedLogs] = useState<string[]>([]);
   const [expandedLogs, setExpandedLogs] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>();
-  const [filterValues, setFilterValues] = useState({
-    month: '',
-    date: '',
-    timeRange: '',
-    type: '',
-    direction: ''
-  });
-
-  const [filterEnabled, setFilterEnabled] = useState({
-    month: false,
-    date: false,
-    timeRange: false,
-    direction: false,
-    type: false
-  });
+  const [filterValues, setFilterValues] = useState({ month: '', date: '', timeRange: '', type: '', direction: '' });
+  const [filterEnabled, setFilterEnabled] = useState({ month: false, date: false, timeRange: false, direction: false, type: false });
 
   // === 真實 API 請求 ===
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await fetch('/api/logs/sys'); // 連接真實 API
-        if (!res.ok) throw new Error('API failed');
-        const data = await res.json();
+        const res = await axios.get('/api/logs/sys');
+        const data = res.data;
 
-        // API回傳轉換成LogEntry格式
         const fetchedLogs: LogEntry[] = Object.keys(data.Logs).map((id) => {
           const log = data.Logs[id];
           return {
             id,
-            date: `${log.Month} ${log.Day}`, // ex: "December 24"
-            time: `${log.Time.Hour.toString().padStart(2, '0')}:${log.Time.Min.toString().padStart(2, '0')}`,
+            date: `${log.Month} ${log.Day}`,
+            time: `${log.Time.Hour.toString().padStart(2,'0')}:${log.Time.Min.toString().padStart(2,'0')}`,
             direction: log.Direction === 'A to B' ? 'in' : 'out',
             type: log.Type as 'SYSTEM' | 'WARNING' | 'ERROR' | 'INFO',
-            message: log.Messages.slice(0, 50) + '...',
+            message: log.Messages.slice(0,50) + '...',
             fullMessage: log.Messages
           };
         });
@@ -111,10 +97,8 @@ export const SystemLogsManager = () => {
         setLogs(fetchedLogs);
       } catch (err) {
         console.error('API 請求失敗:', err);
-        setLogs(mockSystemLogs); // API失敗時啟用虛擬資料（TODO: 刪除）
       }
     };
-
     fetchLogs();
   }, []);
 
@@ -158,37 +142,27 @@ export const SystemLogsManager = () => {
 
   const fetchFilteredLogs = async (searchField: string, parameter: string) => {
     try {
-      const res = await fetch('/api/logs/sys/query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          Search: searchField,
-          Parameter: parameter
-        })
-      });
+      const res = await axios.post('/api/logs/sys/query', { Search: searchField, Parameter: parameter });
+      const data = res.data;
 
-      if (!res.ok) throw new Error('Query API failed');
-
-      const data = await res.json();
       const fetchedLogs: LogEntry[] = Object.keys(data.Logs).map((id) => {
         const log = data.Logs[id];
         return {
           id,
           date: `${log.Month} ${log.Day}`,
-          time: log.Time,
+          time: `${log.Time.Hour.toString().padStart(2,'0')}:${log.Time.Min.toString().padStart(2,'0')}`,
           direction: log.Direction === 'A to B' ? 'in' : 'out',
           type: log.Type as 'SYSTEM' | 'WARNING' | 'ERROR' | 'INFO',
-          message: log.Messages.slice(0, 50) + '...',
+          message: log.Messages.slice(0,50) + '...',
           fullMessage: log.Messages
         };
       });
 
       setLogs(fetchedLogs);
     } catch (err) {
-      console.error('篩選 API 失敗：', err);
+      console.error('篩選 API 失敗:', err);
     }
   };
-
 
   const toggleLogExpansion = (logId: string) => {
     setExpandedLogs(prev => prev.includes(logId) ? prev.filter(id => id !== logId) : [...prev, logId]);

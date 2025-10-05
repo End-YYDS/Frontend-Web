@@ -2,8 +2,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MagnifyingGlassIcon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline';
 import { AddMemberDialog } from './AddMemberDialog';
+import axios from 'axios';
 
-interface Member {
+export interface Member {
   id: string;
   name: string;
   avatar?: string;

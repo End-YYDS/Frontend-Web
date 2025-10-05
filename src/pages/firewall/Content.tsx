@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -9,19 +10,16 @@ import { Shield, Plus, Trash2, Settings, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddRuleDialog } from './AddRuleDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import type { FirewallStatusResponse, PutStatusRequest, PutPolicyRequest, DeleteRuleRequest, Target, Rule } from './types';
 
 interface Host { uuid: string; hostname: string; }
-interface FirewallRule { Target: string; Protocol: string; In: string; Out: string; Source: string; Destination: string; Options: string; }
-interface FirewallChain { Name: string; Policy: string; Rules: FirewallRule[]; Rules_Length: number; }
-interface FirewallStatus { Status: string; Chains: FirewallChain[]; }
 
 export const FirewallManager = () => {
   const [hosts, setHosts] = useState<Host[]>([]);
-  const [selectedHost, setSelectedHost] = useState<string>('');
-  const [firewallStatus, setFirewallStatus] = useState<FirewallStatus | null>(null);
-  const [, setIsLoading] = useState(false);
+  const [selectedHost, setSelectedHost] = useState('');
+  const [firewallStatus, setFirewallStatus] = useState<FirewallStatusResponse | null>(null);
   const [isAddRuleOpen, setIsAddRuleOpen] = useState(false);
-  const [selectedChain, setSelectedChain] = useState<string>('INPUT');
+  const [selectedChain, setSelectedChain] = useState('INPUT');
   const { toast } = useToast();
 
   const [firewallDialog, setFirewallDialog] = useState({ open: false, newStatus: false });
@@ -31,91 +29,48 @@ export const FirewallManager = () => {
   // ======== Fetch Hosts ========
   const fetchHosts = async () => {
     try {
-      const res = await fetch('/api/firewall/pcs');
-      if (res.ok) {
-        const data = await res.json();
-        const pcs: Host[] = Object.entries(data.Pcs).map(([uuid, hostname]) => ({ uuid, hostname: hostname as string }));
-        setHosts(pcs);
-        setSelectedHost(pcs[0]?.uuid || '');
-        return;
-      }
+      const res = await axios.get('/api/firewall/pcs');
+      const data = res.data;
+      const pcs: Host[] = Object.entries(data.Pcs).map(([uuid, hostname]) => ({ uuid, hostname: hostname as string }));
+      setHosts(pcs);
+      setSelectedHost(pcs[0]?.uuid || '');
     } catch (e) {
       console.error('Fetch hosts error', e);
+      // fallback測資
+      // const testHosts: Host[] = [
+      //   { uuid: 'host-001', hostname: 'PC-OFFICE-001' },
+      //   { uuid: 'host-002', hostname: 'PC-OFFICE-002' },
+      //   { uuid: 'host-003', hostname: 'SERVER-001' },
+      //   { uuid: 'host-004', hostname: 'LAPTOP-DEV-001' },
+      //   { uuid: 'host-005', hostname: 'GATEWAY-001' }
+      // ];
+      // setHosts(testHosts);
+      // setSelectedHost(testHosts[0]?.uuid || '');
     }
-
-    // fallback: 保留測資
-    const testHosts: Host[] = [
-      { uuid: 'host-001', hostname: 'PC-OFFICE-001' },
-      { uuid: 'host-002', hostname: 'PC-OFFICE-002' },
-      { uuid: 'host-003', hostname: 'SERVER-001' },
-      { uuid: 'host-004', hostname: 'LAPTOP-DEV-001' },
-      { uuid: 'host-005', hostname: 'GATEWAY-001' }
-    ];
-    setHosts(testHosts);
-    setSelectedHost(testHosts[0]?.uuid || '');
   };
 
   // ======== Fetch Firewall Status ========
   const fetchFirewallStatus = async (uuid: string) => {
-  if (!uuid) return;
-  setIsLoading(true);
-  try {
-    const res = await fetch('/api/firewall', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ Uuid: uuid }) // 完全遵守你的規格
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const chains = data.Chains.map((c: any) => ({
-        Name: c.Name,
-        Policy: c.Policy,
-        Rules: Array.isArray(c.Rules) ? c.Rules : Object.values(c.Rules),
-        Rules_Length: c.Rules_Length
-      }));
-      setFirewallStatus({ Status: data.Status, Chains: chains });
+    if (!uuid) return;
+    try {
+      const res = await axios.get('/api/firewall', { data: { Uuid: uuid } });
+      const data = res.data;
+      setFirewallStatus(data);
       toast({ title: "Success", description: "Firewall status loaded" });
-      return;
-    } else {
-      console.error('API response error', res.status);
+    } catch (e) {
+      console.error('Fetch firewall status error', e);
+      toast({ title: "Error", description: "Failed to load firewall status", variant: "destructive" });
     }
-  } catch (e) {
-    console.error('Fetch firewall status error', e);
-  }
-
-  // fallback: 保留測資
-  const testStatus: FirewallStatus = {
-    Status: 'active',
-    Chains: [
-      { Name: 'INPUT', Policy: 'DROP', Rules: [
-        { Target: 'ACCEPT', Protocol: 'tcp', In: 'lo', Out: '*', Source: '0.0.0.0/0', Destination: '0.0.0.0/0', Options: '' },
-        { Target: 'ACCEPT', Protocol: 'tcp', In: 'eth0', Out: '*', Source: '0.0.0.0/0', Destination: '0.0.0.0/0', Options: 'tcp dpt:22' },
-        { Target: 'DROP', Protocol: 'tcp', In: 'eth0', Out: '*', Source: '192.168.1.100', Destination: '0.0.0.0/0', Options: 'tcp dpt:22' }
-      ], Rules_Length: 3 },
-      { Name: 'FORWARD', Policy: 'DROP', Rules: [], Rules_Length: 0 },
-      { Name: 'OUTPUT', Policy: 'ACCEPT', Rules: [
-        { Target: 'ACCEPT', Protocol: 'all', In: '*', Out: 'eth0', Source: '0.0.0.0/0', Destination: '0.0.0.0/0', Options: '' }
-      ], Rules_Length: 1 }
-    ]
   };
-  setFirewallStatus(testStatus);
-  toast({ title: "Success", description: "Firewall status loaded (test data)" });
-};
 
   // ======== Toggle Firewall Status ========
   const toggleFirewallStatus = async (status: boolean) => {
     if (!selectedHost) return;
+    const req: PutStatusRequest = { Uuid: selectedHost, Status: status ? 'active' : 'inactive' };
     try {
-      const res = await fetch('/api/firewall/status', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Uuid: selectedHost, Status: status ? 'active' : 'inactive' })
-      });
-      if (res.ok) {
-        setFirewallStatus(prev => prev ? { ...prev, Status: status ? 'active' : 'inactive' } : null);
-        toast({ title: "Success", description: `Firewall has been ${status ? 'enabled' : 'disabled'}` });
-      } else throw new Error('API error');
+      await axios.put('/api/firewall/status', req);
+      setFirewallStatus(prev => prev ? { ...prev, Status: status ? 'active' : 'inactive' } : null);
+      toast({ title: "Success", description: `Firewall ${status ? 'enabled' : 'disabled'}` });
     } catch {
       toast({ title: "Error", description: "Failed to update firewall status", variant: "destructive" });
     }
@@ -124,20 +79,14 @@ export const FirewallManager = () => {
   // ======== Update Policy ========
   const confirmUpdatePolicy = async () => {
     if (!selectedHost) return;
-    const { chain, newPolicy } = policyDialog;
+    const req: PutPolicyRequest = { Uuid: selectedHost, Chain: policyDialog.chain, Policy: policyDialog.newPolicy as Target };
     try {
-      const res = await fetch('/api/firewall/policy', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Uuid: selectedHost, Chain: chain, Policy: newPolicy })
-      });
-      if (res.ok) {
-        setFirewallStatus(prev => {
-          if (!prev) return null;
-          return { ...prev, Chains: prev.Chains.map(c => c.Name === chain ? { ...c, Policy: newPolicy } : c) };
-        });
-        toast({ title: "Success", description: `${chain} chain default policy updated` });
-      } else throw new Error('API error');
+      await axios.put('/api/firewall/policy', req);
+      setFirewallStatus(prev => prev ? {
+        ...prev,
+        Chains: prev.Chains.map(c => c.Name === policyDialog.chain ? { ...c, Policy: policyDialog.newPolicy as Target } : c)
+      } : null);
+      toast({ title: "Success", description: "Policy updated" });
     } catch {
       toast({ title: "Error", description: "Failed to update policy", variant: "destructive" });
     } finally { setPolicyDialog(prev => ({ ...prev, open: false })); }
@@ -146,34 +95,24 @@ export const FirewallManager = () => {
   // ======== Delete Rule ========
   const confirmDeleteRule = async () => {
     if (!selectedHost) return;
-    const { chain, ruleIndex } = deleteDialog;
+    const req: DeleteRuleRequest = { Uuid: selectedHost, Chain: deleteDialog.chain, RuleId: deleteDialog.ruleIndex };
     try {
-      const res = await fetch('/api/firewall/rule', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Uuid: selectedHost, Chain: chain, RuleId: ruleIndex })
-      });
-      if (res.ok) {
-        setFirewallStatus(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            Chains: prev.Chains.map(c => {
-              if (c.Name === chain) {
-                const newRules = [...c.Rules];
-                newRules.splice(ruleIndex, 1);
-                return { ...c, Rules: newRules, Rules_Length: newRules.length };
-              }
-              return c;
-            })
-          };
-        });
-        toast({ title: "Success", description: "Rule deleted" });
-      } else throw new Error('API error');
+      await axios.delete('/api/firewall/rule', { data: req });
+      setFirewallStatus(prev => prev ? {
+        ...prev,
+        Chains: prev.Chains.map(c => c.Name === deleteDialog.chain ? {
+          ...c,
+          Rules: c.Rules.filter((_, i) => i !== deleteDialog.ruleIndex),
+          Rules_Length: c.Rules.length - 1
+        } : c)
+      } : null);
+      toast({ title: "Success", description: "Rule deleted" });
     } catch {
       toast({ title: "Error", description: "Failed to delete rule", variant: "destructive" });
     } finally { setDeleteDialog({ open: false, chain: '', ruleIndex: -1 }); }
   };
+
+  // ======== Add Rule ========
 
   useEffect(() => { fetchHosts(); }, []);
   useEffect(() => { if (selectedHost) fetchFirewallStatus(selectedHost); }, [selectedHost]);
@@ -191,7 +130,6 @@ export const FirewallManager = () => {
     const colors = { ACCEPT: 'bg-green-100 text-green-800', DROP: 'bg-red-100 text-red-800', REJECT: 'bg-orange-100 text-orange-800' };
     return <Badge variant="outline" className={colors[target as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>{target}</Badge>;
   };
-
   return (
     <div className="space-y-6">
       {/* 選主機 */}
@@ -321,7 +259,7 @@ export const FirewallManager = () => {
         onClose={() => setIsAddRuleOpen(false)}
         selectedHost={selectedHost}
         selectedChain={selectedChain}
-        onAddRule={async (newRule: FirewallRule) => {
+        onAddRule={async (newRule: Rule) => {
           if (!selectedHost) return;
           try {
             const res = await fetch('/api/firewall/rule', {

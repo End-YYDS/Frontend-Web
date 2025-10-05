@@ -1,8 +1,7 @@
-
 import { Input } from '@/components/ui/input';
 import { CheckIcon } from '@heroicons/react/24/outline';
 
-interface DisplayTabProps {
+export interface DisplayTabProps {
   roleName: string;
   selectedColor: string;
   isEveryoneRole?: boolean;

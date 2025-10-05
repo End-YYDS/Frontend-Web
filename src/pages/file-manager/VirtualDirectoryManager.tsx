@@ -1,24 +1,28 @@
 import { useState, useEffect } from 'react';
-import { 
-  Card, CardContent, CardHeader, CardTitle 
+import axios from 'axios';
+import {
+  Card, CardContent, CardHeader, CardTitle
 } from '@/components/ui/card';
-import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
-import { 
-  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger 
+import {
+  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger
 } from '@/components/ui/context-menu';
-import { 
-  Folder, File, HardDrive, Copy, Trash2, Download, Upload, Edit2 
+import {
+  Folder, File, HardDrive, Copy, Trash2, Download, Upload, Edit2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Breadcrumb } from './Breadcrumb';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
+// 匯入 types
+import type { VdirResponse, DownloadRequestVdir} from './types';
 
 interface FileItem {
   name: string;
@@ -71,12 +75,15 @@ export const VirtualDirectoryManager = () => {
   // ---------------------- Fetch Virtual Directory ----------------------
   const fetchVirtualDirectory = async () => {
     try {
-      const res = await fetch('/api/file/vdir', { method: 'GET' });
-      const data = await res.json();
-      if (data.Path) setCurrentPath(data.Path);
+      const res = await axios.get<VdirResponse>('/api/file/vdir');
+      if (res.data.Path) setCurrentPath(res.data.Path);
     } catch (e) {
       console.error('Fetch virtual directory failed', e);
-      toast({ title: 'Error', description: 'Failed to fetch virtual directory', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch virtual directory',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -86,28 +93,25 @@ export const VirtualDirectoryManager = () => {
 
   // ---------------------- File Actions ----------------------
   const handleItemSelect = (itemName: string, isCtrlClick: boolean = false) => {
-    if (isCtrlClick) {
-      setSelectedItems(prev =>
-        prev.includes(itemName)
-          ? prev.filter(name => name !== itemName)
+    setSelectedItems((prev) =>
+      isCtrlClick
+        ? prev.includes(itemName)
+          ? prev.filter((n) => n !== itemName)
           : [...prev, itemName]
-      );
-    } else {
-      setSelectedItems([itemName]);
-    }
+        : [itemName]
+    );
   };
 
   const handleCheckboxChange = (itemName: string) => {
-    setSelectedItems(prev =>
+    setSelectedItems((prev) =>
       prev.includes(itemName)
-        ? prev.filter(name => name !== itemName)
+        ? prev.filter((n) => n !== itemName)
         : [...prev, itemName]
     );
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) setSelectedItems(files.map(f => f.name));
-    else setSelectedItems([]);
+    setSelectedItems(checked ? files.map((f) => f.name) : []);
   };
 
   const handleDoubleClick = (item: FileItem) => {
@@ -118,12 +122,6 @@ export const VirtualDirectoryManager = () => {
       }
       const newPath = currentPath === '/' ? `/${item.name}` : `${currentPath}/${item.name}`;
       setCurrentPath(newPath);
-      // 模擬子目錄
-      setFiles([
-        { name: '..', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23' },
-        { name: 'subdir', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23' },
-        { name: 'readme.md', type: 'file', size: '512 B', owner: 'root:root', mode: '0644', modified: '2025/05/23' },
-      ]);
     }
   };
 
@@ -131,53 +129,31 @@ export const VirtualDirectoryManager = () => {
     if (currentPath !== '/') {
       const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
       setCurrentPath(parentPath);
-      // 回到根目錄
-      if (parentPath === '/') {
-        setFiles([
-          { name: 'Applications', type: 'folder', owner: 'root:root', mode: '0775', modified: '2025/05/23' },
-          { name: 'bin', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22' },
-          { name: 'home', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21' },
-        ]);
-      }
     }
   };
 
-  const navigateToPath = (path: string) => {
-    setCurrentPath(path);
-    if (path === '/') {
-      setFiles([
-        { name: 'Applications', type: 'folder', owner: 'root:root', mode: '0775', modified: '2025/05/23' },
-        { name: 'bin', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22' },
-        { name: 'home', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21' },
-      ]);
-    } else {
-      setFiles([
-        { name: '..', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23' },
-        { name: 'nested', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/05/23' },
-      ]);
-    }
-  };
+  const navigateToPath = (path: string) => setCurrentPath(path);
 
   const handleContextAction = (action: string, itemName: string) => {
     switch (action) {
       case 'copy':
-        toast({ title: "Copy", description: `Copied ${itemName}` });
+        toast({ title: 'Copy', description: `Copied ${itemName}` });
         break;
       case 'delete':
-        setFiles(prev => prev.filter(file => file.name !== itemName));
-        toast({ title: "Delete", description: `Deleted ${itemName}` });
+        setFiles((prev) => prev.filter((f) => f.name !== itemName));
+        toast({ title: 'Delete', description: `Deleted ${itemName}` });
         break;
       case 'download':
         handleDownload(itemName);
         break;
       case 'rename':
-        toast({ title: "Rename", description: `Renamed ${itemName}` });
+        toast({ title: 'Rename', description: `Renamed ${itemName}` });
         break;
     }
   };
 
-  // ---------------------- Upload ----------------------
-  const handleUploadToSelectedHosts = async (hostUUIDs: string[]) => {
+  // ---------------------- Upload (axios) ----------------------
+  const handleUploadToSelectedHosts = async (_selectedUploadHosts?: string[]) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
@@ -186,46 +162,72 @@ export const VirtualDirectoryManager = () => {
       if (!files) return;
 
       const formData = new FormData();
-      Array.from(files).forEach(f => formData.append('File', f));
+      Array.from(files).forEach((f) => formData.append('File', f));
 
       try {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/file/vdir/action/upload');
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            setUploadProgress(Math.round((event.loaded / event.total) * 100));
+        const res = await axios.post<UploadResponse>(
+          '/api/file/vdir/action/upload',
+          formData,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (event) => {
+              if (event.total) {
+                setUploadProgress(Math.round((event.loaded / event.total) * 100));
+              }
+            },
           }
-        };
-        xhr.onload = () => {
-          const res: UploadResponse = JSON.parse(xhr.responseText);
-          if (res.Type === 'OK') toast({ title: 'Upload Success', description: res.Message });
-          else toast({ title: 'Upload Failed', description: res.Message, variant: 'destructive' });
-          setShowUploadDialog(false);
-          setSelectedUploadHosts([]);
-          setUploadProgress(0);
-        };
-        xhr.send(formData);
+        );
+
+        if (res.data.Type === 'OK') {
+          toast({ title: 'Upload Success', description: res.data.Message });
+        } else {
+          toast({
+            title: 'Upload Failed',
+            description: res.data.Message,
+            variant: 'destructive',
+          });
+        }
       } catch (e) {
         console.error('Upload failed', e);
-        toast({ title: 'Upload Failed', description: 'Error uploading files', variant: 'destructive' });
+        toast({
+          title: 'Upload Failed',
+          description: 'Error uploading files',
+          variant: 'destructive',
+        });
+      } finally {
+        setShowUploadDialog(false);
+        setSelectedUploadHosts([]);
+        setUploadProgress(0);
       }
     };
     input.click();
   };
 
+  // ---------------------- Download (axios) ----------------------
   const handleDownload = async (fileName: string) => {
     try {
-      const res = await fetch('/api/file/vdir/action/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Filename: fileName })
-      });
-      const data: UploadResponse = await res.json();
-      if (data.Type === 'OK') toast({ title: 'Download Success', description: data.Message });
-      else toast({ title: 'Download Failed', description: data.Message, variant: 'destructive' });
+      const body: DownloadRequestVdir = { Filename: fileName };
+      const res = await axios.post<UploadResponse>(
+        '/api/file/vdir/action/download',
+        body
+      );
+
+      if (res.data.Type === 'OK') {
+        toast({ title: 'Download Success', description: res.data.Message });
+      } else {
+        toast({
+          title: 'Download Failed',
+          description: res.data.Message,
+          variant: 'destructive',
+        });
+      }
     } catch (e) {
       console.error('Download failed', e);
-      toast({ title: 'Download Failed', description: 'Error downloading file', variant: 'destructive' });
+      toast({
+        title: 'Download Failed',
+        description: 'Error downloading file',
+        variant: 'destructive',
+      });
     }
   };
 

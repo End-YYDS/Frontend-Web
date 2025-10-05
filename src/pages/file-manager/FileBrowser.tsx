@@ -1,24 +1,26 @@
 import { useState, useEffect } from 'react';
-import { 
-  Card, CardContent, CardHeader, CardTitle 
+import {
+  Card, CardContent, CardHeader, CardTitle
 } from '@/components/ui/card';
-import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
-import { 
-  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger 
+import {
+  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger
 } from '@/components/ui/context-menu';
-import { 
-  Folder, File, HardDrive, Copy, Trash2, Download, Upload, Edit2 
+import {
+  Folder, File, HardDrive, Copy, Trash2, Download, Upload, Edit2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Breadcrumb } from './Breadcrumb';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import axios from 'axios';
+import type { PcsResponse, FilesResponse, DownloadRequestPdir} from './types'; // 假設你 types.ts 放在 src/types.ts
 
 interface FileItem {
   name: string;
@@ -34,14 +36,6 @@ interface Host {
   hostname: string;
   ip?: string;
   status?: 'online' | 'offline';
-}
-
-interface ApiFile {
-  Size: number;
-  Unit: 'B' | 'KB' | 'MB' | 'GB';
-  Owner: string;
-  Mode: string;
-  Modified: string;
 }
 
 interface UploadResponse {
@@ -66,81 +60,94 @@ export const FileBrowser = () => {
   const [selectedUploadHosts, setSelectedUploadHosts] = useState<string[]>([]);
   const [, setUploadProgress] = useState<number>(0);
 
-  // ---------------------- API ----------------------
-  // 抓取所有主機清單
+  // ---------------------- Axios Instance ----------------------
+  const api = axios.create({
+    baseURL: '/api/file',
+    headers: { 'Content-Type': 'application/json' },
+    timeout: 8000,
+  });
+
+  // ---------------------- API Methods ----------------------
+
+  /** 抓取所有主機清單 */
   const fetchHosts = async () => {
     try {
-      const res = await fetch('/api/file/pdir/pcs', { method: 'GET' });
-      const data = await res.json();
-      setHosts(data.Pcs.map((p: any) => ({ uuid: p.uuid, hostname: p.uuid, status: p.status || 'online' })));
-    } catch (e) {
-      console.error('Fetch hosts failed', e);
+      const { data } = await api.get<PcsResponse>('/pdir/pcs');
+      // Rust回傳為: { Pcs: {uuid: hostname}, Length: number }
+      const hostList: Host[] = Object.entries(data.Pcs).map(([uuid, hostname]) => ({
+        uuid,
+        hostname,
+        status: 'online',
+      }));
+      setHosts(hostList);
+    } catch (error) {
+      console.error('Fetch hosts failed', error);
       toast({ title: 'Error', description: 'Failed to fetch hosts', variant: 'destructive' });
     }
   };
 
-  // 抓取指定主機、指定路徑的檔案
-  const fetchFiles = async (hostUuid: string, path: string) => {
+  /** 抓取指定主機、指定路徑的檔案 */
+  const fetchFiles = async (_hostUuid: string, path: string) => {
     try {
-      const res = await fetch('/api/file/pdir/one', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uuid: hostUuid, Directory: path })
-      });
-      const data = await res.json();
-      const newFiles: FileItem[] = Object.entries(data.Files).map(
-        ([name, info]) => {
-          const fileInfo = info as ApiFile;
-          return {
-            name,
-            type: name.includes('.') ? 'file' : 'folder',
-            size: fileInfo.Size ? `${fileInfo.Size} ${fileInfo.Unit}` : undefined,
-            owner: fileInfo.Owner,
-            mode: fileInfo.Mode,
-            modified: fileInfo.Modified
-          };
-        }
-      );
+      const payload = { uuid: { Directory: path } };
+      const { data } = await api.post<FilesResponse>('/pdir/one', payload);
+      // Rust回傳為: { Files: {...}, Length: number }
+      const newFiles: FileItem[] = Object.entries(data.Files).map(([name, info]) => ({
+        name,
+        type: name.includes('.') ? 'file' : 'folder',
+        size: info.Size ? `${info.Size} ${info.Unit}` : undefined,
+        owner: info.Owner,
+        mode: info.Mode,
+        modified: info.Modified,
+      }));
       setFiles(newFiles);
-    } catch (e) {
-      console.error('Fetch files failed', e);
+    } catch (error) {
+      console.error('Fetch files failed', error);
       toast({ title: 'Error', description: 'Failed to fetch files', variant: 'destructive' });
     }
   };
 
-  // 上傳檔案
+  /** 上傳檔案 */
   const handleUpload = async (hostUuid: string, fileList: FileList) => {
     try {
       const formData = new FormData();
-      Array.from(fileList).forEach(f => formData.append('File', f));
+      Array.from(fileList).forEach((f) => formData.append('File', f));
       formData.append('Uuid', hostUuid);
 
-      const res = await fetch('/api/file/pdir/action/upload', { method: 'POST', body: formData });
-      const data: UploadResponse = await res.json();
-      if (data.Type === 'OK') toast({ title: 'Upload Success', description: data.Message });
-      else toast({ title: 'Upload Failed', description: data.Message, variant: 'destructive' });
+      const { data } = await axios.post<UploadResponse>(
+        '/api/file/pdir/action/upload',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (p) => setUploadProgress(Math.round((p.loaded * 100) / (p.total ?? 1))),
+        }
+      );
+
+      if (data.Type === 'OK')
+        toast({ title: 'Upload Success', description: data.Message });
+      else
+        toast({ title: 'Upload Failed', description: data.Message, variant: 'destructive' });
+
       setShowUploadDialog(false);
       setSelectedUploadHosts([]);
       setUploadProgress(0);
-    } catch (e) {
-      console.error('Upload failed', e);
+    } catch (error) {
+      console.error('Upload failed', error);
       toast({ title: 'Upload Failed', description: 'Error uploading files', variant: 'destructive' });
     }
   };
 
-  // 下載檔案
+  /** 下載檔案 */
   const handleDownload = async (hostUuid: string, fileName: string) => {
     try {
-      const res = await fetch('/api/file/pdir/action/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Uuid: hostUuid, Filename: fileName })
-      });
-      const data: UploadResponse = await res.json();
-      if (data.Type === 'OK') toast({ title: 'Download Success', description: data.Message });
-      else toast({ title: 'Download Failed', description: data.Message, variant: 'destructive' });
-    } catch (e) {
-      console.error('Download failed', e);
+      const payload: DownloadRequestPdir = { Uuid: hostUuid, Filename: fileName };
+      const { data } = await api.post<UploadResponse>('/pdir/action/download', payload);
+      if (data.Type === 'OK')
+        toast({ title: 'Download Success', description: data.Message });
+      else
+        toast({ title: 'Download Failed', description: data.Message, variant: 'destructive' });
+    } catch (error) {
+      console.error('Download failed', error);
       toast({ title: 'Download Failed', description: 'Error downloading file', variant: 'destructive' });
     }
   };
@@ -200,6 +207,7 @@ export const FileBrowser = () => {
     fetchHosts();
   }, []);
 
+  // ---------------------- Render ----------------------
   return (
     <div className="space-y-4">
       {/* Host Selection */}

@@ -1,5 +1,5 @@
-
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Monitor, Cpu, MemoryStick } from "lucide-react";
@@ -31,34 +31,8 @@ export function ComputerList({ serverId, searchTerm, onComputerSelect }: Compute
   const fetchComputers = async () => {
     setLoading(true);
     try {
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const mockData: Computer[] = [
-        {
-          uuid: "uuid-001",
-          Hostname: "DESKTOP-001",
-          Status: "active",
-          Cpu: 45.2,
-          Memory: 67.8
-        },
-        {
-          uuid: "uuid-002", 
-          Hostname: "SERVER-MAIN",
-          Status: "active",
-          Cpu: 23.1,
-          Memory: 55.4
-        },
-        {
-          uuid: "uuid-003",
-          Hostname: "DEV-MACHINE",
-          Status: "stopped",
-          Cpu: 0,
-          Memory: 12.3
-        }
-      ];
-      
-      setComputers(mockData);
+      const res = await axios.get<Computer[]>("/api/server/computers", { params: { serverId } });
+      setComputers(res.data);
     } catch (error) {
       toast({
         title: "Error",

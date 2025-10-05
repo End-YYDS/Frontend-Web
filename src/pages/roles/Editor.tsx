@@ -6,13 +6,13 @@ import { DisplayTab } from './DisplayTab';
 import { PermissionsTab } from './PermissionsTab';
 import { MembersTab } from './MembersTab';
 
-interface Member {
+export interface Member {
   id: string;
   name: string;
   avatar?: string;
 }
 
-interface Role {
+export interface Role {
   id: string;
   name: string;
   color: string;
@@ -21,7 +21,7 @@ interface Role {
   memberCount: number;
 }
 
-interface RoleEditorProps {
+export interface RoleEditorProps {
   role: Role;
   allRoles: Role[];
   allUsers: Member[];
