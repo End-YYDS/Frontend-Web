@@ -1,8 +1,12 @@
 // ---------------------------
 // Package 安裝狀態
 // 字串 union type 取代 enum
-export type PackageStatus = "Installed" | "Notinstall";
+export type PackageStatus = 'Installed' | 'Notinstall';
 
+export interface PackageInfo {
+  Version: string; // 對應 Rust 的 version
+  Status: PackageStatus; // 對應 Rust 的 status
+}
 
 // 單一 PC 的所有套件
 export interface PcPackages {
@@ -17,25 +21,25 @@ export interface GetSoftwareResponse {
 // ---------------------------
 // POST /api/software 請求
 export interface InstallRequest {
-  uuid: string[];         // 目標 PC UUID
-  Packages: string[];     // 要安裝的套件名稱
+  uuid: string[]; // 目標 PC UUID
+  Packages: string[]; // 要安裝的套件名稱
 }
 
 // DELETE /api/software 請求
 export interface DeleteRequest {
-  uuid: string[];         // 目標 PC UUID
-  Package: string[];      // 要刪除的套件名稱
+  uuid: string[]; // 目標 PC UUID
+  Package: string[]; // 要刪除的套件名稱
 }
 
 // ---------------------------
 // 安裝/刪除的結果
 export interface PackageActionResult {
-  Installed: string[];     // 成功安裝/刪除的套件
-  Notinstalled: string[];  // 未成功安裝/刪除的套件
+  Installed: string[]; // 成功安裝/刪除的套件
+  Notinstalled: string[]; // 未成功安裝/刪除的套件
 }
 
 // POST/DELETE /api/software 回應
 export interface ActionResponse {
   Packages: Record<string, PackageActionResult>; // package -> result
-  Length: number;                                // 總數
+  Length: number; // 總數
 }
