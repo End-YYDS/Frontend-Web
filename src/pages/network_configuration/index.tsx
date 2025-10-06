@@ -969,7 +969,7 @@ const NetworkConfigurationPage = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() =>handleDeleteRoute} disabled={isLoading}
+              onClick={handleDeleteRoute} disabled={isLoading}
               className="bg-red-500 hover:bg-red-600"
             >
               Delete

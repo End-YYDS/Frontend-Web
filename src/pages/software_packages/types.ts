@@ -5,12 +5,6 @@ export type PackageStatus = "Installed" | "Notinstall";
 
 // 單一套件資訊
 export interface PackageInfo {
-  Version: string;
-  Status: PackageStatus;
-}
-
-// 單一套件資訊
-export interface PackageInfo {
   Version: string;          // 對應 Rust 的 version
   Status: PackageStatus;    // 對應 Rust 的 status
 }
