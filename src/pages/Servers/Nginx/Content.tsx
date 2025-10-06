@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ComputerList } from "./ComputerList";
 import { ComputerDetail } from "./ComputerDetail";
 import {
-  Dialog,
+  Dialog, 
   DialogContent,
   DialogHeader,
   DialogTitle,
