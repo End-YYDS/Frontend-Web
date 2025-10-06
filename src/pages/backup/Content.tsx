@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
+import type { BackupLocation, GetBackupsResponse, InnerGetBackupResponse, PostBackupReductionRequest, PostBackupRequest, PostBackupResponse } from './types';
 
 // ---------- Types ----------
 interface Backup {
@@ -26,14 +27,13 @@ export function BackupContent() {
   // ---------- API Functions (use axios) ----------
   const fetchBackupHistoryApi = async () => {
     try {
-      const res = await axios.get('/api/chm/backup', { params: { limit: 5 } });
+      const res = await axios.get<GetBackupsResponse>('/api/chm/backup', { params: { limit: 5 } });
       const data = res.data;
-      const backups = data.Backups.map((b: any, idx: number) => ({
+      const backups = data?.Backups.map((b: InnerGetBackupResponse, idx: number) => ({
         id: `${idx}`,
         filename: b.Name,
         date: `${b.Year}/${String(b.Month).padStart(2, '0')}/${String(b.Day).padStart(2, '0')}`,
-        time: `${String(b.Hour).padStart(2, '0')}:${String(b.Min).padStart(2, '0')}`,
-        downloadUrl: b.DownloadUrl
+        time: `${String(b.Time.Hour).padStart(2, '0')}:${String(b.Time.Min).padStart(2, '0')}`,
       }));
       setBackupHistory(backups);
     } catch (err: any) {
@@ -42,28 +42,31 @@ export function BackupContent() {
     }
   };
 
-  const backupNowApi = async (name: string, type: 'Remote' | 'Local') => {
-    const res = await axios.post('/api/chm/backup', {
-      Type: type,
+  const backupNowApi = async (name: string, location: BackupLocation) : Promise<Backup> => {
+    let sendData: PostBackupRequest = {      
+      Type: location,
       Name: name
-    });
+    };
+    const res = await axios.post<PostBackupResponse>('/api/chm/backup', sendData);
     const data = res.data;
     if (data.Type !== 'Ok') throw new Error(data.Message);
 
-    return {
-      id: data.Id,
+    let returnData: Backup = {
+      id: data?.Id,
       filename: name,
       date: new Date().toISOString().split('T')[0],
       time: new Date().toTimeString().slice(0, 5),
       downloadUrl: data.DownloadUrl
-    } as Backup;
+    }
+    return returnData;
   };
 
-  const restoreBackupApi = async (backup: Backup, type: 'Remote' | 'Local') => {
-    const res = await axios.post('/api/chm/backup/reduction', {
-      Type: type,
-      Name: backup.filename
-    });
+  const restoreBackupApi = async (backup: Backup, location: BackupLocation) => {
+    let sendData: PostBackupReductionRequest =
+      location === "Local"
+        ? { Type: "Local", Name: backup.filename }
+        : { Type: "Remote", File: backup.filename }; // TODO: 要轉成二進制 Blob
+    const res = await axios.post('/api/chm/backup/reduction', sendData);
     const data = res.data;
     if (data.Type !== 'OK') throw new Error(data.Message);
   };
@@ -76,7 +79,7 @@ export function BackupContent() {
     }
 
     try {
-      const newBackup = await backupNowApi(filename, 'Local');
+      const newBackup: Backup = await backupNowApi(filename, 'Local');
       setBackupHistory(prev => [newBackup, ...prev].slice(0, 5));
       setFilename('');
       setIsBackupDialogOpen(false);

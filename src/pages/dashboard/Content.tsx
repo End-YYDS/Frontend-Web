@@ -64,22 +64,22 @@ export function DashboardContent() {
       // setCluster(dataAll.Cluster);
 
       const timestamp = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      setCpuData(prev => [...prev.slice(-5), { time: timestamp, value: dataAll.Cluster.Cpu }]);
-      setMemoryData(prev => [...prev.slice(-5), { time: timestamp, value: dataAll.Cluster.Memory }]);
-      setDiskData(prev => [...prev.slice(-5), { time: timestamp, value: dataAll.Cluster.Disk }]);
+      setCpuData(prev => [...prev.slice(-5), { time: timestamp, value: (dataAll?.Cluster?.Cpu) ??1 }]);
+      setMemoryData(prev => [...prev.slice(-5), { time: timestamp, value: dataAll?.Cluster?.Memory ??1 }]);
+      setDiskData(prev => [...prev.slice(-5), { time: timestamp, value: dataAll?.Cluster?.Disk ??1 }]);
 
       // 2️⃣ 取得各主機資料
       const reqBody: InfoGetRequest = { Zone: 'info', Target: 'safe', Uuid: null };
       const resPcs = await axios.post<InfoGetResponse>('/api/info/get', reqBody);
-      const pcsData = resPcs.data;
+      const pcsData = resPcs?.data;
 
-      const list = Object.entries(pcsData.Pcs).map(([uuid, stats]) => ({
+      const list = Object.entries(pcsData?.Pcs).map(([uuid, stats]) => ({
         name: `PC-${uuid}`,
-        cpu: stats.Cpu + '%',
-        memory: stats.Memory + '%',
-        disk: stats.Disk + '%',
+        cpu: stats?.Cpu + '%',
+        memory: stats?.Memory + '%',
+        disk: stats?.Disk + '%',
         status: (() => {
-          const cpu = stats.Cpu, mem = stats.Memory, disk = stats.Disk;
+          const cpu = stats?.Cpu, mem = stats?.Memory, disk = stats?.Disk;
           if (cpu < 50 && mem < 50 && disk < 50) return 'safe';
           if (cpu < 70 && mem < 70 && disk < 70) return 'warning';
           return 'danger';
