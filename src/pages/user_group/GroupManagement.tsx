@@ -115,7 +115,7 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
 
               {/* 分隔線 */}
               {/* <div className="mt-3.5 border-t border-gray-300 my-1" /> */}
-              <hr className="mt-3.5 border-t border-gray-300 my-1"></hr>
+              <hr className="mt-3.5 border-t border-gray-300 my-1" />
             </div>
 
             <div className="text-sm text-gray-600">users</div>
