@@ -4,11 +4,22 @@ import { type PageMeta } from '../types';
 import { useAuth } from '@/auth';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import axios from "axios";
 
 (Login as any).meta = {
   requiresAuth: false,
   // allowedRoles: ['admin']
 } satisfies PageMeta;
+
+interface PostLoginRequest {
+  Username: string,
+  Password: string
+};
+
+interface PostLoginResponse {
+  Type: "Ok" | "Err",
+  Message: string
+};
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -23,13 +34,12 @@ function Login() {
     e.preventDefault();
     try {
       setError(null);
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Username: username, Password: password }),
-      });
-      if (!res.ok) throw new Error('帳號或密碼錯誤');
+      let sendData: PostLoginRequest = {
+        Username: username,
+        Password: password
+      };
+      const res = await axios.post<PostLoginResponse>('/api/login', sendData, {withCredentials: true});
+      if (res.data.Type !== 'Ok') throw new Error('帳號或密碼錯誤');
       //TODO: 從後端取得 user 資訊
       const user = { id: '1', role: 'user' };
       signIn(user);

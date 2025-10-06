@@ -289,7 +289,7 @@ const PaginationBar = ({
 );
 
 (UserGroup as any).meta = {
-  requiresAuth: false,
+  requiresAuth: true,
   layout: true,
 } satisfies PageMeta;
 
