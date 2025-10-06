@@ -3,11 +3,6 @@
 // 字串 union type 取代 enum
 export type PackageStatus = "Installed" | "Notinstall";
 
-// 單一套件資訊
-export interface PackageInfo {
-  Version: string;          // 對應 Rust 的 version
-  Status: PackageStatus;    // 對應 Rust 的 status
-}
 
 // 單一 PC 的所有套件
 export interface PcPackages {
