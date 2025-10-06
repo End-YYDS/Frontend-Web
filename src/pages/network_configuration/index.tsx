@@ -462,6 +462,7 @@ const NetworkConfigurationPage = () => {
         } else {
           // 整筆更新 (PUT)
           const payload: PutRouteRequest = {
+            Nid: editingRoute.id,
             Destination: routeData.destinationNetwork || editingRoute.destinationNetwork,
             Via: routeData.nextHop || editingRoute.nextHop,
             Dev: routeData.dev || editingRoute.dev,

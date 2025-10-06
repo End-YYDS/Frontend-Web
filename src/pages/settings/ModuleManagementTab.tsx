@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+// import { Switch } from "@/components/ui/switch";
 import { 
   Table,
   TableBody,
@@ -27,13 +27,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select"
 import { Upload, Check, Trash, Settings, X } from 'lucide-react';
 import { toast } from "sonner";
 
@@ -304,57 +304,57 @@ const ModuleManagementTab = () => {
     );
   };
 
-  const renderConfigOption = (option: ModuleConfigOption, value: ConfigValue, onChange: (val: ConfigValue) => void) => {
-  switch (option.type) {
-    case "text":
-      return (
-        <Input
-          type="text"
-          value={String(value ?? "")}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      );
+//   const renderConfigOption = (option: ModuleConfigOption, value: ConfigValue, onChange: (val: ConfigValue) => void) => {
+//   switch (option.type) {
+//     case "text":
+//       return (
+//         <Input
+//           type="text"
+//           value={String(value ?? "")}
+//           onChange={(e) => onChange(e.target.value)}
+//         />
+//       );
 
-    case "number":
-      return (
-        <Input
-          type="number"
-          value={value !== undefined ? String(value) : ""}
-          onChange={(e) => {
-            const parsed = parseFloat(e.target.value);
-            onChange(isNaN(parsed) ? 0 : parsed);
-          }}
-        />
-      );
+//     case "number":
+//       return (
+//         <Input
+//           type="number"
+//           value={value !== undefined ? String(value) : ""}
+//           onChange={(e) => {
+//             const parsed = parseFloat(e.target.value);
+//             onChange(isNaN(parsed) ? 0 : parsed);
+//           }}
+//         />
+//       );
 
-    case "boolean":
-      return (
-        <Switch
-          checked={Boolean(value)}
-          onCheckedChange={onChange}
-        />
-      );
+//     case "boolean":
+//       return (
+//         <Switch
+//           checked={Boolean(value)}
+//           onCheckedChange={onChange}
+//         />
+//       );
 
-    case "select":
-      return (
-        <Select value={String(value)} onValueChange={onChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="請選擇" />
-          </SelectTrigger>
-          <SelectContent>
-            {option.options?.map((opt) => (
-              <SelectItem key={opt} value={opt}>
-                {opt}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      );
+//     case "select":
+//       return (
+//         <Select value={String(value)} onValueChange={onChange}>
+//           <SelectTrigger>
+//             <SelectValue placeholder="請選擇" />
+//           </SelectTrigger>
+//           <SelectContent>
+//             {option.options?.map((opt) => (
+//               <SelectItem key={opt} value={opt}>
+//                 {opt}
+//               </SelectItem>
+//             ))}
+//           </SelectContent>
+//         </Select>
+//       );
 
-    default:
-      return null;
-  }
-};
+//     default:
+//       return null;
+//   }
+// };
 
 
   const handleConfigureModule = (moduleId: string) => {
@@ -364,9 +364,9 @@ const ModuleManagementTab = () => {
   const ModuleConfigPanel = ({ module }: { module: Module }) => {
     const [tempConfig, setTempConfig] = useState(module.currentConfig);
 
-    const handleConfigChange = (optionName: string, value: ConfigValue) => {
-      setTempConfig(prev => ({ ...prev, [optionName]: value }));
-    };
+    // const handleConfigChange = (optionName: string, value: ConfigValue) => {
+    //   setTempConfig(prev => ({ ...prev, [optionName]: value }));
+    // };
 
     const handleSave = () => {
       handleSaveModuleSettings(module.id, tempConfig);

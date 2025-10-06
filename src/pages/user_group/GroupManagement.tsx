@@ -4,16 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Edit } from 'lucide-react';
-import type { Group } from './types';
+import type { GroupEntry } from './types';
 import { AddGroupDialog } from './AddGroupDialog';
 import { EditGroupDialog } from './EditGroupDialog';
 
 interface GroupManagementProps {
-  groups: Group[];
-  users: { id: number; username: string }[];
-  onAddGroup: (group: Omit<Group, 'id'>) => void;
-  onUpdateGroup: (id: number, group: Omit<Group, 'id'>) => void;
-  onDeleteGroup: (id: number) => void;
+  groups: Record<string, GroupEntry>; // gid -> GroupEntry
+  users: { uid: string; Username: string }[];
+  onAddGroup: (group: Omit<GroupEntry, 'Groupname'> & { Groupname: string }) => void;
+  onUpdateGroup: (gid: string, group: GroupEntry) => void;
+  onDeleteGroup: (gid: string) => void;
   searchTerm: string;
   onSearchChange: (term: string) => void;
   currentPage: number;
@@ -33,18 +33,26 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
 }) => {
   const [isAddGroupDialogOpen, setIsAddGroupDialogOpen] = useState(false);
   const [isEditGroupDialogOpen, setIsEditGroupDialogOpen] = useState(false);
-  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
 
-  const filteredGroups = groups.filter(group =>
-    group.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // 將 groups 轉成陣列以便操作
+  const groupList = Object.entries(groups).map(([gid, group]) => ({ gid, ...group }));
+
+  const filteredGroups = groupList.filter(group =>
+    group.Groupname.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const currentGroups = filteredGroups.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const currentGroups = filteredGroups.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-  const handleEditGroup = (group: Group) => {
-    setEditingGroup(group);
+  const handleEditGroup = (gid: string) => {
+    setEditingGroupId(gid);
     setIsEditGroupDialogOpen(true);
   };
+
+  const editingGroup = editingGroupId ? groups[editingGroupId] : null;
 
   return (
     <div>
@@ -53,8 +61,10 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
           isOpen={isAddGroupDialogOpen}
           onOpenChange={setIsAddGroupDialogOpen}
           onAddGroup={onAddGroup}
-          users={users}
-          existingGroups={groups}
+          users={users.map(u => ({ uid: u.uid, username: u.Username }))} // <-- 轉換
+          existingGroups={Object.fromEntries(
+            Object.entries(groups).map(([gid, group]) => [gid, group])
+          )}
           trigger={
             <Button 
               style={{ backgroundColor: '#7B86AA' }}
@@ -76,12 +86,12 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {currentGroups.map(group => (
-          <Card key={group.id} className="p-4 border border-gray-300 shadow-sm rounded-md">
+          <Card key={group.gid} className="p-4 border border-gray-300 shadow-sm rounded-md">
             <div className="mb-2">
               <div className="flex items-center justify-between">
-                <h3 className="font-medium text-lg">{group.name}</h3>
+                <h3 className="font-medium text-lg">{group.Groupname}</h3>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => handleEditGroup(group)} className="gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => handleEditGroup(group.gid)} className="gap-1">
                     <Edit className="h-3 w-3" />
                   </Button>
                   <AlertDialog>
@@ -96,13 +106,13 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
                     </AlertDialogTrigger>
                     <AlertDialogContent className="max-w-sm mx-auto">
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure you want to delete group {group.name}?</AlertDialogTitle>
+                        <AlertDialogTitle>Are you sure you want to delete group {group.Groupname}?</AlertDialogTitle>
                         <AlertDialogDescription>This action cannot be undone</AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction 
-                          onClick={() => onDeleteGroup(group.id)}
+                          onClick={() => onDeleteGroup(group.gid)}
                           className="bg-red-500 hover:bg-red-600"
                         >
                           Delete
@@ -113,33 +123,37 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
                 </div>
               </div>
 
-              {/* 分隔線 */}
-              {/* <div className="mt-3.5 border-t border-gray-300 my-1" /> */}
               <hr className="mt-3.5 border-t border-gray-300 my-1" />
             </div>
 
             <div className="text-sm text-gray-600">users</div>
             <div className="space-y-0.5">
-              {group.users.map((user) => (
-                <div key={user} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" />
-                  <span>{user}</span>
-                </div>
-              ))}
+              {group.Users.map((uid) => {
+                const user = users.find(u => u.uid === uid);
+                return (
+                  <div key={uid} className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" />
+                    <span>{user ? user.Username : uid}</span>
+                  </div>
+                );
+              })}
             </div>
           </Card>
-
         ))}
       </div>
 
-      {editingGroup && (
+      {editingGroup && editingGroupId && (
         <EditGroupDialog
           isOpen={isEditGroupDialogOpen}
           onOpenChange={setIsEditGroupDialogOpen}
-          group={editingGroup}
-          onUpdateGroup={(group) => onUpdateGroup(editingGroup.id, group)}
-          users={users}
-          existingGroups={groups}
+          group={{ gid: editingGroupId, ...editingGroup }}
+          onUpdateGroup={(group) => onUpdateGroup(editingGroupId, group)}
+          users={users.map((u, index) => ({
+            id: index,                  // 如果沒有真正 id，可暫用 index
+            username: u.Username,       // 對應小寫
+            uid: u.uid                  // 保留 uid
+          }))}
+          existingGroups={groupList}
         />
       )}
     </div>

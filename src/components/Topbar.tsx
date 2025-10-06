@@ -217,8 +217,8 @@ export default function Topbar({ onLogout }: TopbarProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-40">
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            {/* <DropdownMenuItem>Profile</DropdownMenuItem>
+            <DropdownMenuItem>Settings</DropdownMenuItem> */}
             <DropdownMenuItem
               className="text-red-600 focus:text-red-600"
               onClick={onLogout}

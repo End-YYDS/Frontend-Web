@@ -116,6 +116,7 @@ export interface ActionNetRequest {
 // ---------------------------
 
 // Route 相關
+// ---------- RouteItem ----------
 export interface RouteItem {
   Via: string;
   Dev: string;
@@ -125,17 +126,19 @@ export interface RouteItem {
   Src: string;
 }
 
+// ---------- PcRoutes ----------
 export interface PcRoutes {
-  Routes: Record<string, RouteItem>; // destination -> item
+  Routes: Record<string, RouteItem>; // destination -> RouteItem
   Length: number;
 }
 
+// ---------- GetAllRouteResponse ----------
 export interface GetAllRouteResponse {
-  Pcs: Record<string, PcRoutes>; // uuid -> routes
+  Pcs: Record<string, PcRoutes>; // uuid -> PcRoutes
   Length: number;
 }
 
-// POST /api/network/route
+// ---------- CreateRouteRequest (POST /api/network/route) ----------
 export interface CreateRouteRequest {
   Destination: string;
   Via: string;
@@ -146,24 +149,17 @@ export interface CreateRouteRequest {
   Src: string;
 }
 
-// DELETE /api/network/route
+// ---------- DeleteRouteRequest (DELETE /api/network/route) ----------
 export interface DeleteRouteRequest {
   Destination: string;
 }
 
-// PATCH 單欄更新
-export const PatchField = {
-  Via: "Via",
-  Dev: "Dev",
-  Proto: "Proto",
-  Metric: "Metric",
-  Scope: "Scope",
-  Src: "Src",
-} as const;
+// ---------- PatchField ----------
+export type PatchField = "Via" | "Dev" | "Proto" | "Metric" | "Scope" | "Src";
 
-export type PatchField = (typeof PatchField)[keyof typeof PatchField];
-
+// ---------- PatchRouteRequest (PATCH 單欄) ----------
 export interface PatchRouteRequest {
+  Nid: string;
   Destination: string;
   Type: PatchField;
   Via?: string;
@@ -174,8 +170,9 @@ export interface PatchRouteRequest {
   Src?: string;
 }
 
-// PUT 整筆更新
+// ---------- PutRouteRequest (PUT 整筆) ----------
 export interface PutRouteRequest {
+  Nid: string;
   Destination: string;
   Via: string;
   Dev: string;

@@ -3,17 +3,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { User } from './types';
+import type { UserEntry } from './types';
 import { GroupSelectionDialog } from './GroupSelectionDialog';
 
 interface EditUserDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  user: User;
-  onUpdateUser: (user: Omit<User, 'id'>) => void;
+  user: UserEntry;
+  onUpdateUser: (user: UserEntry) => void;
   groups: { id: number; name: string; users: string[] }[];
   onCreateGroup: (name: string) => void;
-  existingUsers: User[];
+  existingUsers: Record<string, UserEntry>; // uid -> UserEntry
 }
 
 const shellOptions = [
@@ -32,42 +32,44 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
   onCreateGroup,
   existingUsers
 }) => {
-  const [editUser, setEditUser] = useState({
-    username: '',
-    groups: [] as string[],
-    homeDirectory: '',
-    shell: '/bin/bash'
+  const [editUser, setEditUser] = useState<UserEntry>({
+    Username: '',
+    Group: [],
+    Home_directory: '',
+    Shell: '/bin/bash'
   });
+
   const [isGroupSelectionDialogOpen, setIsGroupSelectionDialogOpen] = useState(false);
 
+  // 初始化 editUser
   useEffect(() => {
     setEditUser({
-      username: user.username,
-      groups: user.groups,
-      homeDirectory: user.homeDirectory,
-      shell: user.shell
+      Username: user.Username,
+      Group: user.Group,
+      Home_directory: user.Home_directory,
+      Shell: user.Shell
     });
   }, [user]);
 
-  // 當 username 改變時自動更新 home directory
+  // 當 Username 改變時自動更新 Home_directory
   useEffect(() => {
-    if (editUser.username) {
+    if (editUser.Username) {
       setEditUser(prev => ({
         ...prev,
-        homeDirectory: `/home/${editUser.username}`
+        Home_directory: `/home/${editUser.Username}`
       }));
     }
-  }, [editUser.username]);
+  }, [editUser.Username]);
 
-  const isDuplicateName = existingUsers.some(existingUser => 
-    existingUser.username === editUser.username && 
-    existingUser.id !== user.id && 
-    editUser.username !== ''
+  // 檢查名稱是否重複
+  const isDuplicateName = Object.values(existingUsers).some(existingUser =>
+    existingUser.Username === editUser.Username &&
+    existingUser.Username !== user.Username &&
+    editUser.Username !== ''
   );
 
   const handleUpdateUser = () => {
     if (isDuplicateName) return;
-    
     onUpdateUser(editUser);
     onOpenChange(false);
   };
@@ -84,25 +86,28 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
               <label className="block text-sm font-medium mb-1">Username</label>
               <Input
                 placeholder="enter username"
-                value={editUser.username}
-                onChange={(e) => setEditUser({...editUser, username: e.target.value})}
+                value={editUser.Username}
+                onChange={(e) => setEditUser({ ...editUser, Username: e.target.value })}
               />
               {isDuplicateName && (
-                <p className="text-red-500 text-sm mt-1">The name is already exists, you need to change it.</p>
+                <p className="text-red-500 text-sm mt-1">
+                  The name already exists, you need to change it.
+                </p>
               )}
             </div>
+
             <div>
               <label className="block text-sm font-medium mb-1">Group</label>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full justify-start text-gray-500"
                 onClick={() => setIsGroupSelectionDialogOpen(true)}
               >
                 Add to group
               </Button>
-              {editUser.groups.length > 0 && (
+              {editUser.Group.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {editUser.groups.map(group => (
+                  {editUser.Group.map(group => (
                     <span key={group} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
                       {group}
                     </span>
@@ -110,18 +115,23 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
                 </div>
               )}
             </div>
+
             <div>
               <label className="block text-sm font-medium mb-1">Home directory</label>
               <Input
-                value={editUser.homeDirectory}
+                value={editUser.Home_directory}
                 readOnly
                 className="bg-gray-100"
                 placeholder="Auto-generated based on username"
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium mb-1">Shell</label>
-              <Select value={editUser.shell} onValueChange={(value) => setEditUser({...editUser, shell: value})}>
+              <Select
+                value={editUser.Shell}
+                onValueChange={(value) => setEditUser({ ...editUser, Shell: value })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select shell" />
                 </SelectTrigger>
@@ -134,15 +144,16 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
                 </SelectContent>
               </Select>
             </div>
+
             <div className="flex gap-2 pt-4">
               <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
                 Cancel
               </Button>
-              <Button 
-                onClick={handleUpdateUser} 
+              <Button
+                onClick={handleUpdateUser}
                 style={{ backgroundColor: '#7B86AA' }}
                 className="flex-1 hover:opacity-90"
-                disabled={isDuplicateName || !editUser.username}
+                disabled={isDuplicateName || !editUser.Username}
               >
                 Save
               </Button>
@@ -155,8 +166,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
         isOpen={isGroupSelectionDialogOpen}
         onOpenChange={setIsGroupSelectionDialogOpen}
         groups={groups}
-        selectedGroups={editUser.groups}
-        onGroupsChange={(groups) => setEditUser(prev => ({ ...prev, groups }))}
+        selectedGroups={editUser.Group}
+        onGroupsChange={(groups) => setEditUser(prev => ({ ...prev, Group: groups }))}
         onCreateGroup={onCreateGroup}
       />
     </>
