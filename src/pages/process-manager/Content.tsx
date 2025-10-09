@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/table";
 import axios from 'axios';
 // 從 types.ts 引入型別
-import type { PcProcess, GetAllProcessResponse, OneProcessRequest, OneProcessResponse, ActionRequest } from './types';
+import type { GetAllProcessResponse, PostActionRequest, PostActionResponse, PostOneProcessRequest, PostOneProcessResponse } from './types';
 
 interface Process {
   Status: boolean;
@@ -93,14 +93,17 @@ export const ProcessManager = () => {
       const data = res.data;
 
       const pcs: Record<string, Computer> = {};
-      Object.entries(data.Pcs).forEach(([uuid, pc]) => {
-        pcs[uuid] = {
-          uuid,
-          hostname: (pc as PcProcess).Hostname,
-          processes: (pc as PcProcess).Process,
-          length: (pc as PcProcess).Length
-        };
-      });
+      pcs[data.Hostname] = {
+        uuid: data.Hostname, // 假設 hostname 當 uuid
+        hostname: data.Hostname,
+        processes: {
+          [data.Hostname]: {
+            Status: data.Status,
+            Boot: data.Boot
+          }
+        },
+        length: data.Length
+      };
 
       setProcessData({ pcs, length: data.Length });
     } catch (err) {
@@ -115,22 +118,31 @@ export const ProcessManager = () => {
   // 取得單一電腦的 Process
   const fetchOneComputerProcesses = async (uuid: string) => {
     try {
-      const reqData: OneProcessRequest = { Uuid: uuid };
-      const res = await axios.post<OneProcessResponse>('/api/process/one', reqData);
+      const reqData: PostOneProcessRequest  = { Uuid: uuid };
+      const res = await axios.post<PostOneProcessResponse>('/api/process/one', reqData);
       const data = res.data;
 
       if (processData) {
         const newProcessData = { ...processData };
-        newProcessData.pcs[uuid].processes = data.Process;
-        setProcessData(newProcessData);
+        if (newProcessData.pcs[uuid]) {
+          newProcessData.pcs[uuid].processes[uuid] = {
+            Status: data.Status,
+            Boot: data.Boot
+          };
+          setProcessData(newProcessData);
 
-        if (selectedComputer && selectedComputer.uuid === uuid) {
-          setSelectedComputer(newProcessData.pcs[uuid]);
+          if (selectedComputer && selectedComputer.uuid === uuid) {
+            setSelectedComputer(newProcessData.pcs[uuid]);
+          }
         }
       }
     } catch (err) {
-      console.error('Failed to fetch single computer processes:', err);
-      toast({ title: "Error", description: "Failed to fetch computer processes", variant: "destructive" });
+      console.error("Failed to fetch single computer processes:", err);
+      toast({
+        title: "Error",
+        description: "Failed to fetch computer processes",
+        variant: "destructive"
+      });
     }
   };
 
@@ -166,10 +178,10 @@ export const ProcessManager = () => {
       }
 
       // 實際呼叫 API
-      const reqData: ActionRequest = { Uuid: uuid, Process: processName };
-      const res = await axios.post(url, reqData);
+      const reqData: PostActionRequest = { Uuid: uuid, Process: processName };
+      const res = await axios.post<PostActionResponse>(url, reqData);
 
-      if (res.data.Type === 'OK') {
+      if (res.data.Type === 'Ok') {
         toast({ title: "Action Completed", description: `${action} sent to ${processName}` });
       } else {
         toast({ title: "Error", description: res.data.Message, variant: "destructive" });
@@ -185,7 +197,7 @@ export const ProcessManager = () => {
   }, []);
 
   const filteredComputers = processData ? Object.entries(processData.pcs).filter(([, computer]) =>
-    computer.hostname.toLowerCase().includes(searchTerm.toLowerCase())
+    computer.hostname?.toLowerCase().includes(searchTerm.toLowerCase())
   ) : [];
 
   const getComputerStats = (computer: Computer) => {
