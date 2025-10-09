@@ -12,6 +12,7 @@ import { Search, Filter, Download, ChevronDown, ChevronRight, X, CalendarIcon } 
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
+import type { GetSysLogsQueryRequest, GetSysLogsResponse } from './types';
 
 interface LogEntry {
   id: string;
@@ -78,18 +79,18 @@ export const SystemLogsManager = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await axios.get('/api/logs/sys');
+        const res = await axios.get<GetSysLogsResponse>('/api/logs/sys');
         const data = res.data;
 
-        const fetchedLogs: LogEntry[] = Object.keys(data.Logs).map((id) => {
-          const log = data.Logs[id];
+        const fetchedLogs: LogEntry[] = Object.keys((data as any).Logs).map((id) => {
+          const log = (data as any).Logs[id];
           return {
             id,
             date: `${log.Month} ${log.Day}`,
-            time: `${log.Time.Hour.toString().padStart(2,'0')}:${log.Time.Min.toString().padStart(2,'0')}`,
+            time: `${log.Time.Hour.toString().padStart(2, '0')}:${log.Time.Min.toString().padStart(2, '0')}`,
             direction: log.Direction === 'A to B' ? 'in' : 'out',
             type: log.Type as 'SYSTEM' | 'WARNING' | 'ERROR' | 'INFO',
-            message: log.Messages.slice(0,50) + '...',
+            message: log.Messages.slice(0, 50) + '...',
             fullMessage: log.Messages
           };
         });
@@ -141,19 +142,23 @@ export const SystemLogsManager = () => {
   });
 
   const fetchFilteredLogs = async (searchField: string, parameter: string) => {
+    let sendData: GetSysLogsQueryRequest = {
+      Search: searchField, 
+      Parameter: parameter
+    };
     try {
-      const res = await axios.post('/api/logs/sys/query', { Search: searchField, Parameter: parameter });
+      const res = await axios.post<GetSysLogsResponse>('/api/logs/sys/query', sendData);
       const data = res.data;
 
-      const fetchedLogs: LogEntry[] = Object.keys(data.Logs).map((id) => {
-        const log = data.Logs[id];
+      const fetchedLogs: LogEntry[] = Object.keys((data as any).Logs).map((id) => {
+        const log = (data as any).Logs[id];
         return {
           id,
           date: `${log.Month} ${log.Day}`,
-          time: `${log.Time.Hour.toString().padStart(2,'0')}:${log.Time.Min.toString().padStart(2,'0')}`,
+          time: `${log.Time.Hour.toString().padStart(2, '0')}:${log.Time.Min.toString().padStart(2, '0')}`,
           direction: log.Direction === 'A to B' ? 'in' : 'out',
           type: log.Type as 'SYSTEM' | 'WARNING' | 'ERROR' | 'INFO',
-          message: log.Messages.slice(0,50) + '...',
+          message: log.Messages.slice(0, 50) + '...',
           fullMessage: log.Messages
         };
       });

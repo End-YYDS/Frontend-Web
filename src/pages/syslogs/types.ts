@@ -1,56 +1,58 @@
-// ======== PC Log ========
-
-export interface PcLogEntry {
-  Month: string;
-  Day: number;
-  Time: string;
-  Hostname: string;
-  Type: string;
-  Messages: string;
+interface Time {
+  Hour: number,
+  Min: number
 }
 
-export interface PcLogsResponse {
-  Logs: Record<string, PcLogEntry>;
-  Length: number;
+interface SysLogsId {
+  Month: "Jan"|"Feb"|"Mar"|"Apr"|"May"|"Jun"|"Jul"|"Aug"|"Sep"|"Oct"|"Nov"|"Dec",
+  Day: number,
+  Time: Time,
+  Direction: string,
+  Type: string,
+  Messages: string
 }
 
-export interface PcsResponse {
-  Pcs: Record<string, string>; // uuid -> hostname
-  Length: number;
+interface PcLogsId {
+  Month: "Jan"|"Feb"|"Mar"|"Apr"|"May"|"Jun"|"Jul"|"Aug"|"Sep"|"Oct"|"Nov"|"Dec",
+  Day: number,
+  Time: Time,
+  Hostname: string,
+  Type: string,
+  Messages: string
 }
 
-export interface PcRequest {
-  Uuid: string;
+// GetSysLogsQueryResponse
+interface GetSysLogsResponse extends SysLogsId {
+  Length: number
 }
 
-export interface PcLogQuery {
-  Uuid: string;
-  Search: string;
-  Parameter: string;
+interface GetSysLogsQueryRequest {
+  Search: string,
+  Parameter: string
 }
 
-// ======== System Log ========
+// interface GetSysLogsQueryResponse extends LogsId {
+//   Length: number
+// }
 
-export interface SysLogTime {
-  Hour: number;
-  Min: number;
+interface GetAllPcLogsResponse {
+  Uuid: string,
+  Length: number
 }
 
-export interface SysLogEntry {
-  Month: string;
-  Day: number;
-  Time: SysLogTime;
-  Direction: string;
-  Type: string;
-  Messages: string;
+interface GetPcLogsRequest {
+  Uuid: string
 }
 
-export interface SysLogsResponse {
-  Logs: Record<string, SysLogEntry>;
-  Length: number;
+// GetPcLogsQueryResponse
+interface GetPcLogsResponse extends PcLogsId {
+  Length: number
 }
 
-export interface SysLogQuery {
-  Search: string;
-  Parameter: string;
+interface GetPcLogsQueryRequest {
+  Uuid: string,
+  Search: string,
+  Parameter: string
 }
+
+export type {Time, GetSysLogsResponse, GetSysLogsQueryRequest, GetAllPcLogsResponse, GetPcLogsRequest, GetPcLogsResponse, GetPcLogsQueryRequest}

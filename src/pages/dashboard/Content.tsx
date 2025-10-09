@@ -8,7 +8,7 @@ import { Check, AlertTriangle, X, ChevronLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner"; // ✅ 建議加上 toast 提示
 
-import type { GetAllInfoResponse, InfoGetRequest, InfoGetResponse } from "./types";
+import type { GetAllInfoResponse, PostInfoGetRequest, PostInfoGetResponse } from "./types";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -69,8 +69,8 @@ export function DashboardContent() {
       setDiskData(prev => [...prev.slice(-5), { time: timestamp, value: dataAll?.Cluster?.Disk ??1 }]);
 
       // 2️⃣ 取得各主機資料
-      const reqBody: InfoGetRequest = { Zone: 'info', Target: 'safe', Uuid: null };
-      const resPcs = await axios.post<InfoGetResponse>('/api/info/get', reqBody);
+      const reqBody: PostInfoGetRequest = { Zone: 'info', Target: 'safe', Uuid: null };
+      const resPcs = await axios.post<PostInfoGetResponse>('/api/info/get', reqBody);
       const pcsData = resPcs?.data;
 
       const list = Object.entries(pcsData?.Pcs).map(([uuid, stats]) => ({

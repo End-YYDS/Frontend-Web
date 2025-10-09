@@ -6,12 +6,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-// import { Calendar } from '@/components/ui/calendar';
-// import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Search, Filter, Download, ChevronDown, ChevronRight, Server } from 'lucide-react';
-// import { format } from 'date-fns';
-// import { cn } from '@/lib/utils';
 import axios from 'axios';
+import type { GetAllPcLogsResponse, GetPcLogsResponse } from './types';
 
 // -------------------- Type 定義 --------------------
 interface LogEntry {
@@ -81,9 +78,9 @@ export const HostLogsManager = () => {
   // -------------------- API --------------------
   const fetchPcs = async () => {
     try {
-      const res = await axios.get('/api/logs/pc/all');
+      const res = await axios.get<GetAllPcLogsResponse>('/api/logs/pc/all');
       const data = res.data;
-      const pcsData: PcEntry[] = Object.entries(data.Pcs).map(([uuid]) => ({ uuid }));
+      const pcsData: PcEntry[] = Object.entries(data).map(([uuid]) => ({ uuid }));
       setPcs(pcsData);
     } catch (err) {
       console.error('Failed to fetch PCs:', err);
@@ -93,9 +90,18 @@ export const HostLogsManager = () => {
   const fetchLogs = async (uuid: string) => {
     if (!uuid) return;
     try {
-      const res = await axios.get(`/api/logs/pc?Uuid=${uuid}`);
+      const res = await axios.get<GetPcLogsResponse>(`/api/logs/pc?Uuid=${uuid}`);
       const data = res.data;
-      const logsData: LogEntry[] = Object.entries(data.Logs).map(([id, log]: any) => ({ id, ...log }));
+      const logsData: LogEntry[] = Object.entries(data).map(([id, log]) => ({
+        id,
+        Month: log.Month ?? log.Month,
+        Day: log.Day,
+        Time: `${log.Time.Hour.toString().padStart(2, '0')}:${log.Time.Min.toString().padStart(2, '0')}`,
+        Hostname: log.Hostname,
+        Type: log.Type as LogEntry['Type'],
+        Messages: log.Messages
+      }));
+
       setLogs(logsData);
     } catch (err) {
       console.error('Failed to fetch logs:', err);
@@ -106,16 +112,28 @@ export const HostLogsManager = () => {
   useEffect(() => { fetchPcs(); }, []);
   useEffect(() => { fetchLogs(selectedPc); }, [selectedPc]);
 
+  // -------------------- 操作邏輯 --------------------
   const toggleLogExpansion = (logId: string) => {
-    setExpandedLogs(prev => prev.includes(logId) ? prev.filter(id => id !== logId) : [...prev, logId]);
+    setExpandedLogs(prev =>
+      prev.includes(logId)
+        ? prev.filter(id => id !== logId)
+        : [...prev, logId]
+    );
   };
+
   const toggleLogSelection = (logId: string) => {
-    setSelectedLogs(prev => prev.includes(logId) ? prev.filter(id => id !== logId) : [...prev, logId]);
+    setSelectedLogs(prev =>
+      prev.includes(logId)
+        ? prev.filter(id => id !== logId)
+        : [...prev, logId]
+    );
   };
+
   const selectAllLogs = () => {
     if (selectedLogs.length === logs.length) setSelectedLogs([]);
     else setSelectedLogs(logs.map(log => log.id));
   };
+
 
   // -------------------- JSX --------------------
   return (
@@ -129,7 +147,11 @@ export const HostLogsManager = () => {
             <SelectValue placeholder="Please select a PC" />
           </SelectTrigger>
           <SelectContent>
-            {pcs.map(pc => <SelectItem key={pc.uuid} value={pc.uuid}>{pc.uuid}</SelectItem>)}
+            {pcs.map(pc => (
+              <SelectItem key={pc.uuid} value={pc.uuid}>
+                {pc.uuid}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -140,14 +162,31 @@ export const HostLogsManager = () => {
           <div className="flex space-x-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input placeholder="Search logs..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="pl-10" />
+              <Input
+                placeholder="Search logs..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <Button variant="outline" onClick={()=>setIsFilterOpen(!isFilterOpen)} className="flex items-center space-x-2">
-              <Filter className="h-4 w-4" /><span>Filter</span>
+            <Button
+              variant="outline"
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="flex items-center space-x-2"
+            >
+              <Filter className="h-4 w-4" />
+              <span>Filter</span>
             </Button>
-            <Button style={{ backgroundColor: '#7B86AA' }} className="hover:opacity-90 text-white">
+            <Button
+              style={{ backgroundColor: '#7B86AA' }}
+              className="hover:opacity-90 text-white"
+            >
               <Download className="h-4 w-4" />
-              <span>{selectedLogs.length>0 ? `Export (${selectedLogs.length})` : 'Export (All)'}</span>
+              <span>
+                {selectedLogs.length > 0
+                  ? `Export (${selectedLogs.length})`
+                  : 'Export (All)'}
+              </span>
             </Button>
           </div>
 
@@ -155,7 +194,7 @@ export const HostLogsManager = () => {
           <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <CollapsibleContent className="space-y-4 p-4 border rounded-lg bg-muted/50">
               <h3 className="font-medium text-sm">Advanced Filters</h3>
-              {/* Month / Date / Time / Type Filter 同你提供的 UI */}
+              {/* Month / Time / Type 可擴充區 */}
             </CollapsibleContent>
           </Collapsible>
 
@@ -164,40 +203,74 @@ export const HostLogsManager = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableCell><Checkbox checked={selectedLogs.length===logs.length} onCheckedChange={selectAllLogs} /></TableCell>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedLogs.length === logs.length}
+                      onCheckedChange={selectAllLogs}
+                    />
+                  </TableCell>
                   <TableCell></TableCell>
-                  <TableCell>Date</TableCell>
+                  <TableCell>Month</TableCell>
                   <TableCell>Day</TableCell>
                   <TableCell>Time</TableCell>
+                  <TableCell>Hostname</TableCell>
                   <TableCell>Type</TableCell>
                   <TableCell>Messages</TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {logs.filter(log=>log.Messages.toLowerCase().includes(searchTerm.toLowerCase())).map(log=>(
-                  <React.Fragment key={log.id}>
-                    <TableRow className="hover:bg-muted/50">
-                      <TableCell><Checkbox checked={selectedLogs.includes(log.id)} onCheckedChange={()=>toggleLogSelection(log.id)} /></TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={()=>toggleLogExpansion(log.id)} className="h-8 w-8 p-0">
-                          {expandedLogs.includes(log.id) ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
-                        </Button>
-                      </TableCell>
-                      <TableCell>{log.Month}</TableCell>
-                      <TableCell>{log.Day}</TableCell>
-                      <TableCell>{log.Time}</TableCell>
-                      <TableCell><Badge variant={getTypeVariant(log.Type)}>{log.Type}</Badge></TableCell>
-                      <TableCell className="max-w-md truncate">{log.Messages}</TableCell>
-                    </TableRow>
-                    {expandedLogs.includes(log.id) && (
-                      <TableRow>
-                        <TableCell colSpan={7} className="bg-muted/30 p-4 text-xs break-words max-h-[200px] overflow-y-auto">
+                {logs
+                  .filter(log =>
+                    log.Messages.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map(log => (
+                    <React.Fragment key={log.id}>
+                      <TableRow className="hover:bg-muted/50">
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedLogs.includes(log.id)}
+                            onCheckedChange={() => toggleLogSelection(log.id)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleLogExpansion(log.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            {expandedLogs.includes(log.id) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                        <TableCell>{log.Month}</TableCell>
+                        <TableCell>{log.Day}</TableCell>
+                        <TableCell>{log.Time}</TableCell>
+                        <TableCell>{log.Hostname}</TableCell>
+                        <TableCell>
+                          <Badge variant={getTypeVariant(log.Type)}>
+                            {log.Type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-md truncate">
                           {log.Messages}
                         </TableCell>
                       </TableRow>
-                    )}
-                  </React.Fragment>
-                ))}
+                      {expandedLogs.includes(log.id) && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={8}
+                            className="bg-muted/30 p-4 text-xs break-words max-h-[200px] overflow-y-auto"
+                          >
+                            {log.Messages}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  ))}
               </TableBody>
             </Table>
           </div>
