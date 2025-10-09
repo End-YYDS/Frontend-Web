@@ -25,12 +25,16 @@ interface PostInfoGetRequest {
   Uuid?: string | null;
 }
 
-interface InnerUuid extends Cluster {}
-interface Pcs extends InnerUuid {}
-
-//TODO: 詢問寫法
-interface PostInfoGetResponse extends Pcs {
-  Pcs(Pcs: any): unknown;
+// 實際上後端 /api/info/get 回傳的應該是「多台電腦的資料」
+// {
+//   "Pcs": {
+//     "PC-001": { "Cpu": 23, "Memory": 48, "Disk": 55 },
+//     "PC-002": { "Cpu": 70, "Memory": 60, "Disk": 40 }
+//   },
+//   "Length": 2
+// }
+interface PostInfoGetResponse {
+  Pcs: Record<string, Cluster>;
   Length: number;
 }
 
@@ -38,12 +42,4 @@ interface PostInfoGetResponse extends Pcs {
 
 // }
 
-export type {Info, Cluster, InnerUuid, Pcs, GetAllInfoResponse, PostInfoGetRequest, PostInfoGetResponse}
-
-// --------------------------------------------
-
-
-// export interface InfoGetResponse {
-//   Pcs: Record<string, PcMetrics>;
-//   Length: number;
-// }
+export type {GetAllInfoResponse, PostInfoGetRequest, PostInfoGetResponse}
