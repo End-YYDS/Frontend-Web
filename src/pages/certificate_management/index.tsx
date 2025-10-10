@@ -1,8 +1,5 @@
-//TODO: 序號API、更改憑證有效時間，要從後端拿
-
 import { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // ★ 新增 axios
+import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,7 +10,6 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-// import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,39 +26,20 @@ import { Label } from "@/components/ui/label";
 import { Shield, ShieldX } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import type { PageMeta } from '@/types';
-
-// ★ 匯入後端回傳型別
 import type { GetValids, GetRevokeds, RevokeRequest, Valid, Revoked } from './types';
 
 const CertificateManagementPage = () => {
-  // const navigate = useNavigate();
-
-  // ★ 後端有效憑證清單
   const [certificates, setCertificates] = useState<Valid[]>([]);
-  // ★ 後端吊銷憑證清單
   const [revokedCertificates, setRevokedCertificates] = useState<Revoked[]>([]);
   const [revokeReason, setRevokeReason] = useState("");
-
-  // -----------------------------
-  // ★ 頁面載入時抓取有效/吊銷憑證
-  // -----------------------------
   useEffect(() => {
     fetchValids();
     fetchRevoked();
   }, []);
-
-  // ★ 取得有效憑證
+  // 取得有效憑證
   const fetchValids = async () => {
     try {
       const { data } = await axios.get<GetValids>('/api/chm/mCA/valid', { withCredentials: true });
-      // 模擬測試資料可放這裡（若後端尚未串接）
-      // res.data = {
-      //   Valid: [
-      //     { Name: 'www.example.com', Signer: 'CA Root Authority', Period: '2024-01-01~2025-01-01' },
-      //     { Name: 'api.example.com', Signer: 'CA Root Authority', Period: '2024-02-01~2025-02-01' }
-      //   ],
-      //   Length: 2
-      // };
       data && data.Valid && typeof data.Valid === 'object' ?
         setCertificates(data.Valid)
         :
@@ -73,30 +50,15 @@ const CertificateManagementPage = () => {
       setCertificates([]);
     }
   };
-
-  // ★ 取得已吊銷憑證
+  // 取得已吊銷憑證
   const fetchRevoked = async () => {
     try {
       const { data } = await axios.get<GetRevokeds>('/api/chm/mCA/revoked', { withCredentials: true });
-      // 模擬測試資料
-      // res.data = {
-      //   Revoke: [
-      //     { Number: '1001', Time: '2025-10-04T09:30', Reason: 'Expired' }
-      //   ],
-      //   Length: 1
-      // };
-
-      // const mapped = res.data.Revoke.map((r, idx) => ({
-      //   id: `${idx + 1}`,
-      //   serialNumber: r.Number,
-      //   revokedAt: r.Time,
-      //   reason: r.Reason
-      // }));
       console.log('Revoked data:', data);
       data && data.Revoke && typeof data.Revoke === 'object' ?
         setRevokedCertificates(data.Revoke)
         :
-      setRevokedCertificates([]);
+        setRevokedCertificates([]);
     } catch (err) {
       console.error('Failed to fetch revoked list:', err);
       toast({
@@ -108,23 +70,18 @@ const CertificateManagementPage = () => {
   };
 
   // -----------------------------
-  // ★ 吊銷憑證
+  // 吊銷憑證
   // -----------------------------
   const handleRevokeCertificate = async (commonName: string, reason: string) => {
-    // const reason = revokeReason.trim() || "Manually revoked by certificate administrator";
     try {
-      // ★ 呼叫後端吊銷API
       if (reason.trim() === "") {
         reason = "None";
       }
       const payload: RevokeRequest = { Name: commonName, Reason: reason };
       const res = await axios.post('/api/chm/mCA/revoke', payload, { withCredentials: true });
       console.log('Revoke response:', res.data);
-
       toast({ title: "Certificate revoked", description: `Certificate ${commonName} 已被吊銷` });
       setRevokeReason("");
-
-      // 重新抓取最新列表
       fetchValids();
       fetchRevoked();
     } catch (err) {
@@ -135,23 +92,6 @@ const CertificateManagementPage = () => {
       });
     }
   };
-
-  // -----------------------------
-  // 模擬用：產生序號
-  // -----------------------------
-  // const generateSerialNumber = () => {
-  //   const chars = '0123456789ABCDEF';
-  //   let result = '';
-  //   for (let i = 0; i < 6; i++) {
-  //     if (i > 0) result += ':';
-  //     result += chars[Math.floor(Math.random() * 16)] + chars[Math.floor(Math.random() * 16)];
-  //   }
-  //   return result;
-  // };
-
-  // 只顯示有效憑證
-  // const activeCertificates = certificates.filter(cert => cert.status === 'active');
-
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="bg-[#A8AEBD] py-1.5 mb-6">
@@ -213,7 +153,6 @@ const CertificateManagementPage = () => {
                     <TableCell>
                       <div className="text-sm">
                         <div>{new Date(cert.Period).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</div>
-                        {/* <div className="text-gray-500">to {cert.validTo}</div> */}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -262,7 +201,6 @@ const CertificateManagementPage = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-
                 {certificates.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
