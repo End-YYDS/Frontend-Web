@@ -1,82 +1,82 @@
-// 對應 Rust crate::commons::ResponseResult
-export interface ResponseResult {
-  type: string; // ResponseType (e.g., "Ok" / "Error")
-  message: string;
+type ResultType = "Ok" | "Err";
+
+interface PostAddPcRequest {
+  Ip: string,
+  Password: string
 }
 
-// === PCManager ===
 // Post /api/chm/pc/add
-export interface PCManagerRequest {
-  Ip: string;
-  Password: string;
+// Delete /api/chm/pc
+// Post /api/chm/pc/reboot
+// Post /api/chm/pc/shutdown
+// Post、Put、Patch、Delete /api/chm/pcgroup
+interface ResponseResult {
+  Type: ResultType,
+  Message: string
 }
 
-export interface Uuid {
-  Hostname: string;
-  Ip: string;
+interface PcsUuid {
+  Hostname: string,
+  Ip: string
 }
 
-export interface PcInformation {
-  Pcs: Record<string, Uuid>;
+// Get /api/chm/pc/specific
+//TODO: 為什麼要這樣寫
+interface GetAllPcResponse {
+  Pcs: Record<string, PcsUuid>;
   Length: number;
 }
 
-export interface SpecificRequest {
+interface GetSpecificPcRequest {
   Uuid: string[];
 }
 
-export interface DeletePcRequest {
-  Uuids: string[];
-  Passwords: string[];
+interface DeletePcRequest {
+  Uuids: string[],
+  Passwords: string[]
 }
 
-export interface DeletePcResponse {
-  uuids: Record<string, ResponseResult>;
+interface DeletePcResponse {
+  Uuid: ResponseResult
 }
 
-export interface UuidsRequest {
-  Uuids: string[];
+// Post /api/chm/pc/reboot
+// Post /api/chm/pc/shutdown
+interface PostPcActionRequest {
+  Uuids: string[]
 }
 
 // === PC Group ===
-// Post /api/chm/pcgroup
-export interface PostPcgroupRequest {
-  Groupname: string;
-  Describe: string;
+
+interface Vxlanid {
+  Groupname: string,
+  Pcs: string[]
 }
 
-// Put /api/chm/pcgroup
-export interface Vxlanid {
-  Groupname: string;
-  Pcs: string[];
+interface GetPcgroupResponse {
+  Groups: Vxlanid,
+  Length: number
 }
 
-export interface Groups {
-  vxlanid: Vxlanid;
+interface PostPcgroupRequest {
+  Groupname: string,
+  Describe: string
 }
 
-export interface GetPcgroupResponseResult {
-  Groups: Groups;
-  Length: number;
+interface PutPcgroupRequest {
+  Vxlanid: Vxlanid
 }
 
-export interface DePutVxlanid {
-  Groupname: string;
-  Pcs: string[];
+interface PatchVxlanid {
+  Groupname: string
 }
 
-export interface PutPcgroupRequest {
-  vxlanid: DePutVxlanid;
+interface PatchPcgroupRequest {
+  vxlanid: PatchVxlanid
 }
 
-export interface DePatchVxlanid {
-  Groupname: string;
+interface DeletePcGroupRequest {
+  Vxlanid: number
 }
 
-export interface PatchPcgroupRequest {
-  vxlanid: DePatchVxlanid;
-}
-
-export interface DeletePcGroupRequest {
-  Vxlanid: number;
-}
+export type {PostAddPcRequest, ResponseResult, GetAllPcResponse, GetSpecificPcRequest, DeletePcRequest, DeletePcResponse, PostPcActionRequest, GetPcgroupResponse, PostPcgroupRequest, PutPcgroupRequest, PatchPcgroupRequest, DeletePcGroupRequest}

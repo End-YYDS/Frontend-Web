@@ -11,6 +11,7 @@ import { Plus, Computer, Users, LogOut, Edit2, UserPlus } from "lucide-react";
 import { DataTable } from "./data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import axios from "axios";
+import type { DeletePcGroupRequest, GetAllPcResponse, GetPcgroupResponse, PostAddPcRequest, PostPcgroupRequest, ResponseResult } from "./types";
 
 interface Computer {
   id: string;
@@ -42,28 +43,38 @@ export function PCManagerContent() {
   // -------------------- API --------------------
   // 取得所有主機
   const fetchAllComputers = async () => {
-    try {
-      const { data } = await axios.get("/api/chm/pc/all");
-      const pcs: Computer[] = Object.entries(data.Pcs).map(([uuid, pc]: any) => ({
+  try {
+    const res = await axios.get<GetAllPcResponse>("/api/chm/pc/all");
+    const data = res.data;
+
+    if (data && data.Pcs && typeof data.Pcs === "object") {
+      const pcs: Computer[] = Object.entries(data.Pcs).map(([uuid, pc]) => ({
         id: uuid,
         name: pc.Hostname,
         ip: pc.Ip,
         status: "Offline",
       }));
       setComputers(pcs);
-    } catch (err) {
-      console.error("Fetch all PCs failed:", err);
+    } else {
+      // console.warn("⚠️ data.Pcs is undefined or invalid:", data);
+      setComputers([]); // 避免 setComputers(undefined)
     }
-  };
+  } catch (err) {
+    console.error("Fetch all PCs failed:", err);
+    setComputers([]); // 保持狀態穩定
+  }
+};
+
 const defaultGroupComputers = computers.filter((computer) => !computer.group);
 
-  const addComputerAPI = async (ip: string, password: string) => {
+  const addComputerAPI = async (ip: string, password: string): Promise<ResponseResult> => {
+    const body: PostAddPcRequest = { Ip: ip, Password: password };
     try {
-      const { data } = await axios.post("/api/chm/pc/add", { Ip: ip, Password: password });
+      const { data } = await axios.post<ResponseResult>("/api/chm/pc/add", body);
       return data;
     } catch (err) {
       console.error("Add PC API failed:", err);
-      return { Type: "ERR", Message: String(err) };
+      return { Type: "Err", Message: String(err) };
     }
   };
 
@@ -71,29 +82,37 @@ const defaultGroupComputers = computers.filter((computer) => !computer.group);
   // -------------------- PC Group --------------------
   const fetchAllGroups = async () => {
     try {
-      const { data } = await axios.get("/api/chm/pcgroup");
-      const groupList: ComputerGroup[] = Object.entries(data.Groups).map(([vxlanid, g]: any) => ({
-        id: vxlanid,
-        name: g.Groupname,
-        description: g.Describe || "",
-        computerCount: g.Pcs?.length || 0,
-      }));
-      setGroups(groupList);
+      const { data } = await axios.get<GetPcgroupResponse>("/api/chm/pcgroup");
+
+      if (data && data.Groups && typeof data.Groups === 'object'){
+        // data.Groups 是 Record<string, Vxlanid>
+        const groupList: ComputerGroup[] = Object.entries(data?.Groups).map(([vxlanid, g]) => ({
+          id: vxlanid,
+          name: g.Groupname,
+          description: "",
+          computerCount: g.Pcs?.length ?? 0,
+        }));
+
+        setGroups(groupList);
+      }
+      else {
+        setGroups([]);
+      }
     } catch (err) {
       console.error("Fetch all groups failed:", err);
+      setGroups([]);
     }
   };
 
   
-  const deleteGroupAPI = async (vxlanid: string) => {
+  const deleteGroupAPI = async (vxlanid: string): Promise<ResponseResult> => {
+    const body: DeletePcGroupRequest = { Vxlanid: Number(vxlanid) };
     try {
-      const { data } = await axios.delete("/api/chm/pcgroup", {
-        data: { Vxlanid: vxlanid },
-      });
+      const { data } = await axios.delete<ResponseResult>("/api/chm/pcgroup", { data: body });
       return data;
     } catch (err) {
       console.error("Delete group API failed:", err);
-      return { Type: "ERR", Message: String(err) };
+      return { Type: "Err", Message: String(err) };
     }
   };
 
@@ -107,7 +126,7 @@ const defaultGroupComputers = computers.filter((computer) => !computer.group);
   const handleAddComputer = async () => {
     if (!newComputer.ip || !newComputer.password) return;
     const result = await addComputerAPI(newComputer.ip, newComputer.password);
-    if (result.Type === "OK") {
+    if (result.Type === "Ok") {
       await fetchAllComputers();
       setIsAddComputerOpen(false);
       setNewComputer({ ip: "", password: "", group: "" });
@@ -118,7 +137,7 @@ const defaultGroupComputers = computers.filter((computer) => !computer.group);
 
   const handleDeleteGroup = async (groupId: string) => {
     const result = await deleteGroupAPI(groupId);
-    if (result.Type === "OK") {
+    if (result.Type === "Ok") {
       setGroups(groups.filter((g) => g.id !== groupId));
       setComputers(
         computers.map((c) =>
@@ -156,13 +175,14 @@ const defaultGroupComputers = computers.filter((computer) => !computer.group);
 
 const handleAddGroup = async () => {
     if (!newGroup.name) return;
+    const body: PostPcgroupRequest = {
+      Groupname: newGroup.name,
+      Describe: newGroup.description,
+    };
     try {
-      const { data } = await axios.post("/api/chm/pcgroup", {
-        Groupname: newGroup.name,
-        Describe: newGroup.description,
-      });
+      const { data } = await axios.post<ResponseResult>("/api/chm/pcgroup", body);
 
-      if (data.Type === "OK") {
+      if (data.Type === "Ok") {
         const group: ComputerGroup = {
           id: (groups.length + 1).toString(),
           name: newGroup.name,
