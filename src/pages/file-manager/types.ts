@@ -28,7 +28,7 @@ interface GetOnePdirFileResponse {
 
 interface PostUploadFileRequest {
   Uuid: string;
-  // "File": [file] 怎麼寫
+  // "File": [file]
 }
 
 interface PostDownloadPdirFileRequest {

@@ -1,16 +1,20 @@
-// /api/firewall/status & PUT /api/firewall/status
-export interface FirewallRequest {
+type Status = 'active' | 'inactive';
+type Target = 'ACCEPT' | 'DROP' | 'REJECT';
+type ResultType = 'Ok' | 'Err';
+
+type InnerRules = Rule[];
+type InnerChains = Chains[];
+
+interface GetFilewallPcs {
+  Pcs: Record<string, string>;
+  Length: number;
+}
+
+interface GetFirewallRequest {
   Uuid: string;
 }
 
-// Firewall 狀態
-export type FirewallStatus = "active" | "inactive";
-
-// 封包目標
-export type Target = "ACCEPT" | "DROP" | "REJECT";
-
-// 單一防火牆規則
-export interface Rule {
+interface Rule {
   Target: Target;
   Protocol: string;
   In: string;
@@ -20,44 +24,21 @@ export interface Rule {
   Options: string;
 }
 
-// 單一 Chain
-export interface Chain {
+interface Chains {
   Name: string;
   Policy: Target;
-  Rules: Rule[];
+  Rules: InnerRules;
   Rules_Length: number;
 }
 
-// 防火牆回應
-export interface FirewallStatusResponse {
-  Status: FirewallStatus;
-  Chains: Chain[];
+interface GetFirewallResponse {
+  Status: Status;
+  Chain: InnerChains;
 }
 
-// DELETE /api/firewall/rule
-export interface DeleteRuleRequest {
+interface PostFirewallRuleRequest {
   Uuid: string;
-  Chain: string;
-  RuleId: number;
-}
-
-// PUT /api/firewall/status
-export interface PutStatusRequest {
-  Uuid: string;
-  Status: FirewallStatus;
-}
-
-// PUT /api/firewall/policy
-export interface PutPolicyRequest {
-  Uuid: string;
-  Chain: string;
-  Policy: Target;
-}
-
-// POST /api/firewall/rule
-export interface AddRuleRequest {
-  Uuid: string;
-  Chain: string;
+  Chain: string; //INPUT FORWARD OUTPUT
   Target: Target;
   Protocol: string;
   In: string;
@@ -66,3 +47,42 @@ export interface AddRuleRequest {
   Destination: string;
   Options: string;
 }
+
+interface DeleteFirewallRuleRequest {
+  Uuid: string;
+  Chain: string; //INPUT FORWARD OUTPUT
+  RuleId: number;
+}
+
+interface PutFirewallStatusRequest {
+  Uuid: string;
+  Status: Status;
+}
+
+interface PutFirewallPolicyRequest {
+  Uuid: string;
+  Chain: string;
+  Policy: Target;
+}
+
+// Post /api/firewall/rule
+// Delete /api/firewall/rule
+// Put /api/firewall/status
+// Put /api/firewall/policy
+interface FirewallResponse {
+  Type: ResultType;
+  Message: string;
+}
+
+export type {
+  Target,
+  Rule,
+  GetFilewallPcs,
+  GetFirewallRequest,
+  GetFirewallResponse,
+  PostFirewallRuleRequest,
+  FirewallResponse,
+  DeleteFirewallRuleRequest,
+  PutFirewallStatusRequest,
+  PutFirewallPolicyRequest,
+};
