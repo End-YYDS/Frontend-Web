@@ -1,7 +1,7 @@
-type Zone = "info" | "cluster";
-type Target = "safe" | "warn" | "dang" | "Cpu" | "Memory" | "Disk";
+type Zone = 'info' | 'cluster';
+type Target = 'safe' | 'warn' | 'dang' | 'Cpu' | 'Memory' | 'Disk';
 
-interface  Info {
+interface Info {
   Safe: number;
   Warn: number;
   Dang: number;
@@ -42,4 +42,4 @@ interface PostInfoGetResponse {
 
 // }
 
-export type {GetAllInfoResponse, PostInfoGetRequest, PostInfoGetResponse}
+export type { GetAllInfoResponse, PostInfoGetRequest, PostInfoGetResponse };

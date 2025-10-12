@@ -100,7 +100,6 @@ export const HostLogsManager = () => {
     }
   };
 
-  //TODO:reduce GPT
   const fetchLogs = async (uuid: string) => {
     if (!uuid) return;
     try {

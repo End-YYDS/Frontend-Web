@@ -22,7 +22,7 @@ import { Breadcrumb } from './Breadcrumb';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // 匯入 types
-import type { VdirResponse, DownloadRequestVdir} from './types';
+import type {GetVdirFileResponse, PostDownloadVdirFileRequest} from './types';
 
 interface FileItem {
   name: string;
@@ -75,7 +75,7 @@ export const VirtualDirectoryManager = () => {
   // ---------------------- Fetch Virtual Directory ----------------------
   const fetchVirtualDirectory = async () => {
     try {
-      const res = await axios.get<VdirResponse>('/api/file/vdir');
+      const res = await axios.get<GetVdirFileResponse>('/api/file/vdir');
       if (res.data.Path) setCurrentPath(res.data.Path);
     } catch (e) {
       console.error('Fetch virtual directory failed', e);
@@ -206,7 +206,7 @@ export const VirtualDirectoryManager = () => {
   // ---------------------- Download (axios) ----------------------
   const handleDownload = async (fileName: string) => {
     try {
-      const body: DownloadRequestVdir = { Filename: fileName };
+      const body: PostDownloadVdirFileRequest = { Filename: fileName };
       const res = await axios.post<UploadResponse>(
         '/api/file/vdir/action/download',
         body

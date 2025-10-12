@@ -1,8 +1,8 @@
-type ResultType = "Ok" | "Err";
+type ResultType = 'Ok' | 'Err';
 
 interface PostAddPcRequest {
-  Ip: string,
-  Password: string
+  Ip: string;
+  Password: string;
 }
 
 // Post /api/chm/pc/add
@@ -11,17 +11,16 @@ interface PostAddPcRequest {
 // Post /api/chm/pc/shutdown
 // Post、Put、Patch、Delete /api/chm/pcgroup
 interface ResponseResult {
-  Type: ResultType,
-  Message: string
+  Type: ResultType;
+  Message: string;
 }
 
 interface PcsUuid {
-  Hostname: string,
-  Ip: string
+  Hostname: string;
+  Ip: string;
 }
 
 // Get /api/chm/pc/specific
-//TODO: 為什麼要這樣寫
 interface GetAllPcResponse {
   Pcs: Record<string, PcsUuid>;
   Length: number;
@@ -32,51 +31,64 @@ interface GetSpecificPcRequest {
 }
 
 interface DeletePcRequest {
-  Uuids: string[],
-  Passwords: string[]
+  Uuids: string[];
+  Passwords: string[];
 }
 
 interface DeletePcResponse {
-  Uuid: ResponseResult
+  Uuid: ResponseResult;
 }
 
 // Post /api/chm/pc/reboot
 // Post /api/chm/pc/shutdown
 interface PostPcActionRequest {
-  Uuids: string[]
+  Uuids: string[];
 }
 
 // === PC Group ===
 
 interface Vxlanid {
-  Groupname: string,
-  Pcs: string[]
+  Groupname: string;
+  Pcs: string[];
 }
 
 interface GetPcgroupResponse {
-  Groups: Vxlanid,
-  Length: number
+  Groups: Vxlanid;
+  Length: number;
 }
 
 interface PostPcgroupRequest {
-  Groupname: string,
-  Describe: string
+  Groupname: string;
+  Describe: string;
 }
 
 interface PutPcgroupRequest {
-  Vxlanid: Vxlanid
+  Vxlanid: Vxlanid;
 }
 
 interface PatchVxlanid {
-  Groupname: string
+  Groupname: string;
 }
 
 interface PatchPcgroupRequest {
-  vxlanid: PatchVxlanid
+  vxlanid: PatchVxlanid;
 }
 
 interface DeletePcGroupRequest {
-  Vxlanid: number
+  Vxlanid: number;
 }
 
-export type {PostAddPcRequest, ResponseResult, GetAllPcResponse, GetSpecificPcRequest, DeletePcRequest, DeletePcResponse, PostPcActionRequest, GetPcgroupResponse, PostPcgroupRequest, PutPcgroupRequest, PatchPcgroupRequest, DeletePcGroupRequest}
+export type {
+  PostAddPcRequest,
+  ResponseResult,
+  GetAllPcResponse,
+  GetSpecificPcRequest,
+  DeletePcRequest,
+  DeletePcResponse,
+  PostPcActionRequest,
+  GetPcgroupResponse,
+  PostPcgroupRequest,
+  PutPcgroupRequest,
+  PatchPcgroupRequest,
+  DeletePcGroupRequest,
+};

@@ -1,48 +1,65 @@
-// ========== vdir ==========
+type ResultType = 'Ok' | 'Err';
 
-export interface VdirResponse {
-  Path: string;
-}
-
-export interface DownloadRequestVdir {
-  Filename: string;
-}
-
-// ========== pdir ==========
-
-export interface PcsResponse {
-  Pcs: Record<string, string>; // uuid -> hostname
-  Length: number;
-}
-
-export interface GetOneRequest {
-  uuid: UuidDir;
-}
-
-export interface UuidDir {
+interface UuidDir {
   Directory: string;
 }
 
-export interface FileEntry {
+interface InnerFilename {
   Size: number;
-  Unit: FileUnit;
+  Unit: 'B' | 'KB' | 'MB' | 'GB';
   Owner: string;
   Mode: string;
   Modified: string;
 }
 
-export type FileUnit = "B" | "KB" | "MB" | "GB";
-
-export interface FilesResponse {
-  Files: Record<string, FileEntry>;
+interface GetPdirFileResponse {
+  Pcs: Record<string, string>;
   Length: number;
 }
 
-export interface DownloadRequestPdir {
+interface GetOnePdirFileRequest {
+  uuid: UuidDir;
+}
+
+interface GetOnePdirFileResponse {
+  Files: Record<string, InnerFilename>;
+  Length: number;
+}
+
+interface PostUploadFileRequest {
+  Uuid: string;
+  // "File": [file] 怎麼寫
+}
+
+interface PostDownloadPdirFileRequest {
   Uuid: string;
   Filename: string;
 }
 
-export interface UploadRequest {
-  Uuid: string;
+// Post /api/file/pdir/action/upload
+// Post /api/file/pdir/action/download
+// Post /api/file/vdir/action/upload
+// Post /api/file/vdir/action/download
+interface PostFileActionResponse {
+  Type: ResultType;
+  Message: string;
 }
+
+interface GetVdirFileResponse {
+  Path: string;
+}
+
+interface PostDownloadVdirFileRequest {
+  Filename: string;
+}
+
+export type {
+  GetPdirFileResponse,
+  GetOnePdirFileRequest,
+  GetOnePdirFileResponse,
+  PostUploadFileRequest,
+  PostFileActionResponse,
+  PostDownloadPdirFileRequest,
+  GetVdirFileResponse,
+  PostDownloadVdirFileRequest
+};

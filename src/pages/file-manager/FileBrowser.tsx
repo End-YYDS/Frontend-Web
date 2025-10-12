@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Breadcrumb } from './Breadcrumb';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import axios from 'axios';
-import type { PcsResponse, FilesResponse, DownloadRequestPdir} from './types'; // 假設你 types.ts 放在 src/types.ts
+import type { GetOnePdirFileResponse, GetPdirFileResponse, PostDownloadPdirFileRequest } from './types'; // 假設你 types.ts 放在 src/types.ts
 
 interface FileItem {
   name: string;
@@ -70,27 +70,42 @@ export const FileBrowser = () => {
   // ---------------------- API Methods ----------------------
 
   /** 抓取所有主機清單 */
-  const fetchHosts = async () => {
-    try {
-      const { data } = await api.get<PcsResponse>('/pdir/pcs');
-      // Rust回傳為: { Pcs: {uuid: hostname}, Length: number }
-      const hostList: Host[] = Object.entries(data.Pcs).map(([uuid, hostname]) => ({
-        uuid,
-        hostname,
-        status: 'online',
-      }));
-      setHosts(hostList);
-    } catch (error) {
-      console.error('Fetch hosts failed', error);
-      toast({ title: 'Error', description: 'Failed to fetch hosts', variant: 'destructive' });
+const fetchHosts = async () => {
+  try {
+    const { data } = await api.get<GetPdirFileResponse>('/pdir/pcs');
+    
+    if (!data || !data.Pcs || typeof data.Pcs !== 'object') {
+      console.warn('Invalid response structure:', data);
+      toast({
+        title: 'Error',
+        description: 'Invalid host list format',
+        variant: 'destructive',
+      });
+      return;
     }
-  };
+
+    const hostList: Host[] = Object.entries(data.Pcs).map(([uuid, hostname]) => ({
+      uuid,
+      hostname,
+      status: 'online',
+    }));
+
+    setHosts(hostList);
+  } catch (error) {
+    console.error('Fetch hosts failed', error);
+    toast({
+      title: 'Error',
+      description: 'Failed to fetch hosts',
+      variant: 'destructive',
+    });
+  }
+};
 
   /** 抓取指定主機、指定路徑的檔案 */
   const fetchFiles = async (_hostUuid: string, path: string) => {
     try {
       const payload = { uuid: { Directory: path } };
-      const { data } = await api.post<FilesResponse>('/pdir/one', payload);
+      const { data } = await api.post<GetOnePdirFileResponse>('/pdir/one', payload);
       // Rust回傳為: { Files: {...}, Length: number }
       const newFiles: FileItem[] = Object.entries(data.Files).map(([name, info]) => ({
         name,
@@ -140,7 +155,7 @@ export const FileBrowser = () => {
   /** 下載檔案 */
   const handleDownload = async (hostUuid: string, fileName: string) => {
     try {
-      const payload: DownloadRequestPdir = { Uuid: hostUuid, Filename: fileName };
+      const payload: PostDownloadPdirFileRequest = { Uuid: hostUuid, Filename: fileName };
       const { data } = await api.post<UploadResponse>('/pdir/action/download', payload);
       if (data.Type === 'OK')
         toast({ title: 'Download Success', description: data.Message });
