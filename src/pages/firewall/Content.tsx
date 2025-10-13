@@ -10,7 +10,7 @@ import { Shield, Plus, Trash2, Settings, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddRuleDialog } from './AddRuleDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import type { DeleteFirewallRuleRequest, GetFirewallResponse, PutFirewallPolicyRequest, PutFirewallStatusRequest, Rule, Target } from './types';
+import type { DeleteFirewallRuleRequest, FirewallResponse, GetFilewallPcs, GetFirewallResponse, PutFirewallPolicyRequest, PutFirewallStatusRequest, Rule, Target } from './types';
 
 interface Host { uuid: string; hostname: string; }
 
@@ -29,14 +29,14 @@ export const FirewallManager = () => {
   // ======== Fetch Hosts ========
 const fetchHosts = async () => {
   try {
-    const res = await axios.get('/api/firewall/pcs');
+    const res = await axios.get<GetFilewallPcs>('/api/firewall/pcs');
     const data = res.data;
 
     // 安全提取 Pcs，不論伺服器是 data.Pcs 或 data.Data.Pcs
-    const pcsObj = data?.Pcs || data?.Data?.Pcs;
+    const pcsObj = data?.Pcs || data?.Pcs;
 
     if (!pcsObj || typeof pcsObj !== 'object') {
-      console.warn('⚠️ Invalid response structure:', data);
+      console.warn('Invalid response structure:', data);
       toast({
         title: 'Error',
         description: 'Invalid host list format',
@@ -75,7 +75,7 @@ const fetchHosts = async () => {
   const fetchFirewallStatus = async (uuid: string) => {
     if (!uuid) return;
     try {
-      const res = await axios.get('/api/firewall', { data: { Uuid: uuid } });
+      const res = await axios.get<GetFirewallResponse>('/api/firewall', { data: { Uuid: uuid } });
       const data = res.data;
       setFirewallStatus(data);
       toast({ title: "Success", description: "Firewall status loaded" });
@@ -90,7 +90,7 @@ const fetchHosts = async () => {
     if (!selectedHost) return;
     const req: PutFirewallStatusRequest = { Uuid: selectedHost, Status: status ? 'active' : 'inactive' };
     try {
-      await axios.put('/api/firewall/status', req);
+      await axios.put<FirewallResponse>('/api/firewall/status', req);
       setFirewallStatus(prev => prev ? { ...prev, Status: status ? 'active' : 'inactive' } : null);
       toast({ title: "Success", description: `Firewall ${status ? 'enabled' : 'disabled'}` });
     } catch {
@@ -103,7 +103,7 @@ const fetchHosts = async () => {
     if (!selectedHost) return;
     const req: PutFirewallPolicyRequest = { Uuid: selectedHost, Chain: policyDialog.chain, Policy: policyDialog.newPolicy as Target };
     try {
-      await axios.put('/api/firewall/policy', req);
+      await axios.put<FirewallResponse>('/api/firewall/policy', req);
       setFirewallStatus(prev => prev ? {
         ...prev,
         Chains: prev.Chain.map(c => c.Name === policyDialog.chain ? { ...c, Policy: policyDialog.newPolicy as Target } : c)
@@ -119,7 +119,7 @@ const fetchHosts = async () => {
     if (!selectedHost) return;
     const req: DeleteFirewallRuleRequest = { Uuid: selectedHost, Chain: deleteDialog.chain, RuleId: deleteDialog.ruleIndex };
     try {
-      await axios.delete('/api/firewall/rule', { data: req });
+      await axios.delete<FirewallResponse>('/api/firewall/rule', { data: req });
       setFirewallStatus(prev => prev ? {
         ...prev,
         Chains: prev.Chain.map(c => c.Name === deleteDialog.chain ? {

@@ -16,6 +16,7 @@ import {
   AlertDialogAction
 } from "@/components/ui/alert-dialog";
 import axios from 'axios';
+import type { GetRoleResponse, GetRoleUsersResponse, RoleActionResponse } from './types';
 
 export interface Member {
   id: string;
@@ -34,7 +35,7 @@ interface Role {
 
 // ---------- API Helpers ----------
 interface ApiResponse {
-  Type: 'OK' | 'ERR';
+  Type: 'Ok' | 'Err';
   Message: string;
 }
 
@@ -78,8 +79,15 @@ interface ApiResponse {
 // ---------- API Functions ----------
 const fetchAllUsers = async (): Promise<Member[]> => {
   try {
-    const res = await axios.get('/api/chm/role/users');
+    const res = await axios.get<GetRoleUsersResponse>('/api/chm/role/users');
     const data = res.data;
+
+    if (!data || !data.Users || typeof data.Users !== 'object') {
+      console.warn('Invalid Users response:', data);
+      toast.error('Invalid user data received');
+      return [];
+    }
+
     return Object.entries(data.Users).map(([uid, name]) => ({
       id: uid,
       name: String(name),
@@ -88,26 +96,36 @@ const fetchAllUsers = async (): Promise<Member[]> => {
   } catch (err) {
     console.error(err);
     toast.error('Failed to fetch users');
-    return []; // fallback: empty array
+    return [];
   }
 };
 
+
 const fetchAllRoles = async (usersList: Member[]): Promise<Role[]> => {
   try {
-    const res = await axios.get('/api/chm/role');
+    const res = await axios.get<GetRoleResponse>('/api/chm/role');
     const data = res.data;
+
+    if (!data || !Array.isArray(data.Roles)) {
+      console.warn('Invalid Roles response:', data);
+      toast.error('Invalid roles data received');
+      return [];
+    }
+
     return data.Roles.map((r: any, idx: number) => ({
       id: `role-${idx}`,
-      name: String(r.RoleName),
-      color: String(r.Color),
-      permissions: Number(r.Permissions),
-      members: r.Members
-        .map((uid: string) => usersList.find(u => u.id === String(uid)))
-        .filter((u: Member | undefined): u is Member => u !== undefined),
-      memberCount: r.Length
+      name: String(r.RoleName ?? 'Unnamed Role'),
+      color: String(r.Color ?? '#E5E7EB'),
+      permissions: Number(r.Permissions ?? 0),
+      members: Array.isArray(r.Members)
+        ? r.Members
+            .map((uid: string) => usersList.find(u => u.id === String(uid)))
+            .filter((u: Member | undefined): u is Member => u !== undefined)
+        : [],
+      memberCount: Number(r.Length ?? 0)
     }));
   } catch (err) {
-    console.error(err);
+    console.error('fetchAllRoles error:', err);
     toast.error('Failed to fetch roles');
     return []; // fallback: empty array
   }
@@ -122,29 +140,29 @@ const createRole = async (role: Role): Promise<ApiResponse> => {
       Members: role.members.map(m => Number(m.id)),
       Length: role.members.length
     };
-    const res = await axios.post('/api/chm/role', body);
+    const res = await axios.post<RoleActionResponse>('/api/chm/role', body);
     return res.data;
   } catch (err) {
     console.error(err);
     toast.error('Failed to create role');
-    return { Type: 'ERR', Message: 'Create role failed' };
+    return { Type: 'Err', Message: 'Create role failed' };
   }
 };
 
 const deleteRoleApi = async (roleName: string): Promise<ApiResponse> => {
   try {
-    const res = await axios.delete('/api/chm/role', { data: { RoleName: roleName } });
+    const res = await axios.delete<RoleActionResponse>('/api/chm/role', { data: { RoleName: roleName } });
     return res.data;
   } catch (err) {
     console.error(err);
     toast.error('Failed to delete role');
-    return { Type: 'ERR', Message: 'Delete role failed' };
+    return { Type: 'Err', Message: 'Delete role failed' };
   }
 };
 
 const updateRoleMembers = async (roleName: string, members: Member[]): Promise<ApiResponse> => {
   try {
-    const res = await axios.put('/api/chm/role', {
+    const res = await axios.put<RoleActionResponse>('/api/chm/role', {
       RoleName: roleName,
       Members: members.map(m => Number(m.id))
     });
@@ -152,13 +170,13 @@ const updateRoleMembers = async (roleName: string, members: Member[]): Promise<A
   } catch (err) {
     console.error(err);
     toast.error('Failed to update role members');
-    return { Type: 'ERR', Message: 'Update members failed' };
+    return { Type: 'Err', Message: 'Update members failed' };
   }
 };
 
 const updateRolePermissions = async (role: Role): Promise<ApiResponse> => {
   try {
-    const res = await axios.patch('/api/chm/role', {
+    const res = await axios.patch<RoleActionResponse>('/api/chm/role', {
       RoleName: role.name,
       Permissions: role.permissions,
       Color: role.color
@@ -167,7 +185,7 @@ const updateRolePermissions = async (role: Role): Promise<ApiResponse> => {
   } catch (err) {
     console.error(err);
     toast.error('Failed to update role permissions');
-    return { Type: 'ERR', Message: 'Update permissions failed' };
+    return { Type: 'Err', Message: 'Update permissions failed' };
   }
 };
 
@@ -224,7 +242,7 @@ export function RolesContent() {
       return;
     }
     const res = await deleteRoleApi(roleName);
-    if (res.Type === 'OK') {
+    if (res.Type === 'Ok') {
       setRoles(roles.filter(role => role.id !== roleId));
       toast.success(`Role "${roleName}" has been deleted`);
     } else {
@@ -243,7 +261,7 @@ export function RolesContent() {
     try {
       if (updatedRole.id === 'new-role') {
         const res = await createRole(updatedRole);
-        if (res.Type === 'OK') {
+        if (res.Type === 'Ok') {
           setRoles([...roles, { ...updatedRole, id: `role-${roles.length}`, memberCount: updatedRole.members.length }]);
           toast.success(`Role "${updatedRole.name}" has been created`);
         } else {
@@ -251,10 +269,10 @@ export function RolesContent() {
         }
       } else {
         const res1 = await updateRoleMembers(updatedRole.name, updatedRole.members);
-        if (res1.Type !== 'OK') throw new Error(res1.Message);
+        if (res1.Type !== 'Ok') throw new Error(res1.Message);
 
         const res2 = await updateRolePermissions(updatedRole);
-        if (res2.Type !== 'OK') throw new Error(res2.Message);
+        if (res2.Type !== 'Ok') throw new Error(res2.Message);
 
         setRoles(roles.map(r => r.id === updatedRole.id ? { ...updatedRole, memberCount: updatedRole.members.length } : r));
         toast.success(`Role "${updatedRole.name}" has been updated`);

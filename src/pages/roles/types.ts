@@ -1,10 +1,18 @@
-// ========== Roles ==========
-export interface RolesResponse {
-  Roles: RoleInfo[];
-  Length: number;
-}
+type Color =
+  | 'Red'
+  | 'Green'
+  | 'Blue'
+  | 'Yellow'
+  | 'Purple'
+  | 'Orange'
+  | 'Black'
+  | 'White'
+  | 'Gray'
+  | { Custom: string }; // Hex code 或 RGB
+type ResultType = 'Ok' | 'Err';
+type InnerRoles = RolesInfo[];
 
-export interface RoleInfo {
+interface RolesInfo {
   RoleName: string;
   Permissions: number;
   Color: Color;
@@ -12,37 +20,54 @@ export interface RoleInfo {
   Length: number;
 }
 
-// 將 Rust enum Color 轉成 TS union type + 可擴展的 Custom
-export type Color =
-  | "Red"
-  | "Green"
-  | "Blue"
-  | "Yellow"
-  | "Purple"
-  | "Orange"
-  | "Black"
-  | "White"
-  | "Gray"
-  | { Custom: string }; // Hex code 或 RGB
+interface GetRoleResponse {
+  Roles: InnerRoles;
+  Length: number;
+}
 
-// ========== Users ==========
-export interface UsersResponse {
+interface GetRoleUsersResponse {
   Users: Record<number, string>; // userId -> username
   Length: number;
 }
 
-// ========== Role Requests / Responses ==========
-export interface RoleDeleteRequest {
+interface PostRoleRequest {
+  RoleName: string;
+  Permissions: number;
+  Color: Color;
+  Members: number[];
+  Length: number;
+}
+
+// Post /api/chm/role
+// Delete /api/chm/role
+// Put /api/chm/role
+// Patch /api/chm/role
+interface RoleActionResponse {
+  Type: ResultType;
+  Message: string;
+}
+
+interface DeleteRoleRequest {
   RoleName: string;
 }
 
-export interface RolePutResponse {
+interface PutRoleRequest {
   RoleName: string;
   Members: number[];
 }
 
-export interface RolePatchRequest {
+interface PatchRoleRequest {
   RoleName: string;
   Permissions?: number;
   Color?: Color;
 }
+
+export type {
+  GetRoleResponse,
+  GetRoleUsersResponse,
+  PostRoleRequest,
+  RoleActionResponse,
+  DeleteRoleRequest,
+  PutRoleRequest,
+  PatchRoleRequest,
+};

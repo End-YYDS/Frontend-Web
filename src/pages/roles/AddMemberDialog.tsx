@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { MagnifyingGlassIcon, PlusIcon, UserIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
+import type { GetRoleUsersResponse } from './types';
 
 export interface Member {
   id: string;
@@ -12,6 +13,7 @@ export interface Member {
 }
 
 interface AddMemberDialogProps {
+  allUsers: Member[];
   members: Member[];
   onAddMember: (user: Member) => void;
 }
@@ -26,7 +28,7 @@ export function AddMemberDialog({ members, onAddMember }: AddMemberDialogProps) 
 
     const fetchUsers = async () => {
       try {
-        const res = await axios.get('/api/chm/role/users');
+        const res = await axios.get<GetRoleUsersResponse>('/api/chm/role/users');
         const users: Member[] = Object.entries(res.data.Users).map(([id, name]) => ({
           id,
           name: String(name),
