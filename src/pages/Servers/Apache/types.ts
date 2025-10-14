@@ -1,27 +1,84 @@
-// 共用資訊
-export interface CommonInfo {
-  // 根據你的 Rust 定義補上欄位，例如：
-  // status: string;
-  // message: string;
-  // timestamp: string;
-  // 你可以依實際 CommonInfo 結構補充
-  [key: string]: any;
+type ResultType = 'Ok' | 'Err';
+
+interface GetApacheRequest {
+  Uuid: string;
 }
 
-// 日誌結構
-export interface Logs {
-  // 根據 Rust 的 Logs 結構補上欄位，例如：
-  // entries: LogEntry[];
-  // 或其他欄位
-  [key: string]: any;
+type InnerErrorLog = InnerErrorLogResponse[];
+type InnerAccessLog = InnerAccessLogResponse[];
+
+interface Time {
+  Hour: number;
+  Min: number;
 }
 
-// 狀態列舉
-export type Status = "OK" | "ERROR" | string; // 可依實際擴充
+interface Date {
+  Year: number;
+  Month:
+    | 'Jan'
+    | 'Feb'
+    | 'Mar'
+    | 'Apr'
+    | 'May'
+    | 'Jun'
+    | 'Jul'
+    | 'Aug'
+    | 'Sep'
+    | 'Oct'
+    | 'Nov'
+    | 'Dec';
+  Day: number;
+  Week: 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
+  Time: Time;
+}
 
-// Apache API 回傳
-export interface ApacheResponse {
-  common_info: CommonInfo;
+interface InnerErrorLogResponse extends Date {
+  Module: string;
+  Level: 'debug' | 'info' | 'notice' | 'warn' | 'error' | 'crit' | 'alert' | 'emerg';
+  Pid: number;
+  Client: string;
+  Message: string;
+}
+
+interface InnerAccessLogResponse extends Date {
+  Ip: string;
+  Method: string;
+  Url: string;
+  Protocol: string;
+  Status: number;
+  Byte: number;
+  Referer: string;
+  UserAgent: string;
+}
+
+interface InnerLogs {
+  ErrorLog: InnerErrorLog;
+  ErrLength: number;
+  AccessLog: InnerAccessLog;
+  AccLength: number;
+}
+
+interface GetApacheResponse {
+  Hostname: string;
+  Status: 'active' | 'stopped';
+  Cpu: number;
+  Memory: number;
   Connections: number;
-  Logs: Logs;
+  Logs: InnerLogs;
 }
+
+interface PostApacheActionRequest {
+  Uuid: string;
+}
+
+interface PostApacheActionResponse {
+  Type: ResultType;
+  Message: string;
+}
+
+export type {
+  GetApacheRequest,
+  GetApacheResponse,
+  PostApacheActionRequest,
+  PostApacheActionResponse,
+};

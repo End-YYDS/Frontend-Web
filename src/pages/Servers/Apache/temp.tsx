@@ -1,16 +1,8 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Monitor, Cpu, MemoryStick } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { GetApacheResponse } from "./types";
-
-interface ComputerListProps {
-  serverId: string;
-  searchTerm: string;
-  onComputerSelect: (computerId: string) => void;
-}
 
 interface Computer {
   uuid: string;
@@ -20,53 +12,67 @@ interface Computer {
   Memory: number;
 }
 
+interface ComputerListProps {
+  serverId: string;
+  searchTerm: string;
+  onComputerSelect: (computerId: string) => void;
+}
+
 export function ComputerList({ serverId, searchTerm, onComputerSelect }: ComputerListProps) {
   const [computers, setComputers] = useState<Computer[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // 載入伺服器清單
   useEffect(() => {
     fetchComputers();
   }, [serverId]);
 
-  //TODO: 修改串接API
   const fetchComputers = async () => {
     setLoading(true);
     try {
-      // 呼叫實際 API
-      const { data } = await axios.get<GetApacheResponse>("/api/server/apache");
-
-      // 將回傳的物件轉換成陣列格式
-      const formattedData: Computer[] = Object.keys(data || {}).map((uuid) => ({
-        uuid,
-        Hostname: data?.Hostname ?? "Unknown",
-        Status: data?.Status ?? "stopped",
-        Cpu: data?.Cpu ?? 0,
-        Memory: data?.Memory ?? 0,
-      }));
-
-      setComputers(formattedData);
+      // Mock API call - replace with actual API
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const mockData: Computer[] = [
+        {
+          uuid: "uuid-001",
+          Hostname: "DESKTOP-001",
+          Status: "active",
+          Cpu: 45.2,
+          Memory: 67.8
+        },
+        {
+          uuid: "uuid-002", 
+          Hostname: "SERVER-MAIN",
+          Status: "active",
+          Cpu: 23.1,
+          Memory: 55.4
+        },
+        {
+          uuid: "uuid-003",
+          Hostname: "DEV-MACHINE",
+          Status: "stopped",
+          Cpu: 0,
+          Memory: 12.3
+        }
+      ];
+      
+      setComputers(mockData);
     } catch (error) {
-      console.error("Failed to fetch computers:", error);
       toast({
         title: "Error",
         description: "Failed to fetch computers",
         variant: "destructive",
       });
-      setComputers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // 避免 undefined 錯誤的安全搜尋
-  const filteredComputers = computers.filter((computer) => {
-    const hostname = computer.Hostname?.toLowerCase() || "";
-    const uuid = computer.uuid?.toLowerCase() || "";
-    const search = searchTerm?.toLowerCase() || "";
-    return hostname.includes(search) || uuid.includes(search);
-  });
+  const filteredComputers = computers.filter(computer =>
+    computer.Hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    computer.uuid.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -86,7 +92,7 @@ export function ComputerList({ serverId, searchTerm, onComputerSelect }: Compute
   return (
     <div className="space-y-4">
       {filteredComputers.map((computer) => (
-        <Card
+        <Card 
           key={computer.uuid}
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => onComputerSelect(computer.uuid)}
@@ -104,7 +110,7 @@ export function ComputerList({ serverId, searchTerm, onComputerSelect }: Compute
                   <p className="text-sm text-slate-500">{computer.uuid}</p>
                 </div>
               </div>
-
+              
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-4">
                   <div className="text-center">
@@ -114,7 +120,7 @@ export function ComputerList({ serverId, searchTerm, onComputerSelect }: Compute
                     </div>
                     <p className="text-xs text-slate-500">CPU</p>
                   </div>
-
+                  
                   <div className="text-center">
                     <div className="flex items-center gap-1 text-sm text-slate-600">
                       <MemoryStick className="w-4 h-4" />
@@ -124,7 +130,7 @@ export function ComputerList({ serverId, searchTerm, onComputerSelect }: Compute
                   </div>
                 </div>
 
-                <Badge
+                <Badge 
                   variant={computer.Status === "active" ? "default" : "secondary"}
                   className={computer.Status === "active" ? "bg-green-500" : "bg-slate-500"}
                 >
@@ -135,18 +141,14 @@ export function ComputerList({ serverId, searchTerm, onComputerSelect }: Compute
           </CardContent>
         </Card>
       ))}
-
+      
       {filteredComputers.length === 0 && (
         <Card>
           <CardContent className="p-12 text-center">
             <Monitor className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-600 mb-2">
-              No computers found
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-600 mb-2">No computers found</h3>
             <p className="text-slate-500">
-              {searchTerm
-                ? "Try adjusting your search terms"
-                : "No computers have this server installed"}
+              {searchTerm ? "Try adjusting your search terms" : "No computers have this server installed"}
             </p>
           </CardContent>
         </Card>
