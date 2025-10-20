@@ -87,4 +87,24 @@ interface PostLdapActionResponse {
   Message: string;
 }
 
-export type { GetLdapRequest, GetLdapResponse, PostLdapActionRequest, PostLdapActionResponse };
+// 取的online主機
+
+interface PcsUuid {
+  Status: boolean; //online: 1
+  Hostname: string;
+  Ip: string;
+}
+
+interface GetAllPcResponse {
+  Pcs: Record<string, PcsUuid>;
+  Length: number;
+}
+
+export type {
+  PcsUuid,
+  GetLdapRequest,
+  GetLdapResponse,
+  PostLdapActionRequest,
+  PostLdapActionResponse,
+  GetAllPcResponse,
+};
