@@ -1,11 +1,19 @@
 type ResultType = 'Ok' | 'Err';
 
-interface GetApacheRequest {
+interface GetSambaRequest {
   Uuid: string;
 }
 
-type InnerErrorLog = InnerErrorLogResponse[];
-type InnerAccessLog = InnerAccessLogResponse[];
+type InnerSambaLog = InnerSambaLogResponse[];
+type Shares = InnerShares[];
+
+interface InnerShares {
+  Name: string;
+  Path: string;
+  Users: number;
+  Permissions: string;
+  Status: 'active' | 'inactive';
+}
 
 interface Time {
   Hour: number;
@@ -32,48 +40,34 @@ interface Date {
   Time: Time;
 }
 
-interface InnerErrorLogResponse {
+interface InnerSambaLogResponse {
   Date: Date;
-  Module: string;
-  Level: 'debug' | 'info' | 'notice' | 'warn' | 'error' | 'crit' | 'alert' | 'emerg';
-  Pid: number;
   Client: string;
+  Event: string;
+  Level: 'info' | 'warn' | 'error';
   Message: string;
 }
 
-interface InnerAccessLogResponse {
-  Ip: string;
-  Date: Date;
-  Method: string;
-  Url: string;
-  Protocol: string;
-  Status: number;
-  Byte: number;
-  Referer: string;
-  UserAgent: string;
-}
-
 interface InnerLogs {
-  ErrorLog: InnerErrorLog;
-  ErrLength: number;
-  AccessLog: InnerAccessLog;
-  AccLength: number;
+  SambaLog: InnerSambaLog;
+  SambaLength: number;
 }
 
-interface GetApacheResponse {
+interface GetSambaResponse {
   Hostname: string;
   Status: 'active' | 'stopped';
   Cpu: number;
   Memory: number;
   Connections: number;
+  Shares: Shares;
   Logs: InnerLogs;
 }
 
-interface PostApacheActionRequest {
+interface PostSambaActionRequest {
   Uuid: string;
 }
 
-interface PostApacheActionResponse {
+interface PostSambaActionResponse {
   Type: ResultType;
   Message: string;
 }
@@ -93,9 +87,9 @@ interface GetAllPcResponse {
 
 export type {
   PcsUuid,
-  GetApacheRequest,
-  GetApacheResponse,
-  PostApacheActionRequest,
-  PostApacheActionResponse,
+  GetSambaRequest,
+  GetSambaResponse,
+  PostSambaActionRequest,
+  PostSambaActionResponse,
   GetAllPcResponse,
 };

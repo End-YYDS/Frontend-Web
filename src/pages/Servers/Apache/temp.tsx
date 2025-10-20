@@ -1,158 +1,234 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Monitor, Cpu, MemoryStick } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from 'react';
+import { ComputerList } from './ComputerList';
+import { ComputerDetail } from "./ComputerDetail";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { CheckCircle2, Download, Search } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
+import type { PcsUuid, GetAllPcResponse } from './types';
 
 interface Computer {
+  id: string;
+  name: string;
   uuid: string;
-  Hostname: string;
-  Status: "active" | "stopped";
+  status: 'online' | 'offline';
   Cpu: number;
   Memory: number;
 }
 
-interface ComputerListProps {
-  serverId: string;
-  searchTerm: string;
-  onComputerSelect: (computerId: string) => void;
-}
-
-export function ComputerList({ serverId, searchTerm, onComputerSelect }: ComputerListProps) {
+const ServerContent = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [installDialogOpen, setInstallDialogOpen] = useState(false);
+  const [selectedComputersForInstall, setSelectedComputersForInstall] = useState<string[]>([]);
   const [computers, setComputers] = useState<Computer[]>([]);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchComputers();
-  }, [serverId]);
+  const [installComputer, setInstallComputer] = useState<PcsUuid[]>([
+    { Status: true, Hostname: 'name', Ip: 'string' },
+    { Status: true, Hostname: 'name2', Ip: 'string2' },
+    { Status: true, Hostname: 'name3', Ip: 'string3' },
+  ]);
 
-  const fetchComputers = async () => {
-    setLoading(true);
+  // 取得線上電腦資料
+  const getOnlineComputers = async () => {
     try {
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const mockData: Computer[] = [
-        {
-          uuid: "uuid-001",
-          Hostname: "DESKTOP-001",
-          Status: "active",
-          Cpu: 45.2,
-          Memory: 67.8
-        },
-        {
-          uuid: "uuid-002", 
-          Hostname: "SERVER-MAIN",
-          Status: "active",
-          Cpu: 23.1,
-          Memory: 55.4
-        },
-        {
-          uuid: "uuid-003",
-          Hostname: "DEV-MACHINE",
-          Status: "stopped",
-          Cpu: 0,
-          Memory: 12.3
-        }
-      ];
-      
-      setComputers(mockData);
+      const { data } = await axios.post<GetAllPcResponse>('/api/chm/pc/all');
+
+      if (!data || !data.Pcs || Object.keys(data.Pcs).length === 0) {
+        toast({
+          title: 'No Online Computers',
+          description: 'There are currently no online computers available.',
+          variant: 'destructive',
+        });
+        setComputers([]);
+        return;
+      }
+
+      // 將 Record<string, Cluster> 轉為陣列格式
+      const pcsArray = Object.keys(data.Pcs);
+
+      // const pcsArray: Computer[] = Object.entries(data.Pcs).map(([id, cluster]) => ({
+      //   id,
+      //   name: id,
+      //   uuid: id,
+      //   status: 'online',
+      //   cluster,
+      // }));
+
+      // setComputers(pcsArray);
+      console.log('Online PCs:', pcsArray);
     } catch (error) {
+      console.error('Error fetching online computers:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch computers",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to fetch online computers.',
+        variant: 'destructive',
       });
-    } finally {
-      setLoading(false);
+      setInstallComputer([
+        { Status: true, Hostname: 'name', Ip: 'string' },
+        { Status: true, Hostname: 'name2', Ip: 'string2' },
+        { Status: true, Hostname: 'name3', Ip: 'string3' },
+      ]);
     }
   };
 
-  const filteredComputers = computers.filter(computer =>
-    computer.Hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    computer.uuid.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    getOnlineComputers();
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-4 bg-slate-200 rounded w-1/4 mb-2"></div>
-              <div className="h-3 bg-slate-200 rounded w-1/6"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+  const handleComputerToggle = (computerId: string) => {
+    setSelectedComputersForInstall((prev) =>
+      prev.includes(computerId) ? prev.filter((id) => id !== computerId) : [...prev, computerId],
     );
-  }
+  };
+
+  const handleInstallServer = async () => {
+    if (selectedComputersForInstall.length === 0) {
+      toast({
+        title: 'Select Computers',
+        description: 'Please select at least one computer to install.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsInstalling(true);
+
+    setTimeout(() => {
+      setIsInstalling(false);
+      setInstallDialogOpen(false);
+      setSelectedComputersForInstall([]);
+      toast({
+        title: 'Installation Successful',
+        description: `Server has been installed on the selected computers.`,
+      });
+    }, 2000);
+  };
+
+  // 點進去詳細資料
+  // if (selectedComputer) {
+  //     return (
+  //       <ComputerDetail 
+  //         serverId={selectedServer || ""}
+  //         computerId={selectedComputer}
+  //         onBack={() => onComputerSelect(null)}
+  //       />
+  //     );
+  //   }
 
   return (
-    <div className="space-y-4">
-      {filteredComputers.map((computer) => (
-        <Card 
-          key={computer.uuid}
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => onComputerSelect(computer.uuid)}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="bg-slate-100 p-3 rounded-lg">
-                  <Monitor className="w-6 h-6 text-slate-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg text-slate-800">
-                    {computer.Hostname}
-                  </h3>
-                  <p className="text-sm text-slate-500">{computer.uuid}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <div className="flex items-center gap-1 text-sm text-slate-600">
-                      <Cpu className="w-4 h-4" />
-                      <span>{computer.Cpu}%</span>
-                    </div>
-                    <p className="text-xs text-slate-500">CPU</p>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="flex items-center gap-1 text-sm text-slate-600">
-                      <MemoryStick className="w-4 h-4" />
-                      <span>{computer.Memory}%</span>
-                    </div>
-                    <p className="text-xs text-slate-500">Memory</p>
-                  </div>
-                </div>
-
-                <Badge 
-                  variant={computer.Status === "active" ? "default" : "secondary"}
-                  className={computer.Status === "active" ? "bg-green-500" : "bg-slate-500"}
+    <div>
+      <div className='mb-6'>
+        <div className='flex items-center justify-between mb-4'>
+          <div></div>
+          <div className='flex items-center gap-2'>
+            {/* 安裝按鈕 + 對話框 */}
+            <Dialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  style={{ backgroundColor: '#7B86AA' }}
+                  className='hover:opacity-80 text-white'
                 >
-                  {computer.Status === "active" ? "Running" : "Stopped"}
-                </Badge>
-              </div>
+                  <Download className='w-4 h-4 mr-2' />
+                  Install
+                </Button>
+              </DialogTrigger>
+
+              <DialogContent className='max-w-md'>
+                <DialogHeader>
+                  <DialogTitle>Install Apache</DialogTitle>
+                </DialogHeader>
+
+                <div className='space-y-4'>
+                  <p className='text-sm text-slate-600'>Select computers to install Apache on:</p>
+
+                  <div className='space-y-2 max-h-60 overflow-y-auto'>
+                    {computers
+                      .filter((computer) =>
+                        computer.name.toLowerCase().includes(searchTerm.toLowerCase()),
+                      )
+                      .filter((computer) => computer.status === 'online')
+                      .map((computer) => (
+                        <div
+                          key={computer.id}
+                          className='flex items-center space-x-2 p-2 border rounded'
+                        >
+                          <Checkbox
+                            id={computer.id}
+                            checked={selectedComputersForInstall.includes(computer.id)}
+                            onCheckedChange={() => handleComputerToggle(computer.id)}
+                          />
+                          <label htmlFor={computer.id} className='flex-1 cursor-pointer'>
+                            <div className='flex items-center justify-between'>
+                              <span className='font-medium'>{computer.name}</span>
+                            </div>
+                            <p className='text-xs text-slate-500'>
+                              {computer.uuid} | CPU: {computer.Cpu}% MEM: {computer.Memory}%
+                            </p>
+                          </label>
+                        </div>
+                      ))}
+                  </div>
+
+                  <div className='flex justify-end gap-2'>
+                    <Button
+                      variant='outline'
+                      onClick={() => setInstallDialogOpen(false)}
+                      disabled={isInstalling}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleInstallServer}
+                      disabled={isInstalling || selectedComputersForInstall.length === 0}
+                      style={{ backgroundColor: '#7B86AA' }}
+                      className='hover:opacity-80 text-white'
+                    >
+                      {isInstalling ? (
+                        <>
+                          <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2' />
+                          Installing...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className='w-4 h-4 mr-2' />
+                          Confirm Install
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* 搜尋欄 */}
+            <div className='relative'>
+              <Search className='w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400' />
+              <Input
+                placeholder='Search computers...'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className='pl-10 w-64'
+              />
             </div>
-          </CardContent>
-        </Card>
-      ))}
-      
-      {filteredComputers.length === 0 && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Monitor className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-600 mb-2">No computers found</h3>
-            <p className="text-slate-500">
-              {searchTerm ? "Try adjusting your search terms" : "No computers have this server installed"}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </div>
+      </div>
+
+      {/* 電腦列表顯示 */}
+      <ComputerList />
     </div>
   );
-}
+};
+
+export default ServerContent;

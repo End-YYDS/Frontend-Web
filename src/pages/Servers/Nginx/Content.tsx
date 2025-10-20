@@ -215,12 +215,12 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
         </div>
 
         {/* Show installed servers */}
-        {installedServers.length > 0 && (
+        {installedServers.length >= 0 && (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
-                Installed Servers
+                  Installed Servers
               </CardTitle>
             </CardHeader>
             <CardContent>

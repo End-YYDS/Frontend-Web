@@ -1,11 +1,11 @@
 type ResultType = 'Ok' | 'Err';
 
-interface GetApacheRequest {
+interface GetDhcpRequest {
   Uuid: string;
 }
 
 type InnerErrorLog = InnerErrorLogResponse[];
-type InnerAccessLog = InnerAccessLogResponse[];
+type InnerLeaseLog = InnerLeaseLogResponse[];
 
 interface Time {
   Hour: number;
@@ -41,61 +41,39 @@ interface InnerErrorLogResponse {
   Message: string;
 }
 
-interface InnerAccessLogResponse {
-  Ip: string;
+interface InnerLeaseLogResponse {
+  ClientIp: string;
+  Mac: string;
   Date: Date;
-  Method: string;
-  Url: string;
-  Protocol: string;
-  Status: number;
-  Byte: number;
-  Referer: string;
-  UserAgent: string;
+  Action: 'offer' | 'ack' | 'decline' | 'release' | 'inform';
+  LeaseTime: number;
+  ServerIp: string;
+  Message: string;
 }
 
 interface InnerLogs {
   ErrorLog: InnerErrorLog;
   ErrLength: number;
-  AccessLog: InnerAccessLog;
-  AccLength: number;
+  LeaseLog: InnerLeaseLog;
+  LeaseLength: number;
 }
 
-interface GetApacheResponse {
+interface GetDhcpResponse {
   Hostname: string;
   Status: 'active' | 'stopped';
   Cpu: number;
   Memory: number;
-  Connections: number;
+  Leases: number;
   Logs: InnerLogs;
 }
 
-interface PostApacheActionRequest {
+interface PostDhcpActionRequest {
   Uuid: string;
 }
 
-interface PostApacheActionResponse {
+interface PostDhcpActionResponse {
   Type: ResultType;
   Message: string;
 }
 
-// 取得online主機
-
-interface PcsUuid {
-  Status: boolean; //online: 1
-  Hostname: string;
-  Ip: string;
-}
-
-interface GetAllPcResponse {
-  Pcs: Record<string, PcsUuid>;
-  Length: number;
-}
-
-export type {
-  PcsUuid,
-  GetApacheRequest,
-  GetApacheResponse,
-  PostApacheActionRequest,
-  PostApacheActionResponse,
-  GetAllPcResponse,
-};
+export type { GetDhcpRequest, GetDhcpResponse, PostDhcpActionRequest, PostDhcpActionResponse };

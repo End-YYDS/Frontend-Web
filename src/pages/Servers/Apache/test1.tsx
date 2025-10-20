@@ -16,27 +16,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 
-interface ServerContentProps {
-  selectedServer: string | null;
-  selectedComputer: string | null;
-  onComputerSelect: (computer: string | null) => void;
-}
-
-// Mock data for servers and computers
-const servers = [
-  { id: "apache", name: "Apache", installed: true },
-  { id: "nginx", name: "Nginx", installed: false },
-  { id: "bind", name: "BIND DNS", installed: true },
-  { id: "dhcp", name: "DHCP", installed: false },
-  { id: "ldap", name: "LDAP", installed: true },
-  { id: "mysql", name: "MySQL Database", installed: true },
-  { id: "postgresql", name: "PostgreSQL Database", installed: false },
-  { id: "proftpd", name: "ProFTPD", installed: true },
-  { id: "samba", name: "Samba", installed: false },
-  { id: "squid", name: "Squid Proxy", installed: true },
-  { id: "ssh", name: "SSH", installed: true }
-];
-
 const computers = [
   { id: "comp1", name: "SERVER-001", uuid: "uuid-001", status: "online" },
   { id: "comp2", name: "SERVER-002", uuid: "uuid-002", status: "online" },
@@ -45,7 +24,8 @@ const computers = [
   { id: "comp5", name: "WORKSTATION-002", uuid: "uuid-005", status: "online" }
 ];
 
-export function ServerContent({ selectedServer, selectedComputer, onComputerSelect }: ServerContentProps) {
+export function ServerContent() {
+  const [selectedComputer, setSelectedComputer] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedComputersForInstall, setSelectedComputersForInstall] = useState<string[]>([]);
   const [isInstalling, setIsInstalling] = useState(false);
@@ -53,31 +33,12 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
   const [installedServers, setInstalledServers] = useState<string[]>([]);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Reset selected computer when server changes
-    if (selectedServer && selectedComputer) {
-      onComputerSelect(null);
-    }
-  }, [selectedServer]);
-
-  const getServerDisplayName = (serverId: string) => {
-    const serverNames: { [key: string]: string } = {
-      apache: "Apache Webserver",
-      nginx: "Nginx",
-      bind: "BIND DNS Server",
-      dhcp: "DHCP Server",
-      ldap: "LDAP Server",
-      mysql: "MySQL Database Server",
-      postgresql: "PostgreSQL Database Server",
-      proftpd: "ProFTPD Server",
-      samba: "Samba Windows File Sharing",
-      squid: "Squid Proxy Server",
-      ssh: "SSH Server"
-    };
-    return serverNames[serverId] || serverId;
-  };
-
-  const selectedServerData = servers.find(s => s.id === selectedServer);
+  // useEffect(() => {
+  //   // Reset selected computer when server changes
+  //   if (selectedServer && selectedComputer) {
+  //     onComputerSelect(null);
+  //   }
+  // }, [selectedServer]);
 
   const handleComputerToggle = (computerId: string) => {
     setSelectedComputersForInstall(prev => 
@@ -102,9 +63,9 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
     // Simulate installation process
     setTimeout(() => {
       // Add server to installed list
-      if (selectedServer && !installedServers.includes(selectedServer)) {
-        setInstalledServers(prev => [...prev, selectedServer]);
-      }
+      // if (selectedServer && !installedServers.includes(selectedServer)) {
+      //   setInstalledServers(prev => [...prev, selectedServer]);
+      // }
       
       setIsInstalling(false);
       setInstallDialogOpen(false);
@@ -120,7 +81,7 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
   if (selectedComputer) {
     return (
       <ComputerDetail 
-        serverId={selectedServer || ""}
+        // serverId={selectedServer || ""}
         computerId={selectedComputer}
         onBack={() => onComputerSelect(null)}
       />

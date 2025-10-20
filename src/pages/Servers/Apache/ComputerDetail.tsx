@@ -87,9 +87,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
     }
   };
 
-  // ======================
   // Loading 狀態畫面
-  // ======================
   if (loading) {
     return (
       <div className="p-6">
@@ -106,9 +104,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
     );
   }
 
-  // ======================
   // 取得失敗畫面
-  // ======================
   if (!serverStatus) {
     return (
       <div className="p-6">
@@ -128,9 +124,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
     );
   }
 
-  // ======================
   // 顯示 Apache 狀態與 Logs
-  // ======================
   return (
     <div className="p-6">
       {/* Header */}
@@ -277,11 +271,11 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
                     </div>
                     <div className="text-right text-xs text-slate-500">
                       <p>
-                        {log.Month} {log.Day}, {log.Year}
+                        {log.Date.Month} {log.Date.Day}, {log.Date.Year}
                       </p>
                       <p>
-                        {String(log.Time.Hour).padStart(2, "0")}:
-                        {String(log.Time.Min).padStart(2, "0")}
+                        {String(log.Date.Time.Hour).padStart(2, "0")}:
+                        {String(log.Date.Time.Min).padStart(2, "0")}
                       </p>
                     </div>
                   </CardContent>
@@ -325,11 +319,11 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
                     </div>
                     <div className="text-right text-xs text-slate-500">
                       <p>
-                        {log.Month} {log.Day}, {log.Year}
+                        {log.Date.Month} {log.Date.Day}, {log.Date.Year}
                       </p>
                       <p>
-                        {String(log.Time.Hour).padStart(2, "0")}:
-                        {String(log.Time.Min).padStart(2, "0")}
+                        {String(log.Date.Time.Hour).padStart(2, "0")}:
+                        {String(log.Date.Time.Min).padStart(2, "0")}
                       </p>
                     </div>
                   </CardContent>

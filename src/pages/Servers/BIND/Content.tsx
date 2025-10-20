@@ -60,23 +60,6 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
     }
   }, [selectedServer]);
 
-  const getServerDisplayName = (serverId: string) => {
-    const serverNames: { [key: string]: string } = {
-      apache: "Apache Webserver",
-      nginx: "Nginx",
-      bind: "BIND DNS Server",
-      dhcp: "DHCP Server",
-      ldap: "LDAP Server",
-      mysql: "MySQL Database Server",
-      postgresql: "PostgreSQL Database Server",
-      proftpd: "ProFTPD Server",
-      samba: "Samba Windows File Sharing",
-      squid: "Squid Proxy Server",
-      ssh: "SSH Server"
-    };
-    return serverNames[serverId] || serverId;
-  };
-
   const selectedServerData = servers.find(s => s.id === selectedServer);
 
   const handleComputerToggle = (computerId: string) => {
@@ -131,11 +114,7 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
     <div>
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">
-              {getServerDisplayName(selectedServer || "")}
-            </h2>
-          </div>
+          <div></div>
           <div className="flex items-center gap-2">
             <Dialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
               <DialogTrigger asChild>

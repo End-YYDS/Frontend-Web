@@ -1,11 +1,11 @@
 type ResultType = 'Ok' | 'Err';
 
-interface GetApacheRequest {
+interface GetMysqlRequest {
   Uuid: string;
 }
 
 type InnerErrorLog = InnerErrorLogResponse[];
-type InnerAccessLog = InnerAccessLogResponse[];
+type InnerQueryLog = InnerQueryLogResponse[];
 
 interface Time {
   Hour: number;
@@ -41,61 +41,43 @@ interface InnerErrorLogResponse {
   Message: string;
 }
 
-interface InnerAccessLogResponse {
+interface InnerQueryLogResponse {
   Ip: string;
   Date: Date;
-  Method: string;
-  Url: string;
-  Protocol: string;
-  Status: number;
-  Byte: number;
-  Referer: string;
-  UserAgent: string;
+  User: string;
+  Database: string;
+  Query: string;
+  QueryType: 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'CREATE' | 'DROP' | 'ALTER';
+  DurationMs: number;
+  Status: 'Success' | 'Error' | 'Timeout';
+  AffectedRows: number;
 }
 
 interface InnerLogs {
   ErrorLog: InnerErrorLog;
   ErrLength: number;
-  AccessLog: InnerAccessLog;
-  AccLength: number;
+  LeaseLog: InnerQueryLog;
+  LeaseLength: number;
 }
 
-interface GetApacheResponse {
+interface GetMysqlResponse {
   Hostname: string;
   Status: 'active' | 'stopped';
   Cpu: number;
   Memory: number;
   Connections: number;
+  Databases: number;
+  QueriesPerSec: number;
   Logs: InnerLogs;
 }
 
-interface PostApacheActionRequest {
+interface PostMysqlActionRequest {
   Uuid: string;
 }
 
-interface PostApacheActionResponse {
+interface PostMysqlActionResponse {
   Type: ResultType;
   Message: string;
 }
 
-// 取得online主機
-
-interface PcsUuid {
-  Status: boolean; //online: 1
-  Hostname: string;
-  Ip: string;
-}
-
-interface GetAllPcResponse {
-  Pcs: Record<string, PcsUuid>;
-  Length: number;
-}
-
-export type {
-  PcsUuid,
-  GetApacheRequest,
-  GetApacheResponse,
-  PostApacheActionRequest,
-  PostApacheActionResponse,
-  GetAllPcResponse,
-};
+export type { GetMysqlRequest, GetMysqlResponse, PostMysqlActionRequest, PostMysqlActionResponse };

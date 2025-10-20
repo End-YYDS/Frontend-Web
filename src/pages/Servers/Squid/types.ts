@@ -1,10 +1,9 @@
 type ResultType = 'Ok' | 'Err';
 
-interface GetApacheRequest {
+interface GetSquidRequest {
   Uuid: string;
 }
 
-type InnerErrorLog = InnerErrorLogResponse[];
 type InnerAccessLog = InnerAccessLogResponse[];
 
 interface Time {
@@ -32,48 +31,39 @@ interface Date {
   Time: Time;
 }
 
-interface InnerErrorLogResponse {
-  Date: Date;
-  Module: string;
-  Level: 'debug' | 'info' | 'notice' | 'warn' | 'error' | 'crit' | 'alert' | 'emerg';
-  Pid: number;
-  Client: string;
-  Message: string;
-}
-
 interface InnerAccessLogResponse {
   Ip: string;
   Date: Date;
   Method: string;
   Url: string;
-  Protocol: string;
   Status: number;
-  Byte: number;
+  BytesServed: number;
   Referer: string;
   UserAgent: string;
 }
 
 interface InnerLogs {
-  ErrorLog: InnerErrorLog;
-  ErrLength: number;
   AccessLog: InnerAccessLog;
   AccLength: number;
 }
 
-interface GetApacheResponse {
+interface GetSquidResponse {
   Hostname: string;
   Status: 'active' | 'stopped';
   Cpu: number;
   Memory: number;
   Connections: number;
+  CacheHits: number;
+  CacheMisses: number;
+  RequestsProcessed: number;
   Logs: InnerLogs;
 }
 
-interface PostApacheActionRequest {
+interface PostSquidActionRequest {
   Uuid: string;
 }
 
-interface PostApacheActionResponse {
+interface PostSquidActionResponse {
   Type: ResultType;
   Message: string;
 }
@@ -93,9 +83,9 @@ interface GetAllPcResponse {
 
 export type {
   PcsUuid,
-  GetApacheRequest,
-  GetApacheResponse,
-  PostApacheActionRequest,
-  PostApacheActionResponse,
+  GetSquidRequest,
+  GetSquidResponse,
+  PostSquidActionRequest,
+  PostSquidActionResponse,
   GetAllPcResponse,
 };

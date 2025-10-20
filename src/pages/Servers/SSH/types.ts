@@ -1,11 +1,10 @@
 type ResultType = 'Ok' | 'Err';
 
-interface GetApacheRequest {
+interface GetSshRequest {
   Uuid: string;
 }
 
-type InnerErrorLog = InnerErrorLogResponse[];
-type InnerAccessLog = InnerAccessLogResponse[];
+type InnerAuthLog = InnerAuthLogResponse[];
 
 interface Time {
   Hour: number;
@@ -32,48 +31,41 @@ interface Date {
   Time: Time;
 }
 
-interface InnerErrorLogResponse {
+interface LastLogin {
+  User: string;
   Date: Date;
-  Module: string;
-  Level: 'debug' | 'info' | 'notice' | 'warn' | 'error' | 'crit' | 'alert' | 'emerg';
-  Pid: number;
-  Client: string;
+  Ip: string;
+}
+
+interface InnerAuthLogResponse {
+  Date: Date;
+  User: string;
+  Action: 'login' | 'logout' | 'failed_login';
+  Result: 'success' | 'failure';
+  Ip: string;
   Message: string;
 }
 
-interface InnerAccessLogResponse {
-  Ip: string;
-  Date: Date;
-  Method: string;
-  Url: string;
-  Protocol: string;
-  Status: number;
-  Byte: number;
-  Referer: string;
-  UserAgent: string;
-}
-
 interface InnerLogs {
-  ErrorLog: InnerErrorLog;
-  ErrLength: number;
-  AccessLog: InnerAccessLog;
-  AccLength: number;
+  AuthLog: InnerAuthLog;
+  AuthLength: number;
 }
 
-interface GetApacheResponse {
+interface GetSshResponse {
   Hostname: string;
   Status: 'active' | 'stopped';
   Cpu: number;
   Memory: number;
   Connections: number;
+  LastLogin: LastLogin;
   Logs: InnerLogs;
 }
 
-interface PostApacheActionRequest {
+interface PostSshActionRequest {
   Uuid: string;
 }
 
-interface PostApacheActionResponse {
+interface PostSshActionResponse {
   Type: ResultType;
   Message: string;
 }
@@ -93,9 +85,9 @@ interface GetAllPcResponse {
 
 export type {
   PcsUuid,
-  GetApacheRequest,
-  GetApacheResponse,
-  PostApacheActionRequest,
-  PostApacheActionResponse,
+  GetSshRequest,
+  GetSshResponse,
+  PostSshActionRequest,
+  PostSshActionResponse,
   GetAllPcResponse,
 };

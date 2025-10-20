@@ -33,7 +33,6 @@ const servers = [
   { id: 'dhcp', name: 'DHCP', installed: false },
   { id: 'ldap', name: 'LDAP', installed: true },
   { id: 'mysql', name: 'MySQL Database', installed: true },
-  { id: 'postgresql', name: 'PostgreSQL Database', installed: false },
   { id: 'proftpd', name: 'ProFTPD', installed: true },
   { id: 'samba', name: 'Samba', installed: false },
   { id: 'squid', name: 'Squid Proxy', installed: true },

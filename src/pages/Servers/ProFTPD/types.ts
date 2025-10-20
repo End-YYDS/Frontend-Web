@@ -1,11 +1,39 @@
 type ResultType = 'Ok' | 'Err';
 
-interface GetApacheRequest {
+interface GetProftpdRequest {
   Uuid: string;
 }
 
 type InnerErrorLog = InnerErrorLogResponse[];
 type InnerAccessLog = InnerAccessLogResponse[];
+type Sessions = InnerSessions[];
+
+interface LoginTime {
+  Year: number;
+  Month:
+    | 'Jan'
+    | 'Feb'
+    | 'Mar'
+    | 'Apr'
+    | 'May'
+    | 'Jun'
+    | 'Jul'
+    | 'Aug'
+    | 'Sep'
+    | 'Oct'
+    | 'Nov'
+    | 'Dec';
+  Day: number;
+  Hour: number;
+  Min: number;
+}
+
+interface Transfer {
+  Type: 'Upload' | 'Download';
+  File: string;
+  Size: number;
+  Speed: number;
+}
 
 interface Time {
   Hour: number;
@@ -32,6 +60,15 @@ interface Date {
   Time: Time;
 }
 
+interface InnerSessions {
+  Ip: string;
+  Username: string;
+  LoginTime: LoginTime;
+  CurrentDir: string;
+  Status: 'Idle' | 'Uploading' | 'Downloading' | 'Disconnected';
+  Transfer: Transfer;
+}
+
 interface InnerErrorLogResponse {
   Date: Date;
   Module: string;
@@ -44,13 +81,11 @@ interface InnerErrorLogResponse {
 interface InnerAccessLogResponse {
   Ip: string;
   Date: Date;
-  Method: string;
-  Url: string;
-  Protocol: string;
-  Status: number;
-  Byte: number;
-  Referer: string;
-  UserAgent: string;
+  Username: string;
+  Action: 'Login' | 'Logout' | 'Upload' | 'Download' | 'Delete' | 'Rename';
+  File: string;
+  Size: number;
+  Status: 'Success' | 'Failed';
 }
 
 interface InnerLogs {
@@ -60,20 +95,21 @@ interface InnerLogs {
   AccLength: number;
 }
 
-interface GetApacheResponse {
+interface GetProftpdResponse {
   Hostname: string;
   Status: 'active' | 'stopped';
   Cpu: number;
   Memory: number;
   Connections: number;
+  Sessions: Sessions;
   Logs: InnerLogs;
 }
 
-interface PostApacheActionRequest {
+interface PostProftpdActionRequest {
   Uuid: string;
 }
 
-interface PostApacheActionResponse {
+interface PostProftpdActionResponse {
   Type: ResultType;
   Message: string;
 }
@@ -93,9 +129,9 @@ interface GetAllPcResponse {
 
 export type {
   PcsUuid,
-  GetApacheRequest,
-  GetApacheResponse,
-  PostApacheActionRequest,
-  PostApacheActionResponse,
+  GetProftpdRequest,
+  GetProftpdResponse,
+  PostProftpdActionRequest,
+  PostProftpdActionResponse,
   GetAllPcResponse,
 };

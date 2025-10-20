@@ -1,6 +1,6 @@
 type ResultType = 'Ok' | 'Err';
 
-interface GetApacheRequest {
+interface GetLdapRequest {
   Uuid: string;
 }
 
@@ -44,58 +44,47 @@ interface InnerErrorLogResponse {
 interface InnerAccessLogResponse {
   Ip: string;
   Date: Date;
-  Method: string;
-  Url: string;
-  Protocol: string;
-  Status: number;
-  Byte: number;
-  Referer: string;
-  UserAgent: string;
+  Method:
+    | 'BIND'
+    | 'SEARCH'
+    | 'ADD'
+    | 'DELETE'
+    | 'MODIFY'
+    | 'MODDN'
+    | 'COMPARE'
+    | 'UNBIND'
+    | 'EXTENDED';
+  BaseDN: string;
+  Filter: string;
+  Protocol: 'LDAPv2' | 'LDAPv3';
+  Status: 'Success' | 'AuthFailed' | 'NotFound' | 'Error';
+  ResponseTimeMs: number;
 }
 
 interface InnerLogs {
   ErrorLog: InnerErrorLog;
   ErrLength: number;
   AccessLog: InnerAccessLog;
-  AccLength: number;
+  Acclength: number;
 }
 
-interface GetApacheResponse {
+interface GetLdapResponse {
   Hostname: string;
   Status: 'active' | 'stopped';
   Cpu: number;
   Memory: number;
   Connections: number;
+  Entries: number;
   Logs: InnerLogs;
 }
 
-interface PostApacheActionRequest {
+interface PostLdapActionRequest {
   Uuid: string;
 }
 
-interface PostApacheActionResponse {
+interface PostLdapActionResponse {
   Type: ResultType;
   Message: string;
 }
 
-// 取得online主機
-
-interface PcsUuid {
-  Status: boolean; //online: 1
-  Hostname: string;
-  Ip: string;
-}
-
-interface GetAllPcResponse {
-  Pcs: Record<string, PcsUuid>;
-  Length: number;
-}
-
-export type {
-  PcsUuid,
-  GetApacheRequest,
-  GetApacheResponse,
-  PostApacheActionRequest,
-  PostApacheActionResponse,
-  GetAllPcResponse,
-};
+export type { GetLdapRequest, GetLdapResponse, PostLdapActionRequest, PostLdapActionResponse };

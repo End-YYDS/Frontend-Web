@@ -28,6 +28,7 @@ interface GetOnePdirFileResponse {
 
 interface PostUploadFileRequest {
   Uuid: string;
+  Path: string;
   // "File": [file]
 }
 
