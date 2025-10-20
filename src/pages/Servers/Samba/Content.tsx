@@ -1,199 +1,221 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Search, Download, CheckCircle2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { ComputerList } from "./ComputerList";
-import { ComputerDetail } from "./ComputerDetail";
+import { useEffect, useState } from 'react';
+import { ComputerList } from './ComputerList';
+import { ComputerDetail } from './ComputerDetail';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { CheckCircle2, Download, Search } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
+import type { PcsUuid, GetAllPcResponse } from './types';
 
-interface ServerContentProps {
-  selectedServer: string | null;
-  selectedComputer: string | null;
-  onComputerSelect: (computer: string | null) => void;
+interface Computer {
+  id: string;
+  name: string;
+  uuid: string;
+  status: 'online' | 'offline'
 }
 
-// Mock data for servers and computers
-const servers = [
-  { id: "apache", name: "Apache", installed: true },
-  { id: "nginx", name: "Nginx", installed: false },
-  { id: "bind", name: "BIND DNS", installed: true },
-  { id: "dhcp", name: "DHCP", installed: false },
-  { id: "ldap", name: "LDAP", installed: true },
-  { id: "mysql", name: "MySQL Database", installed: true },
-  { id: "postgresql", name: "PostgreSQL Database", installed: false },
-  { id: "proftpd", name: "ProFTPD", installed: true },
-  { id: "samba", name: "Samba", installed: false },
-  { id: "squid", name: "Squid Proxy", installed: true },
-  { id: "ssh", name: "SSH", installed: true }
-];
-
-const computers = [
-  { id: "comp1", name: "SERVER-001", uuid: "uuid-001", status: "online" },
-  { id: "comp2", name: "SERVER-002", uuid: "uuid-002", status: "online" },
-  { id: "comp3", name: "SERVER-003", uuid: "uuid-003", status: "offline" },
-  { id: "comp4", name: "WORKSTATION-001", uuid: "uuid-004", status: "online" },
-  { id: "comp5", name: "WORKSTATION-002", uuid: "uuid-005", status: "online" }
-];
-
-export function ServerContent({ selectedServer, selectedComputer, onComputerSelect }: ServerContentProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedComputersForInstall, setSelectedComputersForInstall] = useState<string[]>([]);
+const ServerContent = () => {
+  const [searchTerm, setSearchTerm] = useState('');
   const [isInstalling, setIsInstalling] = useState(false);
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
-  const [installedServers, setInstalledServers] = useState<string[]>([]);
+  const [selectedComputersForInstall, setSelectedComputersForInstall] = useState<string[]>([]);
+  const [computers, setComputers] = useState<Computer[]>([]);
+  const [selectedComputerId, setSelectedComputerId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Reset selected computer when server changes
-    if (selectedServer && selectedComputer) {
-      onComputerSelect(null);
-    }
-  }, [selectedServer]);
+  const [installComputer] = useState<PcsUuid[]>([
+    { Status: true, Hostname: 'ServerA', Ip: '192.168.0.10' },
+    { Status: true, Hostname: 'ServerB', Ip: '192.168.0.11' },
+    { Status: false, Hostname: 'ServerC', Ip: '192.168.0.12' },
+  ]);
 
-  const getServerDisplayName = (serverId: string) => {
-    const serverNames: { [key: string]: string } = {
-      apache: "Apache Webserver",
-      nginx: "Nginx",
-      bind: "BIND DNS Server",
-      dhcp: "DHCP Server",
-      ldap: "LDAP Server",
-      mysql: "MySQL Database Server",
-      postgresql: "PostgreSQL Database Server",
-      proftpd: "ProFTPD Server",
-      samba: "Samba Windows File Sharing",
-      squid: "Squid Proxy Server",
-      ssh: "SSH Server"
-    };
-    return serverNames[serverId] || serverId;
+  /** 取得線上電腦資料 */
+  const getOnlineComputers = async () => {
+    try {
+      const { data } = await axios.post<GetAllPcResponse>('/api/chm/pc/all');
+
+      if (!data || !data.Pcs || Object.keys(data.Pcs).length === 0) {
+        console.warn('API 回傳空資料，改用測試資料');
+        setComputers(
+          installComputer.map((pc, idx) => ({
+            id: `mock-${idx}`,
+            name: pc.Hostname,
+            uuid: `uuid-${idx}`,
+            status: pc.Status ? 'online' : 'offline',
+          })),
+        );
+        return;
+      }
+
+      const pcsArray: Computer[] = Object.entries(data.Pcs).map(([uuid, pc]) => ({
+        id: uuid,
+        name: pc.Hostname || uuid,
+        uuid,
+        status: pc.Status ? 'online' : 'offline',
+      }));
+
+      setComputers(pcsArray);
+      console.log('從 API 取得電腦清單:', pcsArray);
+    } catch (error) {
+      console.error('取得線上電腦資料失敗:', error);
+      toast({
+        title: 'API 錯誤',
+        description: '無法取得電腦清單，使用測試資料。',
+        variant: 'destructive',
+      });
+
+      setComputers(
+        installComputer.map((pc, idx) => ({
+          id: `mock-${idx}`,
+          name: pc.Hostname,
+          uuid: `uuid-${idx}`,
+          status: pc.Status ? 'online' : 'offline',
+        })),
+      );
+    }
   };
 
-  const selectedServerData = servers.find(s => s.id === selectedServer);
+  useEffect(() => {
+    getOnlineComputers();
+  }, []);
 
+  /** 切換主機勾選 */
   const handleComputerToggle = (computerId: string) => {
-    setSelectedComputersForInstall(prev => 
-      prev.includes(computerId) 
-        ? prev.filter(id => id !== computerId)
-        : [...prev, computerId]
+    setSelectedComputersForInstall((prev) =>
+      prev.includes(computerId) ? prev.filter((id) => id !== computerId) : [...prev, computerId],
     );
   };
 
+  /** 點擊主機卡片時：顯示詳細資訊畫面 */
+  const handleComputerSelect = (computerId: string) => {
+    setSelectedComputerId(computerId);
+  };
+
+  /** 從詳細資訊返回清單 */
+  const handleBackToList = () => {
+    setSelectedComputerId(null);
+  };
+
+  /** 安裝流程 */
   const handleInstallServer = async () => {
     if (selectedComputersForInstall.length === 0) {
       toast({
-        title: "Select Computers",
-        description: "Please select at least one computer to install.",
-        variant: "destructive"
+        title: '未選取主機',
+        description: '請至少選擇一台電腦進行安裝。',
+        variant: 'destructive',
       });
       return;
     }
 
     setIsInstalling(true);
-    
-    // Simulate installation process
-    setTimeout(() => {
-      // Add server to installed list
-      if (selectedServer && !installedServers.includes(selectedServer)) {
-        setInstalledServers(prev => [...prev, selectedServer]);
-      }
-      
-      setIsInstalling(false);
+    console.log('安裝中電腦:', selectedComputersForInstall);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      toast({
+        title: '安裝完成',
+        description: `已成功在 ${selectedComputersForInstall.length} 台電腦安裝 Bind`,
+      });
       setInstallDialogOpen(false);
       setSelectedComputersForInstall([]);
-      
+    } catch (err) {
       toast({
-        title: "Installation Successful",
-        description: `${selectedServerData?.name} has been installed on the selected computers.`,
+        title: '安裝失敗',
+        description: '安裝過程中發生錯誤，請稍後再試。',
+        variant: 'destructive',
       });
-    }, 2000);
+    } finally {
+      setIsInstalling(false);
+    }
   };
 
-  if (selectedComputer) {
-    return (
-      <ComputerDetail 
-        serverId={selectedServer || ""}
-        computerId={selectedComputer}
-        onBack={() => onComputerSelect(null)}
-      />
-    );
+  /** 若有選取主機，顯示詳細資訊畫面 */
+  if (selectedComputerId) {
+    return <ComputerDetail computerId={selectedComputerId} onBack={handleBackToList} />;
   }
 
+  /** 主畫面（清單 + 搜尋 + 安裝 Dialog） */
   return (
     <div>
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">
-              {getServerDisplayName(selectedServer || "")}
-            </h2>
-          </div>
-          <div className="flex items-center gap-2">
+      <div className='mb-6'>
+        <div className='flex items-center justify-between mb-4'>
+          <div></div>
+          <div className='flex items-center gap-2'>
             <Dialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
               <DialogTrigger asChild>
-                <Button style={{ backgroundColor: '#7B86AA' }} className="hover:opacity-80 text-white">
-                  <Download className="w-4 h-4 mr-2" />
+                <Button
+                  style={{ backgroundColor: '#7B86AA' }}
+                  className='hover:opacity-80 text-white'
+                >
+                  <Download className='w-4 h-4 mr-2' />
                   Install
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+
+              <DialogContent className='max-w-md'>
                 <DialogHeader>
-                  <DialogTitle>Install {selectedServerData?.name}</DialogTitle>
+                  <DialogTitle>Install Bind</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <p className="text-sm text-slate-600">
-                    Select computers to install {selectedServerData?.name} on:
-                  </p>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
+
+                <div className='space-y-4'>
+                  <p className='text-sm text-slate-600'>Select computers to install Bind on:</p>
+
+                  <div className='space-y-2 max-h-60 overflow-y-auto'>
                     {computers
-                      .filter(computer => computer.status === 'online') // only online
+                      .filter((computer) =>
+                        computer.name.toLowerCase().includes(searchTerm.toLowerCase()),
+                      )
+                      .filter((computer) => computer.status === 'online')
                       .map((computer) => (
-                        <div key={computer.id} className="flex items-center space-x-2 p-2 border rounded">
+                        <div
+                          key={computer.id}
+                          className='flex items-center space-x-2 p-2 border rounded'
+                        >
                           <Checkbox
                             id={computer.id}
                             checked={selectedComputersForInstall.includes(computer.id)}
                             onCheckedChange={() => handleComputerToggle(computer.id)}
                           />
-                          <label htmlFor={computer.id} className="flex-1 cursor-pointer">
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">{computer.name}</span>
+                          <label htmlFor={computer.id} className='flex-1 cursor-pointer'>
+                            <div className='flex items-center justify-between'>
+                              <span className='font-medium'>{computer.name}</span>
                             </div>
-                            <p className="text-xs text-slate-500">{computer.uuid}</p>
                           </label>
                         </div>
                       ))}
                   </div>
 
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      variant="outline" 
+                  <div className='flex justify-end gap-2'>
+                    <Button
+                      variant='outline'
                       onClick={() => setInstallDialogOpen(false)}
                       disabled={isInstalling}
                     >
                       Cancel
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleInstallServer}
                       disabled={isInstalling || selectedComputersForInstall.length === 0}
                       style={{ backgroundColor: '#7B86AA' }}
-                      className="hover:opacity-80 text-white"
+                      className='hover:opacity-80 text-white'
                     >
                       {isInstalling ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2' />
                           Installing...
                         </>
                       ) : (
                         <>
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          <CheckCircle2 className='w-4 h-4 mr-2' />
                           Confirm Install
                         </>
                       )}
@@ -202,48 +224,25 @@ export function ServerContent({ selectedServer, selectedComputer, onComputerSele
                 </div>
               </DialogContent>
             </Dialog>
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+
+            {/* 搜尋欄 */}
+            <div className='relative'>
+              <Search className='w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400' />
               <Input
-                placeholder="Search computers..."
+                placeholder='Search computers...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-64"
+                className='pl-10 w-64'
               />
             </div>
           </div>
         </div>
-
-        {/* Show installed servers */}
-        {installedServers.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-                Installed Servers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {installedServers.map(serverId => {
-                  const server = servers.find(s => s.id === serverId);
-                  return (
-                    <Badge key={serverId} variant="default" className="bg-green-100 text-green-800">
-                      {server?.name}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
-      <ComputerList 
-        serverId={selectedServer || ""}
-        searchTerm={searchTerm}
-        onComputerSelect={onComputerSelect}
-      />
+      {/* 電腦清單顯示 */}
+      <ComputerList searchTerm={searchTerm} onComputerSelect={handleComputerSelect} />
     </div>
   );
-}
+};
+
+export default ServerContent;
