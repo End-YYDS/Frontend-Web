@@ -86,32 +86,23 @@ interface PostBindActionResponse {
 }
 
 // 取的online主機
-type Zone = 'info' | 'cluster';
-type Target = 'safe' | 'warn' | 'dang' | 'Cpu' | 'Memory' | 'Disk';
 
-interface Cluster {
-  Cpu: number;
-  Memory: number;
-  Disk: number;
+interface PcsUuid {
+  Status: boolean; //online: 1
+  Hostname: string;
+  Ip: string;
 }
 
-interface PostInfoGetRequest {
-  Zone: Zone;
-  Target: Target;
-  // null 代表全部，string 代表指定主機
-  Uuid?: string | null;
-}
-
-interface PostInfoGetResponse {
-  Pcs: Record<string, Cluster>;
+interface GetAllPcResponse {
+  Pcs: Record<string, PcsUuid>;
   Length: number;
 }
 
 export type {
+  PcsUuid,
   GetBindRequest,
   GetBindResponse,
   PostBindActionRequest,
   PostBindActionResponse,
-  PostInfoGetRequest,
-  PostInfoGetResponse,
+  GetAllPcResponse,
 };
