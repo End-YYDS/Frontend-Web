@@ -276,7 +276,7 @@ export const HostLogsManager = () => {
                         <TableRow>
                           <TableCell
                             colSpan={8}
-                            className='bg-muted/30 p-4 text-xs break-words max-h-[200px] overflow-y-auto'
+                            className='bg-muted/30 p-4 text-xs wrap-break-word max-h-[200px] overflow-y-auto'
                           >
                             {log.Messages}
                           </TableCell>

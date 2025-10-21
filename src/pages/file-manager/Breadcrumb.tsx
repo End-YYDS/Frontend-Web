@@ -34,21 +34,21 @@ export const Breadcrumb = ({
         variant="ghost"
         size="sm"
         onClick={() => onNavigate(rootPath)}
-        className="h-6 px-2 text-gray-600 hover:text-gray-900 flex-shrink-0"
+        className="h-6 px-2 text-gray-600 hover:text-gray-900 shrink-0"
       >
         {rootPath}
       </Button>
 
       {pathSegments.length > 0 && (
         <>
-          <ChevronRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
+          <ChevronRight className="w-3 h-3 text-gray-400 shrink-0" />
 
           {/* 最前面的資料夾 */}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onNavigate(buildPath(0))}
-            className="h-6 px-2 text-gray-600 hover:text-gray-900 flex-shrink-0"
+            className="h-6 px-2 text-gray-600 hover:text-gray-900 shrink-0"
           >
             {firstSegment}
           </Button>
@@ -58,12 +58,12 @@ export const Breadcrumb = ({
             <div className="flex-1 max-w-[300px] overflow-x-auto whitespace-nowrap scrollbar-thin mx-1 flex items-center">
               {middleSegments.map((segment, idx) => (
                 <React.Fragment key={idx}>
-                  <ChevronRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                  <ChevronRight className="w-3 h-3 text-gray-400 shrink-0" />
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onNavigate(buildPath(idx + 1))}
-                    className="h-6 px-2 text-gray-600 hover:text-gray-900 flex-shrink-0"
+                    className="h-6 px-2 text-gray-600 hover:text-gray-900 shrink-0"
                   >
                     {segment}
                   </Button>
@@ -75,12 +75,12 @@ export const Breadcrumb = ({
           {/* 最後的資料夾 */}
           {pathSegments.length > 1 && (
             <>
-              <ChevronRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
+              <ChevronRight className="w-3 h-3 text-gray-400 shrink-0" />
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onNavigate(buildPath(pathSegments.length - 1))}
-                className="h-6 px-2 text-gray-600 hover:text-gray-900 flex-shrink-0"
+                className="h-6 px-2 text-gray-600 hover:text-gray-900 shrink-0"
               >
                 {lastSegment}
               </Button>

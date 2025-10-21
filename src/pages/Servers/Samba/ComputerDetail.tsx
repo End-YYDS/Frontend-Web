@@ -17,13 +17,13 @@ import {
   Loader2,
   Folder,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import type {
   GetSambaRequest,
   GetSambaResponse,
   PostSambaActionRequest,
   PostSambaActionResponse,
 } from "./types";
+import { toast } from "sonner";
 
 interface ComputerDetailProps {
   computerId: string;
@@ -34,7 +34,6 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const [sambaStatus, setSambaStatus] = useState<GetSambaResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<"" | "start" | "stop" | "restart">("");
-  const { toast } = useToast();
 
   /** 取得 Samba 狀態 */
   const fetchSambaStatus = async () => {
@@ -45,11 +44,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
       setSambaStatus(res.data);
     } catch (error) {
       console.error("Fetch Samba status failed:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch Samba status",
-        variant: "destructive",
-      });
+      toast.error('Error', { description: 'Failed to fetch Samba status' });
     } finally {
       setLoading(false);
     }
@@ -71,18 +66,14 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
       const data = res.data;
 
       if (data.Type === "Ok") {
-        toast({ title: "Success", description: `Samba ${action} succeeded` });
+        toast.success('Success', { description: `Samba ${action} succeeded` });
         fetchSambaStatus();
       } else {
-        toast({ title: "Error", description: data.Message, variant: "destructive" });
+        toast.error('Error', { description: `Samba ${action} failed: ${data.Message}` });
       }
     } catch (error) {
       console.error(`${action} failed`, error);
-      toast({
-        title: "Error",
-        description: `Failed to ${action} Samba`,
-        variant: "destructive",
-      });
+      toast.error('Error', { description: `Failed to ${action} Samba` });
     } finally {
       setActionLoading("");
     }

@@ -1,8 +1,9 @@
+import type { PageMeta } from '@/types';
 import ServerContent from './Content';
 
 export const meta = { requiresAuth: false };
 
-const index = () => {
+const Squid = () => {
   return (
     <div className='max-w-4xl mx-auto py-8 px-6'>
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
@@ -12,5 +13,9 @@ const index = () => {
     </div>
   );
 };
-
-export default index;
+(Squid as any).meta = {
+  requiresAuth: false, //驗證
+  layout: true,
+  // allowedRoles: ['admin']
+} satisfies PageMeta;
+export default Squid;

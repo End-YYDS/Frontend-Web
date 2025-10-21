@@ -7,10 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Shield, Plus, Trash2, Settings, AlertTriangle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { AddRuleDialog } from './AddRuleDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import type { DeleteFirewallRuleRequest, FirewallResponse, GetFilewallPcs, GetFirewallResponse, PutFirewallPolicyRequest, PutFirewallStatusRequest, Rule, Target } from './types';
+import { toast } from 'sonner';
 
 interface Host { uuid: string; hostname: string; }
 
@@ -20,7 +20,6 @@ export const FirewallManager = () => {
   const [firewallStatus, setFirewallStatus] = useState<GetFirewallResponse | null>(null);
   const [isAddRuleOpen, setIsAddRuleOpen] = useState(false);
   const [selectedChain, setSelectedChain] = useState('INPUT');
-  const { toast } = useToast();
 
   const [firewallDialog, setFirewallDialog] = useState({ open: false, newStatus: false });
   const [policyDialog, setPolicyDialog] = useState({ open: false, chain: '', newPolicy: '' });
@@ -37,11 +36,7 @@ const fetchHosts = async () => {
 
     if (!pcsObj || typeof pcsObj !== 'object') {
       console.warn('Invalid response structure:', data);
-      toast({
-        title: 'Error',
-        description: 'Invalid host list format',
-        variant: 'destructive',
-      });
+      toast.error('Error', { description: 'Invalid host list format' });
       setHosts([]); // fallback 避免渲染報錯
       return;
     }
@@ -55,12 +50,7 @@ const fetchHosts = async () => {
     setSelectedHost(pcs[0]?.uuid || '');
   } catch (e) {
     console.error('Fetch hosts error', e);
-    toast({
-      title: 'Error',
-      description: 'Failed to fetch hosts',
-      variant: 'destructive',
-    });
-
+    toast.error('Error', { description: 'Failed to fetch hosts' });
     const testHosts: Host[] = [
       { uuid: 'host-001', hostname: 'PC-OFFICE-001' },
       { uuid: 'host-002', hostname: 'SERVER-001' },
@@ -78,10 +68,10 @@ const fetchHosts = async () => {
       const res = await axios.get<GetFirewallResponse>('/api/firewall', { data: { Uuid: uuid } });
       const data = res.data;
       setFirewallStatus(data);
-      toast({ title: "Success", description: "Firewall status loaded" });
+      toast.success('Success', { description: 'Firewall status loaded' });
     } catch (e) {
       console.error('Fetch firewall status error', e);
-      toast({ title: "Error", description: "Failed to load firewall status", variant: "destructive" });
+      toast.error('Error', { description: 'Failed to load firewall status' });
     }
   };
 
@@ -92,9 +82,9 @@ const fetchHosts = async () => {
     try {
       await axios.put<FirewallResponse>('/api/firewall/status', req);
       setFirewallStatus(prev => prev ? { ...prev, Status: status ? 'active' : 'inactive' } : null);
-      toast({ title: "Success", description: `Firewall ${status ? 'enabled' : 'disabled'}` });
+      toast.success('Success', { description: `Firewall ${status ? 'enabled' : 'disabled'}` });
     } catch {
-      toast({ title: "Error", description: "Failed to update firewall status", variant: "destructive" });
+      toast.error('Error', { description: 'Failed to update firewall status' });
     }
   };
 
@@ -108,9 +98,9 @@ const fetchHosts = async () => {
         ...prev,
         Chains: prev.Chain.map(c => c.Name === policyDialog.chain ? { ...c, Policy: policyDialog.newPolicy as Target } : c)
       } : null);
-      toast({ title: "Success", description: "Policy updated" });
+      toast.success('Success', { description: 'Policy updated' });
     } catch {
-      toast({ title: "Error", description: "Failed to update policy", variant: "destructive" });
+      toast.error('Error', { description: 'Failed to update policy' });
     } finally { setPolicyDialog(prev => ({ ...prev, open: false })); }
   };
 
@@ -128,9 +118,9 @@ const fetchHosts = async () => {
           Rules_Length: c.Rules.length - 1
         } : c)
       } : null);
-      toast({ title: "Success", description: "Rule deleted" });
+      toast.success('Success', { description: 'Rule deleted' });
     } catch {
-      toast({ title: "Error", description: "Failed to delete rule", variant: "destructive" });
+      toast.error('Error', { description: 'Failed to delete rule' });
     } finally { setDeleteDialog({ open: false, chain: '', ruleIndex: -1 }); }
   };
 
@@ -304,10 +294,10 @@ const fetchHosts = async () => {
                   })
                 };
               });
-              toast({ title: "Success", description: "Rule added" });
+              toast.success('Success', { description: 'Rule added' });
             } else throw new Error(data.Message);
           } catch (e) {
-            toast({ title: "Error", description: "Failed to add rule", variant: "destructive" });
+            toast.error('Error', { description: (e as Error).message || 'Failed to add rule' });
           }
         }}
       />

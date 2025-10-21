@@ -1,19 +1,16 @@
 //TODO: 序號API、更改憑證有效時間，要從後端拿
-
 import { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // ★ 新增 axios
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import axios from 'axios';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from "@/components/ui/table";
-// import { Badge } from "@/components/ui/badge";
+  TableRow,
+} from '@/components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,16 +21,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Shield, ShieldX} from 'lucide-react';
-import { toast } from "@/hooks/use-toast";
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Shield, ShieldX } from 'lucide-react';
 import type { PageMeta } from '@/types';
-
-// ★ 匯入後端回傳型別
 import type { GetValids, GetRevokeds, RevokeRequest } from './types';
-
+import { toast } from 'sonner';
 interface Certificate {
   id: string;
   commonName: string;
@@ -45,7 +39,6 @@ interface Certificate {
   keySize: number;
   algorithm: string;
 }
-
 interface RevokedCertificateInfo {
   id: string;
   serialNumber: string;
@@ -54,23 +47,13 @@ interface RevokedCertificateInfo {
 }
 
 const CertificateManagementPage = () => {
-  // const navigate = useNavigate();
-
-  // ★ 後端有效憑證清單
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  // ★ 後端吊銷憑證清單
   const [revokedCertificates, setRevokedCertificates] = useState<RevokedCertificateInfo[]>([]);
-  const [revokeReason, setRevokeReason] = useState("");
-
-  // -----------------------------
-  // ★ 頁面載入時抓取有效/吊銷憑證
-  // -----------------------------
+  const [revokeReason, setRevokeReason] = useState('');
   useEffect(() => {
     fetchValids();
     fetchRevoked();
   }, []);
-
-  // ★ 取得有效憑證
   const fetchValids = async () => {
     try {
       const res = await axios.get<GetValids>('/api/chm/mCA/valid', { withCredentials: true });
@@ -89,22 +72,21 @@ const CertificateManagementPage = () => {
           id: `${idx + 1}`,
           commonName: v.Name,
           issuer: v.Signer,
-          serialNumber: `SN-${idx + 1}`, // ★ TODO: 後端序號API
+          serialNumber: `SN-${idx + 1}`,
           validFrom: from.trim(),
           validTo: to.trim(),
           status: 'active',
           keySize: 2048,
-          algorithm: 'RSA'
+          algorithm: 'RSA',
         } as Certificate;
       });
       setCertificates(mapped);
     } catch (err) {
       console.error('Failed to fetch valids:', err);
-      toast({ title: "Fetch Error", description: "無法取得有效憑證列表" });
+      toast.error('Fetch Error', { description: 'Failed to fetch the valid certificate list' });
     }
   };
 
-  // ★ 取得已吊銷憑證
   const fetchRevoked = async () => {
     try {
       const res = await axios.get<GetRevokeds>('/api/chm/mCA/revoked', { withCredentials: true });
@@ -120,45 +102,38 @@ const CertificateManagementPage = () => {
         id: `${idx + 1}`,
         serialNumber: r.Number,
         revokedAt: r.Time,
-        reason: r.Reason
+        reason: r.Reason,
       }));
       setRevokedCertificates(mapped);
     } catch (err) {
       console.error('Failed to fetch revoked list:', err);
-      toast({
-        title: "Fetch Error",
-        description: "Failed to fetch the revocation certificate list",
+      toast.error('Fetch Error', {
+        description: 'Failed to fetch the revocation certificate list',
       });
     }
   };
-
-  // -----------------------------
-  // ★ 吊銷憑證
-  // -----------------------------
-  const handleRevokeCertificate = async (_certificateId: string, commonName: string, _issuer: string, _serialNumber: string) => {
-    const reason = revokeReason.trim() || "Manually revoked by certificate administrator";
+  const handleRevokeCertificate = async (
+    _certificateId: string,
+    commonName: string,
+    _issuer: string,
+    _serialNumber: string,
+  ) => {
+    const reason = revokeReason.trim() || 'Manually revoked by certificate administrator';
 
     try {
-      // ★ 呼叫後端吊銷API
       const payload: RevokeRequest = { Name: commonName, Reason: reason };
       const res = await axios.post('/api/chm/mCA/revoke', payload, { withCredentials: true });
       console.log('Revoke response:', res.data);
 
-      toast({ title: "Certificate revoked", description: `Certificate ${commonName} 已被吊銷` });
-      setRevokeReason("");
-
-      // 重新抓取最新列表
+      toast.success('Success', { description: `Certificate ${commonName} has been revoked.` });
+      setRevokeReason('');
       fetchValids();
       fetchRevoked();
     } catch (err) {
       console.error('Revoke failed:', err);
-      toast({
-        title: "Revoke Error",
-        description: "Revocation failed. Please try again later.",
-      });
+      toast.error('Revoke Error', { description: 'Revocation failed. Please try again later.' });
     }
   };
-
   // -----------------------------
   // 模擬用：產生序號
   // -----------------------------
@@ -173,76 +148,74 @@ const CertificateManagementPage = () => {
   // };
 
   // 只顯示有效憑證
-  const activeCertificates = certificates.filter(cert => cert.status === 'active');
+  const activeCertificates = certificates.filter((cert) => cert.status === 'active');
 
   return (
-    <div className="container mx-auto py-6 px-4">
-<div className="bg-[#A8AEBD] py-1.5 mb-6">
-       <h1 className="text-4xl font-extrabold text-center text-[#E6E6E6]">
-            mCA
-       </h1>
-  </div>
-      
+    <div className='container mx-auto py-6 px-4'>
+      <div className='bg-[#A8AEBD] py-1.5 mb-6'>
+        <h1 className='text-4xl font-extrabold text-center text-[#E6E6E6]'>mCA</h1>
+      </div>
+
       {/* 統計卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-6'>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Certificates</CardTitle>
-            <Shield className="h-4 w-4 text-green-500" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Active Certificates</CardTitle>
+            <Shield className='h-4 w-4 text-green-500' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{activeCertificates.length}</div>
+            <div className='text-2xl font-bold text-green-600'>{activeCertificates.length}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revoked Certificates</CardTitle>
-            <ShieldX className="h-4 w-4 text-red-500" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Revoked Certificates</CardTitle>
+            <ShieldX className='h-4 w-4 text-red-500' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{revokedCertificates.length}</div>
+            <div className='text-2xl font-bold text-red-600'>{revokedCertificates.length}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* 有效憑證列表 */}
-      <Card className="mb-6">
+      <Card className='mb-6'>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-green-500" />
+          <CardTitle className='flex items-center gap-2'>
+            <Shield className='h-5 w-5 text-green-500' />
             Active Certificates List
           </CardTitle>
-          <CardDescription>
-            Currently active CA certificates
-          </CardDescription>
+          <CardDescription>Currently active CA certificates</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className='overflow-x-auto'>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Common Name</TableHead>
                   <TableHead>Issuer</TableHead>
                   <TableHead>Validity</TableHead>
-                  <TableHead className="text-right">Operation</TableHead>
+                  <TableHead className='text-right'>Operation</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {activeCertificates.map((cert) => (
                   <TableRow key={cert.id}>
-                    <TableCell className="font-medium">{cert.commonName}</TableCell>
+                    <TableCell className='font-medium'>{cert.commonName}</TableCell>
                     <TableCell>{cert.issuer}</TableCell>
                     <TableCell>
-                      <div className="text-sm">
+                      <div className='text-sm'>
                         <div>{cert.validFrom}</div>
-                        <div className="text-gray-500">to {cert.validTo}</div>
+                        <div className='text-gray-500'>to {cert.validTo}</div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className='text-right'>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm">Revoke</Button>
+                          <Button variant='destructive' size='sm'>
+                            Revoke
+                          </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
@@ -252,30 +225,40 @@ const CertificateManagementPage = () => {
                               <br />
                               Serial Number: {cert.serialNumber}
                               <br />
-                              <span className="text-red-600 font-medium">
-                                This action cannot be undone. The certificate will be immediately invalidated and a new one will be issued.
+                              <span className='text-red-600 font-medium'>
+                                This action cannot be undone. The certificate will be immediately
+                                invalidated and a new one will be issued.
                               </span>
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="reason" className="text-right">
+                          <div className='grid gap-4 py-4'>
+                            <div className='grid grid-cols-4 items-center gap-4'>
+                              <Label htmlFor='reason' className='text-right'>
                                 Revocation Reason
                               </Label>
                               <Input
-                                id="reason"
+                                id='reason'
                                 value={revokeReason}
                                 onChange={(e) => setRevokeReason(e.target.value)}
-                                placeholder="Enter revocation reason (optional)"
-                                className="col-span-3"
+                                placeholder='Enter revocation reason (optional)'
+                                className='col-span-3'
                               />
                             </div>
                           </div>
                           <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setRevokeReason("")}>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel onClick={() => setRevokeReason('')}>
+                              Cancel
+                            </AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => handleRevokeCertificate(cert.id, cert.commonName, cert.issuer, cert.serialNumber)}
-                              className="bg-red-600 hover:bg-red-700"
+                              onClick={() =>
+                                handleRevokeCertificate(
+                                  cert.id,
+                                  cert.commonName,
+                                  cert.issuer,
+                                  cert.serialNumber,
+                                )
+                              }
+                              className='bg-red-600 hover:bg-red-700'
                             >
                               Confirm Revocation
                             </AlertDialogAction>
@@ -288,7 +271,7 @@ const CertificateManagementPage = () => {
 
                 {activeCertificates.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                    <TableCell colSpan={4} className='text-center py-4 text-muted-foreground'>
                       No active certificates
                     </TableCell>
                   </TableRow>
@@ -302,16 +285,14 @@ const CertificateManagementPage = () => {
       {/* 已吊銷憑證列表 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShieldX className="h-5 w-5 text-red-500" />
+          <CardTitle className='flex items-center gap-2'>
+            <ShieldX className='h-5 w-5 text-red-500' />
             Revoked Certificates List
           </CardTitle>
-          <CardDescription>
-            Records of revoked CA certificates
-          </CardDescription>
+          <CardDescription>Records of revoked CA certificates</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className='overflow-x-auto'>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -323,7 +304,7 @@ const CertificateManagementPage = () => {
               <TableBody>
                 {revokedCertificates.map((cert) => (
                   <TableRow key={cert.id}>
-                    <TableCell className="font-mono text-sm">{cert.serialNumber}</TableCell>
+                    <TableCell className='font-mono text-sm'>{cert.serialNumber}</TableCell>
                     <TableCell>{cert.revokedAt}</TableCell>
                     <TableCell>{cert.reason}</TableCell>
                   </TableRow>
@@ -331,7 +312,7 @@ const CertificateManagementPage = () => {
 
                 {revokedCertificates.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                    <TableCell colSpan={3} className='text-center py-4 text-muted-foreground'>
                       No revoked certificates
                     </TableCell>
                   </TableRow>

@@ -17,13 +17,13 @@ import {
   Loader2,
   BookOpen,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import type {
   GetLdapRequest,
   GetLdapResponse,
   PostLdapActionRequest,
   PostLdapActionResponse,
 } from "./types";
+import { toast } from "sonner";
 
 interface ComputerDetailProps {
   computerId: string;
@@ -34,7 +34,6 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const [serverStatus, setServerStatus] = useState<GetLdapResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<"" | "start" | "stop" | "restart">("");
-  const { toast } = useToast();
 
   /** 取得 LDAP 狀態 */
   const fetchServerStatus = async () => {
@@ -45,11 +44,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
       setServerStatus(res.data);
     } catch (error) {
       console.error("Fetch LDAP status failed:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch LDAP server status",
-        variant: "destructive",
-      });
+      toast.error('Error', { description: 'Failed to fetch LDAP server status' });
     } finally {
       setLoading(false);
     }
@@ -71,18 +66,14 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
       const data = res.data;
 
       if (data.Type === "Ok") {
-        toast({ title: "Success", description: `Server ${action} succeeded` });
+        toast.success('Success', { description: `Server ${action} succeeded` });
         fetchServerStatus();
       } else {
-        toast({ title: "Error", description: data.Message, variant: "destructive" });
+        toast.error('Error', { description: data.Message || `Failed to ${action} server` });
       }
     } catch (error) {
       console.error(`${action} failed`, error);
-      toast({
-        title: "Error",
-        description: `Failed to ${action} LDAP server`,
-        variant: "destructive",
-      });
+      toast.error('Error', { description: `Failed to ${action} LDAP server` });
     } finally {
       setActionLoading("");
     }

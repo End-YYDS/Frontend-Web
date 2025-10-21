@@ -17,13 +17,13 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import type {
   GetMysqlRequest,
   GetMysqlResponse,
   PostMysqlActionRequest,
   PostMysqlActionResponse,
 } from "./types";
+import { toast } from "sonner";
 
 interface ComputerDetailProps {
   computerId: string;
@@ -34,7 +34,6 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const [serverStatus, setServerStatus] = useState<GetMysqlResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<"" | "start" | "stop" | "restart">("");
-  const { toast } = useToast();
 
   /** 取得 MySQL 狀態 */
   const fetchServerStatus = async () => {
@@ -45,11 +44,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
       setServerStatus(res.data);
     } catch (error) {
       console.error("Fetch MySQL status failed:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch MySQL server status",
-        variant: "destructive",
-      });
+      toast.error('Error', { description: 'Failed to fetch MySQL server status' });
     } finally {
       setLoading(false);
     }
@@ -71,18 +66,14 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
       const data = res.data;
 
       if (data.Type === "Ok") {
-        toast({ title: "Success", description: `MySQL ${action} succeeded` });
+        toast.success('Success', { description: `MySQL ${action} succeeded` });
         fetchServerStatus();
       } else {
-        toast({ title: "Error", description: data.Message, variant: "destructive" });
+        toast.error('Error', { description: data.Message || `Failed to ${action} MySQL server` });
       }
     } catch (error) {
       console.error(`${action} failed`, error);
-      toast({
-        title: "Error",
-        description: `Failed to ${action} MySQL server`,
-        variant: "destructive",
-      });
+      toast.error('Error', { description: `Failed to ${action} MySQL server` });
     } finally {
       setActionLoading("");
     }

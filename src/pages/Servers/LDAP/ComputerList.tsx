@@ -3,8 +3,8 @@ import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Monitor, Cpu, MemoryStick } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import type { GetLdapResponse } from './types';
+import { toast } from 'sonner';
 
 // interface ComputerListProps {
 //   serverId: string;
@@ -37,7 +37,6 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
     { uuid: '11114', Hostname: 'name4', Status: 'active', Cpu: 12, Memory: 13 },
   ]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   // 載入伺服器清單
   useEffect(() => {
@@ -67,11 +66,7 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
       // setLoading(false);
     } catch (error) {
       console.error('Failed to fetch computers:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch computers',
-        variant: 'destructive',
-      });
+      toast.error('Error', { description: 'Failed to fetch computers' });
       setComputers([
         { uuid: '11111', Hostname: 'name', Status: 'active', Cpu: 12, Memory: 13 },
         { uuid: '11112', Hostname: 'name2', Status: 'active', Cpu: 12, Memory: 13 },
