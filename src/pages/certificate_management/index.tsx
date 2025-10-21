@@ -1,28 +1,16 @@
-<<<<<<< HEAD
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-=======
 //TODO: 序號API、更改憑證有效時間，要從後端拿
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
->>>>>>> main
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-<<<<<<< HEAD
-  TableRow
-} from "@/components/ui/table";
-=======
   TableRow,
 } from '@/components/ui/table';
->>>>>>> main
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,20 +21,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-<<<<<<< HEAD
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Shield, ShieldX } from 'lucide-react';
-import { toast } from "@/hooks/use-toast";
-import type { PageMeta } from '@/types';
-import type { GetValids, GetRevokeds, RevokeRequest, Valid, Revoked } from './types';
-
-const CertificateManagementPage = () => {
-  const [certificates, setCertificates] = useState<Valid[]>([]);
-  const [revokedCertificates, setRevokedCertificates] = useState<Revoked[]>([]);
-  const [revokeReason, setRevokeReason] = useState("");
-=======
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -76,36 +50,10 @@ const CertificateManagementPage = () => {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [revokedCertificates, setRevokedCertificates] = useState<RevokedCertificateInfo[]>([]);
   const [revokeReason, setRevokeReason] = useState('');
->>>>>>> main
   useEffect(() => {
     fetchValids();
     fetchRevoked();
   }, []);
-<<<<<<< HEAD
-  // 取得有效憑證
-  const fetchValids = async () => {
-    try {
-      const { data } = await axios.get<GetValids>('/api/chm/mCA/valid', { withCredentials: true });
-      data && data.Valid && typeof data.Valid === 'object' ?
-        setCertificates(data.Valid)
-        :
-        setCertificates([]);
-    } catch (err) {
-      console.error('Failed to fetch valids:', err);
-      toast({ title: "Fetch Error", description: "無法取得有效憑證列表" });
-      setCertificates([]);
-    }
-  };
-  // 取得已吊銷憑證
-  const fetchRevoked = async () => {
-    try {
-      const { data } = await axios.get<GetRevokeds>('/api/chm/mCA/revoked', { withCredentials: true });
-      console.log('Revoked data:', data);
-      data && data.Revoke && typeof data.Revoke === 'object' ?
-        setRevokedCertificates(data.Revoke)
-        :
-        setRevokedCertificates([]);
-=======
   const fetchValids = async () => {
     try {
       const res = await axios.get<GetValids>('/api/chm/mCA/valid', { withCredentials: true });
@@ -157,7 +105,6 @@ const CertificateManagementPage = () => {
         reason: r.Reason,
       }));
       setRevokedCertificates(mapped);
->>>>>>> main
     } catch (err) {
       console.error('Failed to fetch revoked list:', err);
       toast.error('Fetch Error', {
@@ -166,22 +113,6 @@ const CertificateManagementPage = () => {
       setRevokedCertificates([]);
     }
   };
-<<<<<<< HEAD
-
-  // -----------------------------
-  // 吊銷憑證
-  // -----------------------------
-  const handleRevokeCertificate = async (commonName: string, reason: string) => {
-    try {
-      if (reason.trim() === "") {
-        reason = "None";
-      }
-      const payload: RevokeRequest = { Name: commonName, Reason: reason };
-      const res = await axios.post('/api/chm/mCA/revoke', payload, { withCredentials: true });
-      console.log('Revoke response:', res.data);
-      toast({ title: "Certificate revoked", description: `Certificate ${commonName} 已被吊銷` });
-      setRevokeReason("");
-=======
   const handleRevokeCertificate = async (
     _certificateId: string,
     commonName: string,
@@ -197,7 +128,6 @@ const CertificateManagementPage = () => {
 
       toast.success('Success', { description: `Certificate ${commonName} has been revoked.` });
       setRevokeReason('');
->>>>>>> main
       fetchValids();
       fetchRevoked();
     } catch (err) {
@@ -205,14 +135,6 @@ const CertificateManagementPage = () => {
       toast.error('Revoke Error', { description: 'Revocation failed. Please try again later.' });
     }
   };
-<<<<<<< HEAD
-  return (
-    <div className="container mx-auto py-6 px-4">
-      <div className="bg-[#A8AEBD] py-1.5 mb-6">
-        <h1 className="text-4xl font-extrabold text-center text-[#E6E6E6]">
-          mCA
-        </h1>
-=======
   // -----------------------------
   // 模擬用：產生序號
   // -----------------------------
@@ -233,7 +155,6 @@ const CertificateManagementPage = () => {
     <div className='container mx-auto py-6 px-4'>
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
         <h1 className='text-4xl font-extrabold text-center text-[#E6E6E6]'>mCA</h1>
->>>>>>> main
       </div>
 
       {/* 統計卡片 */}
@@ -244,11 +165,7 @@ const CertificateManagementPage = () => {
             <Shield className='h-4 w-4 text-green-500' />
           </CardHeader>
           <CardContent>
-<<<<<<< HEAD
-            <div className="text-2xl font-bold text-green-600">{certificates.length}</div>
-=======
             <div className='text-2xl font-bold text-green-600'>{activeCertificates.length}</div>
->>>>>>> main
           </CardContent>
         </Card>
 
@@ -284,15 +201,6 @@ const CertificateManagementPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-<<<<<<< HEAD
-                {certificates.map((cert) => (
-                  <TableRow key={cert.Name}>
-                    <TableCell className="font-medium">{cert.Name}</TableCell>
-                    <TableCell>{cert.Signer}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{new Date(cert.Period).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</div>
-=======
                 {activeCertificates.map((cert) => (
                   <TableRow key={cert.id}>
                     <TableCell className='font-medium'>{cert.commonName}</TableCell>
@@ -301,7 +209,6 @@ const CertificateManagementPage = () => {
                       <div className='text-sm'>
                         <div>{cert.validFrom}</div>
                         <div className='text-gray-500'>to {cert.validTo}</div>
->>>>>>> main
                       </div>
                     </TableCell>
                     <TableCell className='text-right'>
@@ -317,7 +224,7 @@ const CertificateManagementPage = () => {
                             <AlertDialogDescription>
                               Are you sure you want to revoke certificate?
                               <br />
-                              Common Name: {cert.Name}
+                              Common Name: {cert.commonName}
                               <br />
                               <span className='text-red-600 font-medium'>
                                 This action cannot be undone. The certificate will be immediately
@@ -344,10 +251,6 @@ const CertificateManagementPage = () => {
                               Cancel
                             </AlertDialogCancel>
                             <AlertDialogAction
-<<<<<<< HEAD
-                              onClick={() => handleRevokeCertificate(cert.Name, revokeReason)}
-                              className="bg-red-600 hover:bg-red-700"
-=======
                               onClick={() =>
                                 handleRevokeCertificate(
                                   cert.id,
@@ -357,7 +260,6 @@ const CertificateManagementPage = () => {
                                 )
                               }
                               className='bg-red-600 hover:bg-red-700'
->>>>>>> main
                             >
                               Confirm Revocation
                             </AlertDialogAction>
@@ -401,17 +303,10 @@ const CertificateManagementPage = () => {
               </TableHeader>
               <TableBody>
                 {revokedCertificates.map((cert) => (
-<<<<<<< HEAD
-                  <TableRow key={cert.Number}>
-                    <TableCell className="font-mono text-sm">{cert.Number}</TableCell>
-                    <TableCell>{new Date(cert.Time).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</TableCell>
-                    <TableCell>{cert.Reason === "None" ? "No reason provided" : cert.Reason}</TableCell>
-=======
                   <TableRow key={cert.id}>
                     <TableCell className='font-mono text-sm'>{cert.serialNumber}</TableCell>
                     <TableCell>{cert.revokedAt}</TableCell>
                     <TableCell>{cert.reason}</TableCell>
->>>>>>> main
                   </TableRow>
                 ))}
 
