@@ -16,7 +16,6 @@ import {
   ChevronRight,
   Pin
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -29,6 +28,7 @@ import {
 import axios from 'axios';
 // 從 types.ts 引入型別
 import type { GetAllProcessResponse, PostActionRequest, PostActionResponse, PostOneProcessRequest, PostOneProcessResponse } from './types';
+import { toast } from 'sonner';
 
 interface Process {
   Status: boolean;
@@ -83,8 +83,6 @@ export const ProcessManager = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [pinnedProcesses, setPinnedProcesses] = useState<Set<string>>(new Set());
-  const { toast } = useToast();
-
   // 取得所有電腦 Process
   const fetchAllProcesses = async () => {
     setLoading(true);
@@ -108,7 +106,7 @@ export const ProcessManager = () => {
       setProcessData({ pcs, length: data.Length });
     } catch (err) {
       console.error('Failed to fetch process data:', err);
-      toast({ title: "Error", description: "Failed to fetch process data", variant: "destructive" });
+      toast.error('Error', { description: 'Failed to fetch process data' });
       setProcessData(null);
     } finally {
       setLoading(false);
@@ -138,11 +136,7 @@ export const ProcessManager = () => {
       }
     } catch (err) {
       console.error("Failed to fetch single computer processes:", err);
-      toast({
-        title: "Error",
-        description: "Failed to fetch computer processes",
-        variant: "destructive"
-      });
+      toast.error('Error', { description: 'Failed to fetch computer processes' });
     }
   };
 
@@ -182,13 +176,13 @@ export const ProcessManager = () => {
       const res = await axios.post<PostActionResponse>(url, reqData);
 
       if (res.data.Type === 'Ok') {
-        toast({ title: "Action Completed", description: `${action} sent to ${processName}` });
+        toast.success('Success', { description: `Action ${action} completed for ${processName}` });
       } else {
-        toast({ title: "Error", description: res.data.Message, variant: "destructive" });
+        toast.error('Error', { description: res.data.Message || 'Failed to perform action' });
       }
     } catch (error) {
       console.error('API action failed', error);
-      toast({ title: "Error", description: "Failed to perform action", variant: "destructive" });
+      toast.error('Error', { description: 'Failed to perform action' });
     }
   };
 

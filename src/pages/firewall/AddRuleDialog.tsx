@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { PostFirewallRuleRequest, FirewallResponse, Target } from './types'; // ✅ 正確 import 型別
+import { toast } from 'sonner';
 
 interface AddRuleDialogProps {
   isOpen: boolean;
@@ -33,7 +33,6 @@ export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, on
   const [customPort, setCustomPort] = useState('');
   const [openPortPopover, setOpenPortPopover] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const portOptions = ['22', '80', '443', '53', 'Other'];
 
@@ -60,7 +59,7 @@ export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, on
     try {
       const res = await axios.post<FirewallResponse>('/api/firewall/rule', newRule);
       if (res.data.Type === 'Ok') {
-        toast({ title: 'Success', description: 'Firewall rule added' });
+        toast.success('Success', { description: 'Firewall rule added' });
         onAddRule(newRule);
         onClose();
         setFormData({
@@ -79,11 +78,7 @@ export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, on
         throw new Error(res.data.Message || 'Add rule failed');
       }
     } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: err.message || 'Unable to add rule',
-        variant: 'destructive'
-      });
+      toast.error('Error', { description: err.message || 'Unable to add rule' });
     } finally {
       setIsLoading(false);
     }

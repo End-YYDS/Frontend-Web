@@ -17,12 +17,12 @@ import {
 import {
   Folder, File, HardDrive, Copy, Trash2, Download, Upload, Edit2
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { Breadcrumb } from './Breadcrumb';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // 匯入 types
 import type {GetVdirFileResponse, PostDownloadVdirFileRequest} from './types';
+import { toast } from 'sonner';
 
 interface FileItem {
   name: string;
@@ -46,7 +46,6 @@ interface UploadResponse {
 }
 
 export const VirtualDirectoryManager = () => {
-  const { toast } = useToast();
 
   // ---------------------- Hosts ----------------------
   const [hosts] = useState<Host[]>([
@@ -79,11 +78,7 @@ export const VirtualDirectoryManager = () => {
       if (res.data.Path) setCurrentPath(res.data.Path);
     } catch (e) {
       console.error('Fetch virtual directory failed', e);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch virtual directory',
-        variant: 'destructive',
-      });
+      toast.error('Fetch Failed', { description: 'Failed to fetch virtual directory' });
     }
   };
 
@@ -137,17 +132,17 @@ export const VirtualDirectoryManager = () => {
   const handleContextAction = (action: string, itemName: string) => {
     switch (action) {
       case 'copy':
-        toast({ title: 'Copy', description: `Copied ${itemName}` });
+        toast.success('Copy', { description: `Copied ${itemName}` });
         break;
       case 'delete':
         setFiles((prev) => prev.filter((f) => f.name !== itemName));
-        toast({ title: 'Delete', description: `Deleted ${itemName}` });
+        toast.success('Delete', { description: `Deleted ${itemName}` });
         break;
       case 'download':
         handleDownload(itemName);
         break;
       case 'rename':
-        toast({ title: 'Rename', description: `Renamed ${itemName}` });
+        toast.success('Rename', { description: `Renamed ${itemName}` });
         break;
     }
   };
@@ -179,21 +174,13 @@ export const VirtualDirectoryManager = () => {
         );
 
         if (res.data.Type === 'OK') {
-          toast({ title: 'Upload Success', description: res.data.Message });
+          toast.success('Upload Success', { description: res.data.Message });
         } else {
-          toast({
-            title: 'Upload Failed',
-            description: res.data.Message,
-            variant: 'destructive',
-          });
+          toast.error('Upload Failed', { description: res.data.Message });
         }
       } catch (e) {
         console.error('Upload failed', e);
-        toast({
-          title: 'Upload Failed',
-          description: 'Error uploading files',
-          variant: 'destructive',
-        });
+        toast.error('Upload Failed', { description: 'Error uploading files' });
       } finally {
         setShowUploadDialog(false);
         setSelectedUploadHosts([]);
@@ -213,21 +200,13 @@ export const VirtualDirectoryManager = () => {
       );
 
       if (res.data.Type === 'OK') {
-        toast({ title: 'Download Success', description: res.data.Message });
+        toast.success('Download Success', { description: res.data.Message });
       } else {
-        toast({
-          title: 'Download Failed',
-          description: res.data.Message,
-          variant: 'destructive',
-        });
+        toast.error('Download Failed', { description: res.data.Message });
       }
     } catch (e) {
       console.error('Download failed', e);
-      toast({
-        title: 'Download Failed',
-        description: 'Error downloading file',
-        variant: 'destructive',
-      });
+      toast.error('Download Failed', { description: 'Error downloading file' });
     }
   };
 

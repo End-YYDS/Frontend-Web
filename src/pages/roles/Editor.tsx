@@ -89,7 +89,7 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br">      
+    <div className="min-h-screen bg-linear-to-br">      
       <div className="grid grid-cols-12 gap-6">
         <RoleEditorSidebar 
           roleName={roleName}

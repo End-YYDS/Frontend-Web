@@ -12,9 +12,9 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, Download, Search } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import type { PcsUuid, GetAllPcResponse } from './types';
+import { toast } from 'sonner';
 
 interface Computer {
   id: string;
@@ -30,7 +30,6 @@ const ServerContent = () => {
   const [selectedComputersForInstall, setSelectedComputersForInstall] = useState<string[]>([]);
   const [computers, setComputers] = useState<Computer[]>([]);
   const [selectedComputerId, setSelectedComputerId] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const [installComputer] = useState<PcsUuid[]>([
     { Status: true, Hostname: 'ServerA', Ip: '192.168.0.10' },
@@ -67,11 +66,7 @@ const ServerContent = () => {
       console.log('從 API 取得電腦清單:', pcsArray);
     } catch (error) {
       console.error('取得線上電腦資料失敗:', error);
-      toast({
-        title: 'API 錯誤',
-        description: '無法取得電腦清單，使用測試資料。',
-        variant: 'destructive',
-      });
+      toast.error('Error', { description: 'Failed to fetch computer list, using test data.' });
 
       setComputers(
         installComputer.map((pc, idx) => ({
@@ -108,11 +103,7 @@ const ServerContent = () => {
   /** 安裝流程 */
   const handleInstallServer = async () => {
     if (selectedComputersForInstall.length === 0) {
-      toast({
-        title: '未選取主機',
-        description: '請至少選擇一台電腦進行安裝。',
-        variant: 'destructive',
-      });
+      toast.error('Error', { description: 'Please select at least one computer to install on.' });
       return;
     }
 
@@ -121,18 +112,11 @@ const ServerContent = () => {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast({
-        title: '安裝完成',
-        description: `已成功在 ${selectedComputersForInstall.length} 台電腦安裝 Bind`,
-      });
+      toast.success('Success', { description: `Successfully installed Bind on ${selectedComputersForInstall.length} computers.` });
       setInstallDialogOpen(false);
       setSelectedComputersForInstall([]);
     } catch (err) {
-      toast({
-        title: '安裝失敗',
-        description: '安裝過程中發生錯誤，請稍後再試。',
-        variant: 'destructive',
-      });
+      toast.error('Error', { description: 'Installation failed, please try again later.' });
     } finally {
       setIsInstalling(false);
     }

@@ -593,11 +593,11 @@ export const SystemLogsManager = () => {
                   <TableRow>
                     <TableCell
                       colSpan={7}
-                      className='bg-muted/30 p-4 text-xs align-top max-w-[300px] break-words'
+                      className='bg-muted/30 p-4 text-xs align-top max-w-[300px] wrap-break-word'
                     >
                       <div className='space-y-2'>
                         <h4 className='font-medium text-xs'>Full Message:</h4>
-                        <p className='text-xs text-muted-foreground whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto'>
+                        <p className='text-xs text-muted-foreground whitespace-pre-wrap wrap-break-word max-h-[200px] overflow-y-auto'>
                           {log.fullMessage}
                         </p>
                       </div>

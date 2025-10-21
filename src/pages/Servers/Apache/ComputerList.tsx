@@ -3,8 +3,8 @@ import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Monitor, Cpu, MemoryStick } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import type { GetApacheResponse } from './types';
+import { toast } from 'sonner';
 
 // interface ComputerListProps {
 //   serverId: string;
@@ -37,7 +37,6 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
     { uuid: '11114', Hostname: 'name4', Status: 'active', Cpu: 12, Memory: 13 },
   ]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   // 載入伺服器清單
   useEffect(() => {
@@ -67,10 +66,9 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
       // setLoading(false);
     } catch (error) {
       console.error('Failed to fetch computers:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch computers',
-        variant: 'destructive',
+      toast.error('Failed to fetch computers', {
+        description: 'Please check the server or your network connection.',
+        duration: 4000,
       });
       setComputers([
         { uuid: '11111', Hostname: 'name', Status: 'active', Cpu: 12, Memory: 13 },
@@ -120,7 +118,6 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
           className='cursor-pointer hover:shadow-md transition-shadow'
           // onClick={(e) => console.log(e)}
           onClick={() => onComputerSelect(computer.uuid)}
-
         >
           <CardContent className='p-6'>
             <div className='flex items-center justify-between'>
