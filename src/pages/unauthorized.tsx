@@ -1,5 +1,8 @@
 import { type PageMeta } from '../types';
-export const meta: PageMeta = { requiresAuth: false, layout: false };
+(Unauthorized as any).meta = {
+  requiresAuth: false,
+  layout: false,
+} satisfies PageMeta;
 export default function Unauthorized() {
   return (
     <div className='min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4'>

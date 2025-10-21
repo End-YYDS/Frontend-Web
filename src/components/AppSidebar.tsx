@@ -5,7 +5,6 @@ import {
   Users,
   Shield,
   Settings,
-  ShieldCheck,
   Archive,
   FileText,
   Monitor,
@@ -16,6 +15,8 @@ import {
   Download,
   BrickWallFire,
   Globe,
+  ChevronDown,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -35,61 +36,153 @@ import {
 } from '@/components/ui/sidebar';
 
 import Logo from '@/assets/CHM.png';
+import { useEffect, useState } from 'react';
 
-// Menu items（保持扁平結構）
-type Item = { title: string; url: string; icon: LucideIcon };
-const items: Item[] = [
-  { title: 'Dashboard', url: '/', icon: Home },
-
-  { title: 'CHM - User & Group', url: '/user_group', icon: Users },
-  { title: 'CHM - Roles', url: '/roles', icon: Shield },
-
-  { title: 'CHM - Backup', url: '/backup', icon: Archive },
-  { title: 'CHM - Settings', url: '/settings', icon: Settings },
-  { title: 'CHM - mCA', url: '/certificate_management', icon: ShieldCheck },
-  { title: 'System & Host Logs', url: '/s&h-logs', icon: FileText },
-
-  { title: 'CHM - PC Manager', url: '/pc-manager', icon: Monitor },
-  { title: 'Process Manager', url: '/process-manager', icon: Power },
-  { title: 'Cron Management', url: '/cron_management', icon: Clock },
-
-  { title: 'Servers', url: '/servers', icon: Server },
-  { title: 'Software Package', url: '/software_packages', icon: Package },
-  { title: 'File Manager', url: '/file-manager', icon: Download },
-
-  { title: 'Firewall', url: '/firewall', icon: BrickWallFire },
-  { title: 'Network Configuration', url: '/network_configuration', icon: Globe },
+const servers = [
+  { id: 'apache', name: 'Apache', installed: true },
+  { id: 'nginx', name: 'Nginx', installed: false },
+  { id: 'bind', name: 'BIND DNS', installed: true },
+  { id: 'dhcp', name: 'DHCP', installed: false },
+  { id: 'ldap', name: 'LDAP', installed: true },
+  { id: 'mysql', name: 'MySQL Database', installed: true },
+  { id: 'proftpd', name: 'ProFTPD', installed: true },
+  { id: 'samba', name: 'Samba', installed: false },
+  { id: 'squid', name: 'Squid Proxy', installed: true },
+  { id: 'ssh', name: 'SSH', installed: true },
 ];
 
-// 分類配置：父層是分類名稱，子層是要顯示的 item 標題
-const categories: Record<string, string[]> = {
-  User: ['CHM - User & Group', 'CHM - Roles'],
-  System: ['CHM - Backup', 'CHM - Settings', 'CHM - mCA', 'System & Host Logs'],
-  'Host Management': ['CHM - PC Manager', 'Process Manager', 'Cron Management'],
-  'Resources & Services': ['Servers', 'Software Package', 'File Manager'],
-  Network: ['Firewall', 'Network Configuration'],
-};
+interface SidebarLeaf {
+  name: string;
+  icon: LucideIcon;
+  path: string;
+}
+
+interface SidebarCategory {
+  category: string;
+  items: SidebarLeaf[];
+}
+
+type SidebarItem = SidebarLeaf | SidebarCategory;
+
+const sidebarItems: SidebarItem[] = [
+  { name: 'Dashboard', icon: Home, path: '/dashboard' },
+  {
+    category: 'User',
+    items: [
+      { name: 'CHM - User & Group', icon: Users, path: '/user_group' },
+      { name: 'CHM - Roles', icon: Shield, path: '/roles' },
+    ],
+  },
+  {
+    category: 'System',
+    items: [
+      { name: 'CHM - Backup', icon: Archive, path: '/backup' },
+      { name: 'CHM - Settings', icon: Settings, path: '/settings' },
+      { name: 'System & Host Logs', icon: FileText, path: '/syslogs' },
+    ],
+  },
+  {
+    category: 'Host Management',
+    items: [
+      { name: 'CHM - PC Manager', icon: Monitor, path: '/pc-manager' },
+      { name: 'Process Manager', icon: Power, path: '/process-manager' },
+      { name: 'Cron Management', icon: Clock, path: '/cron_management' },
+    ],
+  },
+  {
+    category: 'Resources & Services',
+    items: [
+      { name: 'Servers', icon: Server, path: '/servers' },
+      { name: 'Software Package', icon: Package, path: '/software_packages' },
+      { name: 'File Manager', icon: Download, path: '/file-manager' },
+    ],
+  },
+  {
+    category: 'Network',
+    items: [
+      { name: 'Firewall', icon: BrickWallFire, path: '/firewall' },
+      { name: 'Network Configuration', icon: Globe, path: '/network_configuration' },
+    ],
+  },
+];
 
 export function AppSidebar() {
   const location = useLocation();
-  const dashboard = items[0];
+  const [showServers, setShowServers] = useState(false);
+  const dashboard = sidebarItems[0] as SidebarLeaf;
   const DashboardIcon = dashboard.icon;
-  const byTitle = React.useMemo(() => {
-    const m = new Map<string, Item>();
-    for (const it of items) m.set(it.title, it);
-    return m;
-  }, []);
-
   const isActive = (url: string) =>
     url === '/'
       ? location.pathname === '/'
       : location.pathname === url || location.pathname.startsWith(url + '/');
+  useEffect(() => {
+    if (location.pathname.startsWith('/servers')) {
+      setShowServers(true);
+    }
+  }, [location.pathname]);
+  const handleServersClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
+    e.preventDefault();
+    setShowServers((prev) => !prev);
+  };
+  const renderLeaf = (leaf: SidebarLeaf) => {
+    const Icon = leaf.icon;
+    return (
+      <SidebarMenuItem key={leaf.path}>
+        <SidebarMenuButton asChild isActive={isActive(leaf.path)}>
+          <Link to={leaf.path}>
+            <Icon className='size-4' />
+            <span>{leaf.name}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
+
+  const renderServers = (leaf: SidebarLeaf) => {
+    const Icon = leaf.icon;
+    const isServersActive = isActive('/servers');
+
+    return (
+      <SidebarMenuItem key='__servers__'>
+        <SidebarMenuButton asChild isActive={isServersActive}>
+          <Link to='/servers' onClick={handleServersClick}>
+            <Icon className='size-4' />
+            <span>{leaf.name}</span>
+            <div className='ml-auto flex items-center'>
+              {showServers ? (
+                <ChevronDown className='size-4 opacity-70' />
+              ) : (
+                <ChevronRight className='size-4 opacity-70' />
+              )}
+            </div>
+          </Link>
+        </SidebarMenuButton>
+
+        {showServers && (
+          <SidebarMenuSub>
+            {servers.map((s) => {
+              const to = `/servers/${s.id}`;
+              return (
+                <SidebarMenuSubItem key={s.id}>
+                  <SidebarMenuSubButton asChild isActive={isActive(to)}>
+                    <Link to={to}>
+                      <span className='truncate'>{s.name}</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              );
+            })}
+          </SidebarMenuSub>
+        )}
+      </SidebarMenuItem>
+    );
+  };
 
   return (
     <Sidebar>
       {/* Header */}
       <SidebarHeader className='flex items-center p-3 bg-[#1E232E]/75 w-full whitespace-nowrap'>
-        <div className='flex items-center gap-3 flex-shrink-0 scale-90 sm:scale-100'>
+        <div className='flex items-center gap-3 shrink-0 scale-90 sm:scale-100'>
           <img src={Logo} alt='CHM Logo' className='w-12 h-12 object-contain' />
           <span className='text-3xl font-bold leading-none relative top-[2px]'>CHM</span>
         </div>
@@ -101,50 +194,33 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive(dashboard.url)} /* ⭐ NEW */>
-                  <Link to={dashboard.url}>
-                    <DashboardIcon />
-                    <span>{dashboard.title}</span>
+                <SidebarMenuButton asChild isActive={isActive(dashboard.path)}>
+                  <Link to={dashboard.path}>
+                    <DashboardIcon className='size-4' />
+                    <span>{dashboard.name}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {Object.entries(categories).map(([category, titles]) => {
-          return (
-            <SidebarGroup key={category}>
-              <SidebarGroupLabel>{category}</SidebarGroupLabel>
+
+        {/* 其他分類 */}
+        {sidebarItems
+          .filter((it): it is SidebarCategory => 'category' in it)
+          .map((section) => (
+            <SidebarGroup key={section.category}>
+              <SidebarGroupLabel>{section.category}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuSub>
-                      {titles
-                        .map((t) => byTitle.get(t))
-                        .filter(Boolean)
-                        .map((subItem) => {
-                          const Icon = subItem!.icon;
-                          return (
-                            <SidebarMenuSubItem key={subItem!.title}>
-                              <SidebarMenuSubButton
-                                asChild
-                                isActive={isActive(subItem!.url)} // ⭐ NEW
-                              >
-                                <Link to={subItem!.url}>
-                                  <Icon className='size-4' />
-                                  <span>{subItem!.title}</span>
-                                </Link>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          );
-                        })}
-                    </SidebarMenuSub>
-                  </SidebarMenuItem>
+                  {section.items.map((leaf) => {
+                    if (leaf.path === '/servers') return renderServers(leaf);
+                    return renderLeaf(leaf);
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
-          );
-        })}
+          ))}
       </SidebarContent>
     </Sidebar>
   );

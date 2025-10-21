@@ -82,7 +82,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-gray-700  border-[1px] border-transparent border-solid bg-clip-padding;
+  @apply rounded-full bg-gray-700  border border-transparent border-solid bg-clip-padding;
 }
 
 @theme inline {

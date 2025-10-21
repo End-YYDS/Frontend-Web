@@ -44,7 +44,6 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Plus, Trash2, Edit, FileDown, FileUp, Power, PowerOff } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import type { PageMeta } from '@/types';
 import axios from 'axios';
 import type {
@@ -54,6 +53,7 @@ import type {
   DeleteCronRequest,
   PutCronRequest,
 } from './types';
+import { toast } from 'sonner';
 
 interface CronJob {
   id: number;
@@ -65,7 +65,6 @@ interface CronJob {
 }
 
 const CronManagement = () => {
-  const { toast } = useToast();
   const [jobs, setJobs] = useState<CronJob[]>([]);
   const [selectedJobs, setSelectedJobs] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,7 +87,6 @@ const CronManagement = () => {
   });
   const itemsPerPage = 10;
 
-  // -------------------- API --------------------
   const fetchJobs = async () => {
     try {
       const res = await axios.get<GetAllResponse>('/api/cron/all', { withCredentials: true });
@@ -103,17 +101,19 @@ const CronManagement = () => {
       setJobs(jobsArray);
     } catch (error) {
       console.error(error);
-      toast({ title: 'Fetch Failed', description: 'Failed to fetch cron jobs' });
+      toast.error('Fetch Failed', {
+        description: 'Failed to fetch cron jobs',
+      });
     }
   };
 
   const addJobApi = async (job: CreateCronRequest) => {
     try {
       await axios.post('/api/cron', job, { withCredentials: true });
-      toast({ title: 'Success', description: 'Cron job added' });
+      toast.info('Success', { description: 'Cron job added' });
       fetchJobs();
     } catch (error) {
-      toast({ title: 'Failed', description: 'Failed to add cron job' });
+      toast.error('Failed', { description: 'Failed to add cron job' });
     }
   };
 
@@ -121,10 +121,10 @@ const CronManagement = () => {
     try {
       const data: PutCronRequest = { [id]: job };
       await axios.put('/api/cron', data, { withCredentials: true });
-      toast({ title: 'Success', description: 'Cron job updated' });
+      toast.info('Success', { description: 'Cron job updated' });
       fetchJobs();
     } catch (error) {
-      toast({ title: 'Failed', description: 'Failed to update cron job' });
+      toast.error('Failed', { description: 'Failed to update cron job' });
     }
   };
 
@@ -132,10 +132,10 @@ const CronManagement = () => {
     try {
       const data: DeleteCronRequest = { id: id.toString() };
       await axios.delete('/api/cron', { data, withCredentials: true });
-      toast({ title: 'Success', description: 'Cron job deleted' });
+      toast.info('Success', { description: 'Cron job deleted' });
       fetchJobs();
     } catch (error) {
-      toast({ title: 'Failed', description: 'Failed to delete cron job' });
+      toast.error('Failed', { description: 'Failed to delete cron job' });
     }
   };
 
@@ -147,10 +147,10 @@ const CronManagement = () => {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      toast({ title: 'Success', description: 'Cron jobs imported' });
+      toast.info('Success', { description: 'Cron jobs imported' });
       fetchJobs();
     } catch (error) {
-      toast({ title: 'Failed', description: 'Failed to import cron jobs' });
+      toast.error('Failed', { description: 'Failed to import cron jobs' });
     }
   };
 
@@ -169,18 +169,14 @@ const CronManagement = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      toast({ title: 'Success', description: 'Cron jobs exported' });
+      toast.info('Success', { description: 'Cron jobs exported' });
     } catch (error) {
-      toast({ title: 'Failed', description: 'Failed to export cron jobs' });
+      toast.error('Failed', { description: 'Failed to export cron jobs' });
     }
   };
-
-  // -------------------- Lifecycle --------------------
   useEffect(() => {
     fetchJobs();
   }, []);
-
-  // -------------------- Helper Functions --------------------
   const resetNewJob = () => {
     setNewJob({
       username: '',
@@ -336,7 +332,7 @@ const CronManagement = () => {
         return updateJobApi(id, payload);
       }),
     );
-    toast({ title: 'Success', description: 'Selected jobs have been enabled' });
+    toast.info('Success', { description: 'Selected jobs have been enabled' });
   };
 
   const handleBatchDisable = async () => {
@@ -352,7 +348,7 @@ const CronManagement = () => {
         } as unknown as CronJobEntry),
       ),
     );
-    toast({ title: 'Success', description: 'Selected jobs have been disabled' });
+    toast.info('Success', { description: 'Selected jobs have been disabled' });
   };
 
   const handleEditJob = (job: CronJob) => {
