@@ -33,7 +33,6 @@ interface Certificate {
   commonName: string;
   issuer: string;
   serialNumber: string;
-  validFrom: string;
   validTo: string;
   status: 'active' | 'revoked';
   keySize: number;
@@ -67,16 +66,21 @@ const CertificateManagementPage = () => {
       // };
 
       const mapped = res.data.Valid.map((v, idx) => {
-        const [from, to] = v.Period.split('~');
+        // const [from, to] = v.Period.split('~');
+        // console.log(from, to);
+        const time = v.Period.trim();
+        const local_time = new Date(time);
+        const formatted_time = local_time.toLocaleString();
         return {
           id: `${idx + 1}`,
           commonName: v.Name,
           issuer: v.Signer,
           serialNumber: `SN-${idx + 1}`,
-          validFrom: from.trim(),
-          validTo: to.trim(),
+          // validFrom: from.trim(),
+          // validTo: to.trim(),
+          validTo: formatted_time,
           status: 'active',
-          keySize: 2048,
+          keySize: 4096,
           algorithm: 'RSA',
         } as Certificate;
       });
@@ -101,7 +105,7 @@ const CertificateManagementPage = () => {
       const mapped = res.data.Revoke.map((r, idx) => ({
         id: `${idx + 1}`,
         serialNumber: r.Number,
-        revokedAt: r.Time,
+        revokedAt: new Date(r.Time).toLocaleString(),
         reason: r.Reason,
       }));
       setRevokedCertificates(mapped);
@@ -195,7 +199,7 @@ const CertificateManagementPage = () => {
                 <TableRow>
                   <TableHead>Common Name</TableHead>
                   <TableHead>Issuer</TableHead>
-                  <TableHead>Validity</TableHead>
+                  <TableHead>Validity To</TableHead>
                   <TableHead className='text-right'>Operation</TableHead>
                 </TableRow>
               </TableHeader>
@@ -206,8 +210,7 @@ const CertificateManagementPage = () => {
                     <TableCell>{cert.issuer}</TableCell>
                     <TableCell>
                       <div className='text-sm'>
-                        <div>{cert.validFrom}</div>
-                        <div className='text-gray-500'>to {cert.validTo}</div>
+                        <div>{cert.validTo}</div>
                       </div>
                     </TableCell>
                     <TableCell className='text-right'>
