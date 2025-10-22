@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   const refresh = async () => {
     try {
-      const res = await axios.get<User>('/api/me', { withCredentials: true });
+      const res = await axios.get<User>('/api/login/me', { withCredentials: true });
       res.data = { id: '1', role: 'user' }; // 確保有 role 屬性
       console.log('Fetched current user:', res.data);
       // setUser(res.data);
