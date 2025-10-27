@@ -17,6 +17,7 @@ import {
   Globe,
   ChevronDown,
   ChevronRight,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -78,6 +79,7 @@ const sidebarItems: SidebarItem[] = [
     items: [
       { name: 'CHM - Backup', icon: Archive, path: '/backup' },
       { name: 'CHM - Settings', icon: Settings, path: '/settings' },
+      { name: 'CHM - mCA', icon: ShieldCheck, path: '/certificate_management' },
       { name: 'System & Host Logs', icon: FileText, path: '/syslogs' },
     ],
   },
@@ -184,7 +186,7 @@ export function AppSidebar() {
       <SidebarHeader className='flex items-center p-3 bg-[#1E232E]/75 w-full whitespace-nowrap'>
         <div className='flex items-center gap-3 shrink-0 scale-90 sm:scale-100'>
           <img src={Logo} alt='CHM Logo' className='w-12 h-12 object-contain' />
-          <span className='text-3xl font-bold leading-none relative top-[2px]'>CHM</span>
+          <span className='text-3xl font-bold leading-none relative top-0.5'>CHM</span>
         </div>
       </SidebarHeader>
 
