@@ -1,14 +1,8 @@
 import StatusCard from './MyCard';
-import axios from 'axios';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { Check, AlertTriangle, X, ChevronLeft } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-
-import type { GetAllInfoResponse, PostInfoGetRequest, PostInfoGetResponse } from './types';
 import {
   Table,
   TableBody,
@@ -17,6 +11,56 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { Check, AlertTriangle, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+// Function to fetch system metrics from backend
+const fetchSystemMetrics = async () => {
+  try {
+    // Mock backend API call - replace with actual Supabase API call
+    return {
+      cpu: Math.floor(Math.random() * 80) + 20,
+      memory: Math.floor(Math.random() * 80) + 20,
+      disk: Math.floor(Math.random() * 80) + 20,
+      timestamp: new Date().toLocaleTimeString('zh-TW', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }),
+    };
+  } catch (error) {
+    console.error('Error fetching system metrics:', error);
+    return null;
+  }
+};
+
+// Mock data for computer list with status
+const computers = [
+  { name: 'Agent-1', cpu: '35%', memory: '38%', disk: '34%', status: 'safe' },
+  { name: 'Agent-2', cpu: '23%', memory: '34%', disk: '42%', status: 'safe' },
+  { name: 'Agent-3', cpu: '45%', memory: '36%', disk: '68%', status: 'warning' },
+  { name: 'Agent-4', cpu: '87%', memory: '89%', disk: '92%', status: 'danger' },
+  { name: 'Agent-5', cpu: '34%', memory: '35%', disk: '45%', status: 'safe' },
+  { name: 'Agent-6', cpu: '56%', memory: '67%', disk: '55%', status: 'warning' },
+  { name: 'Agent-7', cpu: '38%', memory: '54%', disk: '53%', status: 'warning' },
+  { name: 'Agent-8', cpu: '23%', memory: '43%', disk: '48%', status: 'safe' },
+  { name: 'Agent-9', cpu: '45%', memory: '36%', disk: '32%', status: 'safe' },
+  { name: 'Agent-10', cpu: '34%', memory: '67%', disk: '69%', status: 'safe' },
+  { name: 'Agent-11', cpu: '23%', memory: '45%', disk: '55%', status: 'safe' },
+  { name: 'Agent-12', cpu: '86%', memory: '78%', disk: '91%', status: 'danger' },
+  { name: 'Agent-13', cpu: '65%', memory: '42%', disk: '50%', status: 'warning' },
+  { name: 'Agent-14', cpu: '45%', memory: '58%', disk: '46%', status: 'warning' },
+  { name: 'Agent-15', cpu: '25%', memory: '42%', disk: '62%', status: 'safe' },
+  { name: 'Agent-16', cpu: '35%', memory: '48%', disk: '68%', status: 'safe' },
+  { name: 'Agent-17', cpu: '55%', memory: '65%', disk: '74%', status: 'warning' },
+  { name: 'Agent-18', cpu: '75%', memory: '82%', disk: '85%', status: 'warning' },
+  { name: 'Agent-19', cpu: '42%', memory: '56%', disk: '71%', status: 'warning' },
+  { name: 'Agent-20', cpu: '28%', memory: '38%', disk: '52%', status: 'safe' },
+  { name: 'Agent-21', cpu: '18%', memory: '32%', disk: '48%', status: 'safe' },
+  { name: 'Agent-22', cpu: '62%', memory: '74%', disk: '89%', status: 'warning' },
+];
 
 const ITEMS_PER_PAGE = 5;
 
@@ -24,19 +68,33 @@ export function DashboardContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<'safe' | 'warning' | 'danger' | null>(null);
 
-  // 系統總覽資料
-  // const [info, setInfo] = useState({ Safe: 0, Warn: 0, Dang: 0 });
-  // const [cluster, setCluster] = useState({ Cpu: 0, Memory: 0, Disk: 0 });
+  // Real-time data state (store last 6 data points)
+  const [cpuData, setCpuData] = useState([
+    { time: '00:00', value: 25 },
+    { time: '04:00', value: 35 },
+    { time: '08:00', value: 45 },
+    { time: '12:00', value: 55 },
+    { time: '16:00', value: 40 },
+    { time: '20:00', value: 30 },
+  ]);
 
-  // 圖表資料
-  const [cpuData, setCpuData] = useState<{ time: string; value: number }[]>([]);
-  const [memoryData, setMemoryData] = useState<{ time: string; value: number }[]>([]);
-  // const [diskData, setDiskData] = useState<{ time: string; value: number }[]>([]);
+  const [memoryData, setMemoryData] = useState([
+    { time: '00:00', value: 60 },
+    { time: '04:00', value: 45 },
+    { time: '08:00', value: 55 },
+    { time: '12:00', value: 70 },
+    { time: '16:00', value: 65 },
+    { time: '20:00', value: 50 },
+  ]);
 
-  // 電腦列表
-  const [computers, setComputers] = useState<
-    { name: string; cpu: string; memory: string; disk: string; status: string }[]
-  >([]);
+  const [, setDiskData] = useState([
+    { time: '00:00', value: 80 },
+    { time: '04:00', value: 82 },
+    { time: '08:00', value: 85 },
+    { time: '12:00', value: 88 },
+    { time: '16:00', value: 86 },
+    { time: '20:00', value: 84 },
+  ]);
 
   const statusIconMap: Record<string, { icon: React.ElementType; color: string }> = {
     safe: { icon: Check, color: 'text-green-600' },
@@ -44,202 +102,88 @@ export function DashboardContent() {
     danger: { icon: X, color: 'text-red-500' },
   };
 
-  /* ==============================
-     mock虛擬資料 fallback
-     ============================== */
-  // const fakeData = () => {
-  //   const timestamp = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  //   const fakeCluster = { Cpu: Math.floor(Math.random() * 50) + 30, Memory: Math.floor(Math.random() * 50) + 30, Disk: Math.floor(Math.random() * 50) + 30 };
-  //   const fakeInfo = { Safe: 5, Warn: 3, Dang: 2 };
-
-  //   const list = [
-  //     ...Array(fakeInfo.Safe).fill(0).map((_, i) => ({ name: `PC-Safe-${i + 1}`, cpu: (Math.random() * 50 + 10).toFixed(0) + '%', memory: (Math.random() * 50 + 10).toFixed(0) + '%', disk: (Math.random() * 50 + 10).toFixed(0) + '%', status: 'safe' })),
-  //     ...Array(fakeInfo.Warn).fill(0).map((_, i) => ({ name: `PC-Warn-${i + 1}`, cpu: (Math.random() * 30 + 50).toFixed(0) + '%', memory: (Math.random() * 30 + 50).toFixed(0) + '%', disk: (Math.random() * 30 + 50).toFixed(0) + '%', status: 'warning' })),
-  //     ...Array(fakeInfo.Dang).fill(0).map((_, i) => ({ name: `PC-Danger-${i + 1}`, cpu: (Math.random() * 20 + 80).toFixed(0) + '%', memory: (Math.random() * 20 + 80).toFixed(0) + '%', disk: (Math.random() * 20 + 80).toFixed(0) + '%', status: 'danger' })),
-  //   ];
-
-  //   return { fakeCluster, fakeInfo, list, timestamp };
-  // };
-
-  const fakeData = () => {
-    const timestamp = new Date().toLocaleTimeString('zh-TW', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-
-    const fakeCluster = {
-      Cpu: Math.floor(Math.random() * 50) + 30,
-      Memory: Math.floor(Math.random() * 50) + 30,
-      Disk: Math.floor(Math.random() * 50) + 30,
-    };
-
-    const fakeInfo = { Safe: 5, Warn: 3, Dang: 2 };
-
-    const list = [
-      ...Array(fakeInfo.Safe)
-        .fill(0)
-        .map((_, i) => ({
-          name: `PC-Safe-${i + 1}`,
-          cpu: (Math.random() * 50 + 10).toFixed(0) + '%',
-          memory: (Math.random() * 50 + 10).toFixed(0) + '%',
-          disk: (Math.random() * 50 + 10).toFixed(0) + '%',
-          status: 'safe',
-        })),
-      ...Array(fakeInfo.Warn)
-        .fill(0)
-        .map((_, i) => ({
-          name: `PC-Warn-${i + 1}`,
-          cpu: (Math.random() * 30 + 50).toFixed(0) + '%',
-          memory: (Math.random() * 30 + 50).toFixed(0) + '%',
-          disk: (Math.random() * 30 + 50).toFixed(0) + '%',
-          status: 'warning',
-        })),
-      ...Array(fakeInfo.Dang)
-        .fill(0)
-        .map((_, i) => ({
-          name: `PC-Danger-${i + 1}`,
-          cpu: (Math.random() * 20 + 80).toFixed(0) + '%',
-          memory: (Math.random() * 20 + 80).toFixed(0) + '%',
-          disk: (Math.random() * 20 + 80).toFixed(0) + '%',
-          status: 'danger',
-        })),
-    ];
-
-    return { fakeCluster, list, timestamp };
-  };
-
-  /* ==============================
-     axios 串接 API
-     ============================== */
-  //TODO: info要記得加上
-  const fetchAllInfo = async () => {
-    try {
-      // 取得總覽資料
-      const { data } = await axios.get<GetAllInfoResponse>('/api/info/getAll');
-
-      // setInfo(dataAll.Info);
-      // setCluster(dataAll.Cluster);
-
-      if (
-        data &&
-        data.Cluster &&
-        data.Info &&
-        typeof data.Cluster === 'object' &&
-        typeof data.Info === 'object'
-      ) {
-        const timestamp = new Date().toLocaleTimeString('zh-TW', {
-          hour12: false,
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        });
-        setCpuData((prev) => [
-          ...prev.slice(-5),
-          { time: timestamp, value: data?.Cluster?.Cpu ?? 1 },
-        ]);
-        setMemoryData((prev) => [
-          ...prev.slice(-5),
-          { time: timestamp, value: data?.Cluster?.Memory ?? 1 },
-        ]);
-        // setDiskData((prev) => [
-        //   ...prev.slice(-5),
-        //   { time: timestamp, value: data?.Cluster?.Disk ?? 1 },
-        // ]);
-      }
-      // 取得各主機資料
-      const reqBody: PostInfoGetRequest = { Zone: 'info', Target: 'safe', Uuid: null };
-      const resPcs = await axios.post<PostInfoGetResponse>('/api/info/get', reqBody);
-      const pcsData = resPcs.data;
-
-      if (pcsData && pcsData.Pcs && typeof pcsData.Pcs === 'object') {
-        const list = Object.entries(pcsData?.Pcs).map(([uuid, stats]) => ({
-          name: `PC-${uuid}`,
-          cpu: stats?.Cpu + '%',
-          memory: stats?.Memory + '%',
-          disk: stats?.Disk + '%',
-          status: (() => {
-            const cpu = stats?.Cpu,
-              mem = stats?.Memory,
-              disk = stats?.Disk;
-            if (cpu < 50 && mem < 50 && disk < 50) return 'safe';
-            if (cpu < 70 && mem < 70 && disk < 70) return 'warning';
-            return 'danger';
-          })(),
-        }));
-
-        setComputers(list);
-      }
-    } catch (err: any) {
-      // console.error('Error fetching info:', err);
-      toast.error('後端連線失敗，使用模擬資料');
-
-      const { fakeCluster, list, timestamp } = fakeData();
-
-      setCpuData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Cpu }]);
-      setMemoryData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Memory }]);
-      // setDiskData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Disk }]);
-      setComputers(list);
-
-      // 若 API 失敗，用假資料補上
-      // const { fakeCluster, fakeInfo, list, timestamp } = fakeData();
-      // setInfo(fakeInfo);
-      // setCluster(fakeCluster);
-      // setCpuData(prev => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Cpu }]);
-      // setMemoryData(prev => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Memory }]);
-      // setDiskData(prev => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Disk }]);
-      // setComputers(list);
-    }
-  };
-
+  // Fetch data every 5 seconds
   useEffect(() => {
-    fetchAllInfo();
-    const interval = setInterval(fetchAllInfo, 5000); // 每 5 秒更新
+    const interval = setInterval(async () => {
+      const metrics = await fetchSystemMetrics();
+      if (metrics) {
+        // Update CPU data (shift left and add new data point)
+        setCpuData((prev) => {
+          const newData = [...prev.slice(1), { time: metrics.timestamp, value: metrics.cpu }];
+          return newData;
+        });
+
+        // Update Memory data (shift left and add new data point)
+        setMemoryData((prev) => {
+          const newData = [...prev.slice(1), { time: metrics.timestamp, value: metrics.memory }];
+          return newData;
+        });
+
+        // Update Disk data (shift left and add new data point)
+        setDiskData((prev) => {
+          const newData = [...prev.slice(1), { time: metrics.timestamp, value: metrics.disk }];
+          return newData;
+        });
+      }
+    }, 5000); // Fetch every 5 seconds
+
     return () => clearInterval(interval);
   }, []);
 
+  // Filter computers based on selected status
   const filteredComputers = selectedStatus
-    ? computers.filter((c) => c.status === selectedStatus)
+    ? computers.filter((computer) => computer.status === selectedStatus)
     : computers;
 
+  // Calculate pagination for filtered computers
+  const totalPages = Math.ceil(filteredComputers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentComputers = filteredComputers.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(filteredComputers.length / ITEMS_PER_PAGE);
 
   const handleStatusClick = (status: 'safe' | 'warning' | 'danger') => {
     setSelectedStatus(selectedStatus === status ? null : status);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
-  const getStatusCount = (status: string) => computers.filter((c) => c.status === status).length;
+  const getStatusCount = (status: string) => {
+    return computers.filter((computer) => computer.status === status).length;
+  };
 
-  /* ==============================
-     以下為 Dashboard 顯示
-     ============================== */
+  // If a status is selected, only show the filtered computer list
   if (selectedStatus) {
-    const { icon: Icon, color } = statusIconMap[selectedStatus];
     return (
       <div className='space-y-6'>
+        {/* Back button and status header */}
         <div className='flex items-center justify-between'>
           <Button
             variant='outline'
             onClick={() => setSelectedStatus(null)}
             className='flex items-center gap-2'
           >
-            <ChevronLeft className='w-4 h-4' /> Back to Dashboard
+            <ChevronLeft className='w-4 h-4' />
+            Back to Dashboard
           </Button>
           <h2 className='text-2xl font-bold text-slate-700 capitalize flex items-center gap-2'>
-            <Icon className={`w-6 h-6 ${color}`} />
+            {(() => {
+              const { icon: Icon, color } = statusIconMap[selectedStatus] || {
+                icon: Check,
+                color: 'text-slate-400',
+              };
+              return <Icon className={`w-6 h-6 ${color}`} />;
+            })()}
             {selectedStatus} Computers ({filteredComputers.length})
           </h2>
         </div>
 
+        {/* Computer List */}
         <Card>
           <CardContent className='p-6 relative'>
+            {/* Header */}
             <div className='relative w-full h-8 border-b border-slate-200'>
-              <div className='absolute left-0 w-[40%] text-xs font-medium text-slate-600'>Name</div>
+              <div className='absolute left-0 w-[40%] overflow-hidden whitespace-nowrap text-ellipsis text-xs font-medium text-slate-600'>
+                Name
+              </div>
               <div className='absolute left-[48%] w-[15%] text-right text-xs font-medium text-slate-600'>
                 CPU
               </div>
@@ -250,12 +194,16 @@ export function DashboardContent() {
                 Disk
               </div>
             </div>
+            {/* Rows */}
             <div className='mt-2 space-y-1'>
-              {currentComputers.map((computer, index) => (
-                <div key={index} className='relative w-full h-8 border-b border-slate-100'>
+              {currentComputers.map((computer) => (
+                <div key={computer.name} className='relative w-full h-8 border-b border-slate-100'>
+                  {/* Name */}
                   <div className='absolute left-0 w-[40%] overflow-hidden whitespace-nowrap text-md'>
                     {computer.name}
                   </div>
+
+                  {/* CPU */}
                   <div className='absolute left-[50%] w-[15%] text-right text-xs'>
                     <Badge
                       variant='outline'
@@ -270,6 +218,8 @@ export function DashboardContent() {
                       {computer.cpu}
                     </Badge>
                   </div>
+
+                  {/* Memory */}
                   <div className='absolute left-[65%] w-[15%] text-right text-xs'>
                     <Badge
                       variant='outline'
@@ -284,6 +234,8 @@ export function DashboardContent() {
                       {computer.memory}
                     </Badge>
                   </div>
+
+                  {/* Disk */}
                   <div className='absolute left-[80%] w-[15%] text-right text-xs'>
                     <Badge
                       variant='outline'
@@ -307,9 +259,6 @@ export function DashboardContent() {
     );
   }
 
-  /* ==============================
-     主畫面 Dashboard
-     ============================== */
   return (
     <div className='space-y-6'>
       <div className='text-center mb-8'>
@@ -320,13 +269,11 @@ export function DashboardContent() {
           Dashboard
         </h1>
       </div>
-
       {/* Status Cards */}
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
         <Button variant='ghost' className='h-auto p-0' onClick={() => handleStatusClick('safe')}>
           <StatusCard status='safe' getStatusCount={getStatusCount} />
         </Button>
-
         <Button variant='ghost' className='h-auto p-0' onClick={() => handleStatusClick('warning')}>
           <StatusCard status='warning' getStatusCount={getStatusCount} />
         </Button>
@@ -336,7 +283,7 @@ export function DashboardContent() {
         </Button>
       </div>
 
-      {/* Charts */}
+      {/* Charts and Computer List in vertical layout */}
       <div className='space-y-6'>
         {/* CPU Chart */}
         <Card>
@@ -388,7 +335,7 @@ export function DashboardContent() {
           </CardContent>
         </Card>
 
-        {/* Disk */}
+        {/* Disk Storage */}
         <Card>
           <CardHeader>
             <CardTitle className='text-slate-700'>Disk</CardTitle>
@@ -448,12 +395,10 @@ export function DashboardContent() {
                     <TableHead className='text-xs'>Disk</TableHead>
                   </TableRow>
                 </TableHeader>
-
                 <TableBody>
                   {currentComputers.map((computer) => (
                     <TableRow key={computer.name}>
                       <TableCell className='text-xs font-medium'>{computer.name}</TableCell>
-
                       <TableCell className='text-xs'>
                         <Badge
                           variant='outline'
@@ -468,7 +413,6 @@ export function DashboardContent() {
                           {computer.cpu}
                         </Badge>
                       </TableCell>
-
                       <TableCell className='text-xs'>
                         <Badge
                           variant='outline'
@@ -483,7 +427,6 @@ export function DashboardContent() {
                           {computer.memory}
                         </Badge>
                       </TableCell>
-
                       <TableCell className='text-xs'>
                         <Badge
                           variant='outline'
@@ -510,7 +453,6 @@ export function DashboardContent() {
                     Showing {startIndex + 1} to {Math.min(endIndex, filteredComputers.length)} of{' '}
                     {filteredComputers.length} computers
                   </div>
-
                   <div className='flex items-center space-x-2'>
                     <Button
                       variant='outline'
@@ -518,20 +460,18 @@ export function DashboardContent() {
                       onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
                     >
-                      Prev
+                      <ChevronLeft className='w-4 h-4' />
                     </Button>
-
                     <span className='text-xs text-slate-600'>
                       Page {currentPage} of {totalPages}
                     </span>
-
                     <Button
                       variant='outline'
                       size='sm'
                       onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
                     >
-                      Next
+                      <ChevronRight className='w-4 h-4' />
                     </Button>
                   </div>
                 </div>
@@ -543,3 +483,6 @@ export function DashboardContent() {
     </div>
   );
 }
+
+
+// temp
