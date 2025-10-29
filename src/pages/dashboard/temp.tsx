@@ -196,8 +196,8 @@ export function DashboardContent() {
             </div>
             {/* Rows */}
             <div className='mt-2 space-y-1'>
-              {currentComputers.map((computer, index) => (
-                <div key={index} className='relative w-full h-8 border-b border-slate-100'>
+              {currentComputers.map((computer) => (
+                <div key={computer.name} className='relative w-full h-8 border-b border-slate-100'>
                   {/* Name */}
                   <div className='absolute left-0 w-[40%] overflow-hidden whitespace-nowrap text-md'>
                     {computer.name}
@@ -396,8 +396,8 @@ export function DashboardContent() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentComputers.map((computer, index) => (
-                    <TableRow key={index}>
+                  {currentComputers.map((computer) => (
+                    <TableRow key={computer.name}>
                       <TableCell className='text-xs font-medium'>{computer.name}</TableCell>
                       <TableCell className='text-xs'>
                         <Badge

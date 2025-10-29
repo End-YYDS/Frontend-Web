@@ -450,8 +450,8 @@ export function DashboardContent() {
                 </TableHeader>
 
                 <TableBody>
-                  {currentComputers.map((computer, index) => (
-                    <TableRow key={index}>
+                  {currentComputers.map((computer) => (
+                    <TableRow key={computer.name}>
                       <TableCell className='text-xs font-medium'>{computer.name}</TableCell>
 
                       <TableCell className='text-xs'>
