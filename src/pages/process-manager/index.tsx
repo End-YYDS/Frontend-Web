@@ -13,7 +13,7 @@ const Process_manager = () => {
   );
 };
 (Process_manager as any).meta = {
-  requiresAuth: false, //驗證
+  requiresAuth: true, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

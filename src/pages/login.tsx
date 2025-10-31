@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { type PageMeta } from '../types';
-import { useAuth } from '@/auth';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useAuth } from '@/auth';
 
 (Login as any).meta = {
   requiresAuth: false,
@@ -14,10 +14,8 @@ function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { signIn } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const from = (location.state as any)?.from?.pathname || '/';
+  const { refresh } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +28,8 @@ function Login() {
         body: JSON.stringify({ Username: username, Password: password }),
       });
       if (!res.ok) throw new Error('帳號或密碼錯誤');
-      //TODO: 從後端取得 user 資訊
-      const user = { id: '1', role: 'user' };
-      signIn(user);
-      localStorage.setItem('isLoggedIn', 'true');
-      navigate(from, { replace: true });
+      await refresh();
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
       setError(err.message);
     }

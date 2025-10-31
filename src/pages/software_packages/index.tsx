@@ -574,7 +574,7 @@ interface PC {
 };
 
 (SoftwarePackagesPage as any).meta = {
-  requiresAuth: false, //驗證
+  requiresAuth: true, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

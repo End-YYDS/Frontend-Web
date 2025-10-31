@@ -1,7 +1,7 @@
 import type { PageMeta } from '@/types';
 import ServerContent from './Content';
 
-export const meta = { requiresAuth: false };
+export const meta = { requiresAuth: true };
 
 const Squid = () => {
   return (
@@ -14,7 +14,7 @@ const Squid = () => {
   );
 };
 (Squid as any).meta = {
-  requiresAuth: false, //驗證
+  requiresAuth: true, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

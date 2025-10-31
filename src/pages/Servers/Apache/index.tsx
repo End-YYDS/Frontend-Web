@@ -11,7 +11,7 @@ const Apache = () => {
   );
 };
 (Apache as any).meta = {
-  requiresAuth: false, 
+  requiresAuth: true, 
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;
