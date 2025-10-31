@@ -4,7 +4,7 @@ import { DashboardContent } from './Content';
 
 const Dashboard = () => {
   return (
-    <div className='max-w-4xl mx-auto py-8 px-6'>
+    <div className='container mx-auto py-8 px-6'>
       <DashboardContent />
     </div>
   );

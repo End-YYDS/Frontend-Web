@@ -143,10 +143,6 @@ export function DashboardContent() {
           ...prev.slice(-5),
           { time: timestamp, value: data?.Cluster?.Memory ?? 1 },
         ]);
-        // setDiskData((prev) => [
-        //   ...prev.slice(-5),
-        //   { time: timestamp, value: data?.Cluster?.Disk ?? 1 },
-        // ]);
       }
       // 取得各主機資料
       const reqBody: PostInfoGetRequest = { Zone: 'info', Target: 'safe', Uuid: null };
@@ -312,13 +308,8 @@ export function DashboardContent() {
      ============================== */
   return (
     <div className='space-y-6'>
-      <div className='text-center mb-8'>
-        <h1
-          className='text-4xl font-bold mb-2'
-          style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
-        >
-          Dashboard
-        </h1>
+      <div className='bg-[#A8AEBD] py-1.5 mb-6'>
+        <h1 className='text-4xl font-extrabold text-center text-[#E6E6E6]'>Dashboard</h1>
       </div>
 
       {/* Status Cards */}
