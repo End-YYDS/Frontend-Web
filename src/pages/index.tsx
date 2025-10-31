@@ -1,13 +1,14 @@
 import { type PageMeta } from '../types';
-function Home() {
-  return <div>Home</div>;
+import { DashboardContent } from './dashboard/Content';
+function Dashboard() {
+  return <DashboardContent />;
 }
-(Home as any).meta = {
-  requiresAuth: false, //驗證
+(Dashboard as any).meta = {
+  requiresAuth: true, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;
-export default Home;
+export default Dashboard;
 // import { useEffect, useState } from 'react';
 // import { TooltipProvider } from '@/components/ui/tooltip';
 // import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
