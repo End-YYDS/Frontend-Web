@@ -300,7 +300,7 @@ export function RolesContent() {
   const filteredRoles = roles.filter(role => role.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-linear-to-br">
+    <div className="bg-linear-to-br">
       {/* Default Role Card */}
       <div 
         className="bg-white rounded-lg shadow-sm p-6 mb-6 cursor-pointer hover:bg-gray-50 transition-colors"

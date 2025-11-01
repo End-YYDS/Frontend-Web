@@ -37,7 +37,14 @@ const permissionsList = [
   { id: 3, name: 'Manage', bit: 1 << 3 },
 ];
 
-export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSelect }: RoleEditorProps) {
+export function RoleEditor({
+  role,
+  allRoles,
+  allUsers,
+  onBack,
+  onSave,
+  onRoleSelect,
+}: RoleEditorProps) {
   const [roleName, setRoleName] = useState(role.name);
   const [selectedColor, setSelectedColor] = useState(role.color);
   const [rolePermissions, setRolePermissions] = useState(role.permissions);
@@ -68,8 +75,8 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
 
   const togglePermission = (bit: number) => {
     if (isEveryoneRole) return;
-    
-    setRolePermissions(prev => {
+
+    setRolePermissions((prev) => {
       if (prev & bit) {
         return prev & ~bit; // Remove permission
       } else {
@@ -79,19 +86,19 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
   };
 
   const addMember = (user: Member) => {
-    if (!members.find(m => m.id === user.id)) {
+    if (!members.find((m) => m.id === user.id)) {
       setMembers([...members, user]);
     }
   };
 
   const removeMember = (memberId: string) => {
-    setMembers(members.filter(m => m.id !== memberId));
+    setMembers(members.filter((m) => m.id !== memberId));
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br">      
-      <div className="grid grid-cols-12 gap-6">
-        <RoleEditorSidebar 
+    <div className='bg-linear-to-br'>
+      <div className='grid grid-cols-12 gap-6'>
+        <RoleEditorSidebar
           roleName={roleName}
           selectedColor={selectedColor}
           currentRole={role}
@@ -100,19 +107,19 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
           onRoleSelect={onRoleSelect}
         />
 
-        <div className="col-span-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-6">Edit Role - {roleName}</h2>
-            
-            <Tabs defaultValue="display" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="display">Display</TabsTrigger>
-                <TabsTrigger value="permissions">Permissions</TabsTrigger>
-                <TabsTrigger value="members">Manage Members</TabsTrigger>
+        <div className='col-span-8'>
+          <div className='bg-white rounded-lg shadow-sm p-6'>
+            <h2 className='text-xl font-semibold mb-6'>Edit Role - {roleName}</h2>
+
+            <Tabs defaultValue='display' className='w-full'>
+              <TabsList className='grid w-full grid-cols-3'>
+                <TabsTrigger value='display'>Display</TabsTrigger>
+                <TabsTrigger value='permissions'>Permissions</TabsTrigger>
+                <TabsTrigger value='members'>Manage Members</TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="display">
-                <DisplayTab 
+
+              <TabsContent value='display'>
+                <DisplayTab
                   roleName={roleName}
                   selectedColor={selectedColor}
                   isEveryoneRole={isEveryoneRole}
@@ -120,22 +127,22 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
                   onColorChange={setSelectedColor}
                 />
               </TabsContent>
-              
-              <TabsContent value="permissions">
-                <PermissionsTab 
-                  permissions={permissionsList.map(perm => ({
+
+              <TabsContent value='permissions'>
+                <PermissionsTab
+                  permissions={permissionsList.map((perm) => ({
                     id: perm.id.toString(),
                     name: perm.name,
                     enabled: (rolePermissions & perm.bit) !== 0,
-                    bit: perm.bit
+                    bit: perm.bit,
                   }))}
                   isEveryoneRole={isEveryoneRole}
                   onPermissionToggle={togglePermission}
                 />
               </TabsContent>
-              
-              <TabsContent value="members">
-                <MembersTab 
+
+              <TabsContent value='members'>
+                <MembersTab
                   members={members}
                   allUsers={allUsers}
                   searchMember={searchMember}
@@ -146,15 +153,15 @@ export function RoleEditor({ role, allRoles, allUsers, onBack, onSave, onRoleSel
                 />
               </TabsContent>
             </Tabs>
-            
-            <div className="flex justify-end space-x-4 mt-8 pt-6 border-t">
-              <Button variant="outline" onClick={onBack}>
+
+            <div className='flex justify-end space-x-4 mt-8 pt-6 border-t'>
+              <Button variant='outline' onClick={onBack}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleSave} 
+              <Button
+                onClick={handleSave}
                 style={{ backgroundColor: '#7B86AA' }}
-                className="hover:opacity-90 text-white"
+                className='hover:opacity-90 text-white'
                 disabled={isEveryoneRole}
               >
                 Save

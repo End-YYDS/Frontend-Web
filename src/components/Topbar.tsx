@@ -208,10 +208,16 @@ export default function Topbar({ onLogout }: TopbarProps) {
               <ChevronDown className='w-4 h-4 text-gray-500' />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className='w-40'>
+          <DropdownMenuContent
+            className='w-40 p-2 mr-1 mt-1 rounded-lg shadow-lg border border-gray-200 '
+            align='end'
+          >
             {/* <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem> */}
-            <DropdownMenuItem className='text-red-600 focus:text-red-600' onClick={onLogout}>
+            <DropdownMenuItem
+              onClick={onLogout}
+              className='justify-center text-red-600 font-semibold focus:bg-red-50 py-2'
+            >
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

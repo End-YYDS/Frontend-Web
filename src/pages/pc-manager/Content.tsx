@@ -440,7 +440,7 @@ const handleAddGroup = async () => {
 
 
   return (
-    <div className="min-h-screen bg-linear-to-br">   
+    <div className="bg-linear-to-br">   
 
       {/* Main Content */}
       <div className="container mx-auto py-8 px-6">
