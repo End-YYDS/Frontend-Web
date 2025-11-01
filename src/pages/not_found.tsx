@@ -10,8 +10,17 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-gray-100'>
-      <div className='text-center'>
+    <div className='min-h-screen flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 p-4'>
+      <div
+        className='
+          w-full
+          max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl
+          bg-white rounded-2xl shadow-2xl
+          p-10
+          text-center
+          transition-all duration-300
+        '
+      >
         <h1 className='text-5xl font-bold text-gray-800 mb-4'>404</h1>
         <p className='text-xl text-gray-600 mb-4'>哇! 頁面不存在</p>
         <a href='/' className='text-blue-500 hover:text-blue-700 underline'>

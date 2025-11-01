@@ -97,7 +97,7 @@ export default function Router() {
     // 不進 Layout 的頁（login/unauthorized）
     ...bare.map((r) => ({ path: r.path, element: r.element })),
 
-    { path: '*', element: <Navigate to='/' replace /> },
+    { path: '*', element: <Navigate to='/dashboard' replace /> },
   ];
 
   return <Suspense fallback={<div>加載中…</div>}>{useRoutes(routes)}</Suspense>;

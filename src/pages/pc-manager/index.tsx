@@ -1,18 +1,9 @@
 import type { PageMeta } from '@/types';
 import { PCManagerContent } from './Content';
 
-
-const Pc_manager = () => {
-  return (
-    <div className='min-h-screen bg-gray-50 flex'>
-      <div className='flex-1'>
-        <PCManagerContent />
-      </div>
-    </div>
-  );
-};
+const Pc_manager = () => <PCManagerContent />;
 (Pc_manager as any).meta = {
-  requiresAuth: false, //驗證
+  requiresAuth: true, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

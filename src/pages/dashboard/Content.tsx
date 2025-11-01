@@ -143,10 +143,6 @@ export function DashboardContent() {
           ...prev.slice(-5),
           { time: timestamp, value: data?.Cluster?.Memory ?? 1 },
         ]);
-        // setDiskData((prev) => [
-        //   ...prev.slice(-5),
-        //   { time: timestamp, value: data?.Cluster?.Disk ?? 1 },
-        // ]);
       }
       // 取得各主機資料
       const reqBody: PostInfoGetRequest = { Zone: 'info', Target: 'safe', Uuid: null };
@@ -311,14 +307,9 @@ export function DashboardContent() {
      主畫面 Dashboard
      ============================== */
   return (
-    <div className='space-y-6'>
-      <div className='text-center mb-8'>
-        <h1
-          className='text-4xl font-bold mb-2'
-          style={{ color: '#E6E6E6', backgroundColor: '#A8AEBD' }}
-        >
-          Dashboard
-        </h1>
+    <div className='container mx-auto py-6 px-4'>
+      <div className='bg-[#A8AEBD] py-1.5 mb-6'>
+        <h1 className='text-4xl font-extrabold text-center text-[#E6E6E6]'>Dashboard</h1>
       </div>
 
       {/* Status Cards */}
@@ -337,14 +328,14 @@ export function DashboardContent() {
       </div>
 
       {/* Charts */}
-      <div className='space-y-6'>
+      <div className='space-y-6 min-w-0'>
         {/* CPU Chart */}
         <Card>
           <CardHeader>
             <CardTitle className='text-slate-700'>CPU</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className='h-48'>
+          <CardContent className='p-6 w-full min-w-0'>
+            <div className='w-full min-w-0 h-48'>
               <ResponsiveContainer width='100%' height='100%'>
                 <LineChart data={cpuData}>
                   <CartesianGrid strokeDasharray='3 3' stroke='#e2e8f0' />
@@ -368,8 +359,8 @@ export function DashboardContent() {
           <CardHeader>
             <CardTitle className='text-slate-700'>Memory</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className='h-48'>
+          <CardContent className='p-6 w-full min-w-0'>
+            <div className='w-full min-w-0 h-48'>
               <ResponsiveContainer width='100%' height='100%'>
                 <LineChart data={memoryData}>
                   <CartesianGrid strokeDasharray='3 3' stroke='#e2e8f0' />
@@ -394,7 +385,7 @@ export function DashboardContent() {
             <CardTitle className='text-slate-700'>Disk</CardTitle>
             <p className='text-sm text-gray-500'>Used 2.1 TB (Total 3.2 TB)</p>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-6 w-full min-w-0'>
             <div className='space-y-4'>
               {/* Storage Bar */}
               <div className='w-full h-6 bg-gray-200 rounded-lg overflow-hidden flex'>

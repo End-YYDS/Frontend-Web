@@ -5,6 +5,7 @@ import axios from 'axios';
 export interface User {
   id: string;
   role: string;
+  username: string;
 }
 
 interface AuthContextType {
@@ -30,10 +31,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const refresh = async () => {
     try {
       const res = await axios.get<User>('/api/login/me', { withCredentials: true });
-      res.data = { id: '1', role: 'user' }; // 確保有 role 屬性
-      console.log('Fetched current user:', res.data);
-      // setUser(res.data);
-      setUser(null);
+      if (res.status === 403) {
+        throw new Error();
+      }
+      setUser(res.data);
     } catch {
       setUser(null);
     }
@@ -84,7 +85,6 @@ export function RequireAuth({ allowedRoles }: RequireAuthProps) {
   const location = useLocation();
 
   if (loading) return <div>驗證中…</div>;
-  console.log('Current User:', user);
   if (!user) return <Navigate to='/login' state={{ from: location }} replace />;
 
   if (allowedRoles?.length && !allowedRoles.includes(user.role)) {

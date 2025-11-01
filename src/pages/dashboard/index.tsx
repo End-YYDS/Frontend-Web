@@ -1,17 +1,8 @@
 import type { PageMeta } from '@/types';
 import { DashboardContent } from './Content';
-
-
-const Dashboard = () => {
-  return (
-    <div className='max-w-4xl mx-auto py-8 px-6'>
-      <DashboardContent />
-    </div>
-  );
-};
-
+const Dashboard = () => <DashboardContent />;
 (Dashboard as any).meta = {
-  requiresAuth: false, //驗證
+  requiresAuth: true, //驗證
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

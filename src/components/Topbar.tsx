@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/auth';
 
 interface Notification {
   id: number;
@@ -67,6 +68,7 @@ const mockNotifications: Notification[] = [
 ];
 
 export default function Topbar({ onLogout }: TopbarProps) {
+  const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [, setShowUserMenu] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
@@ -202,14 +204,20 @@ export default function Topbar({ onLogout }: TopbarProps) {
               variant='ghost'
               className='flex items-center space-x-1 text-sm font-medium text-gray-800 hover:bg-transparent'
             >
-              <span>Derrick Lin</span>
+              <span>{user?.username}</span>
               <ChevronDown className='w-4 h-4 text-gray-500' />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className='w-40'>
+          <DropdownMenuContent
+            className='w-40 p-2 mr-1 mt-1 rounded-lg shadow-lg border border-gray-200 '
+            align='end'
+          >
             {/* <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem> */}
-            <DropdownMenuItem className='text-red-600 focus:text-red-600' onClick={onLogout}>
+            <DropdownMenuItem
+              onClick={onLogout}
+              className='justify-center text-red-600 font-semibold focus:bg-red-50 py-2'
+            >
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
