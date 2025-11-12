@@ -177,7 +177,7 @@ const handleAddGroup = async () => {
     if (!newGroup.name) return;
     const body: PostPcgroupRequest = {
       Groupname: newGroup.name,
-      Describe: newGroup.description,
+      Cidr: newGroup.description,
     };
     try {
       const { data } = await axios.post<ResponseResult>("/api/chm/pcgroup", body);
