@@ -16,6 +16,7 @@ interface ResponseResult {
 }
 
 interface PcsUuid {
+  Status: boolean;
   Hostname: string;
   Ip: string;
 }
@@ -35,8 +36,11 @@ interface DeletePcRequest {
   Passwords: string[];
 }
 
+// Post /api/chm/pc/reboot
+// Post /api/chm/pc/shutdown
 interface DeletePcResponse {
-  Uuid: ResponseResult;
+  Pcs: Record<string, ResponseResult>;
+  Length: number;
 }
 
 // Post /api/chm/pc/reboot
@@ -53,13 +57,13 @@ interface Vxlanid {
 }
 
 interface GetPcgroupResponse {
-  Groups: Vxlanid;
+  Groups: Record<string, Vxlanid>;
   Length: number;
 }
 
 interface PostPcgroupRequest {
   Groupname: string;
-  Describe: string;
+  Cidr: string;
 }
 
 interface PutPcgroupRequest {
