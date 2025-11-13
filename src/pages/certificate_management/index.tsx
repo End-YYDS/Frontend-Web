@@ -1,6 +1,4 @@
-//TODO: 序號API、更改憑證有效時間，要從後端拿
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -26,8 +24,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, ShieldX } from 'lucide-react';
 import type { PageMeta } from '@/types';
-import type { GetValids, GetRevokeds, RevokeRequest } from './types';
+import type { RevokeRequest } from './types';
 import { toast } from 'sonner';
+import { mcaApi } from '@/api/mcaApi';
 interface Certificate {
   id: string;
   commonName: string;
@@ -55,19 +54,8 @@ const CertificateManagementPage = () => {
   }, []);
   const fetchValids = async () => {
     try {
-      const res = await axios.get<GetValids>('/api/chm/mCA/valid', { withCredentials: true });
-      // 模擬測試資料可放這裡（若後端尚未串接）
-      // res.data = {
-      //   Valid: [
-      //     { Name: 'www.example.com', Signer: 'CA Root Authority', Period: '2024-01-01~2025-01-01' },
-      //     { Name: 'api.example.com', Signer: 'CA Root Authority', Period: '2024-02-01~2025-02-01' }
-      //   ],
-      //   Length: 2
-      // };
-
-      const mapped = res.data.Valid.map((v, idx) => {
-        // const [from, to] = v.Period.split('~');
-        // console.log(from, to);
+      const { data } = await mcaApi.getValidCerts();
+      const mapped = data.Valid.map((v, idx) => {
         const time = v.Period.trim();
         const local_time = new Date(time);
         const formatted_time = local_time.toLocaleString();
@@ -76,8 +64,6 @@ const CertificateManagementPage = () => {
           commonName: v.Name,
           issuer: v.Signer,
           serialNumber: `SN-${idx + 1}`,
-          // validFrom: from.trim(),
-          // validTo: to.trim(),
           validTo: formatted_time,
           status: 'active',
           keySize: 4096,
@@ -93,16 +79,8 @@ const CertificateManagementPage = () => {
 
   const fetchRevoked = async () => {
     try {
-      const res = await axios.get<GetRevokeds>('/api/chm/mCA/revoked', { withCredentials: true });
-      // 模擬測試資料
-      // res.data = {
-      //   Revoke: [
-      //     { Number: '1001', Time: '2025-10-04T09:30', Reason: 'Expired' }
-      //   ],
-      //   Length: 1
-      // };
-
-      const mapped = res.data.Revoke.map((r, idx) => ({
+      const { data } = await mcaApi.getRevokedCerts();
+      const mapped = data.Revoke.map((r, idx) => ({
         id: `${idx + 1}`,
         serialNumber: r.Number,
         revokedAt: new Date(r.Time).toLocaleString(),
@@ -126,9 +104,7 @@ const CertificateManagementPage = () => {
 
     try {
       const payload: RevokeRequest = { Name: commonName, Reason: reason };
-      const res = await axios.post('/api/chm/mCA/revoke', payload, { withCredentials: true });
-      console.log('Revoke response:', res.data);
-
+      await mcaApi.revokeCert(payload);
       toast.success('Success', { description: `Certificate ${commonName} has been revoked.` });
       setRevokeReason('');
       fetchValids();
@@ -138,22 +114,7 @@ const CertificateManagementPage = () => {
       toast.error('Revoke Error', { description: 'Revocation failed. Please try again later.' });
     }
   };
-  // -----------------------------
-  // 模擬用：產生序號
-  // -----------------------------
-  // const generateSerialNumber = () => {
-  //   const chars = '0123456789ABCDEF';
-  //   let result = '';
-  //   for (let i = 0; i < 6; i++) {
-  //     if (i > 0) result += ':';
-  //     result += chars[Math.floor(Math.random() * 16)] + chars[Math.floor(Math.random() * 16)];
-  //   }
-  //   return result;
-  // };
-
-  // 只顯示有效憑證
   const activeCertificates = certificates.filter((cert) => cert.status === 'active');
-
   return (
     <div className='container mx-auto py-6 px-4'>
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
@@ -330,7 +291,7 @@ const CertificateManagementPage = () => {
 };
 
 (CertificateManagementPage as any).meta = {
-  requiresAuth: true, //驗證
+  requiresAuth: true,
   layout: true,
   // allowedRoles: ['admin']
 } satisfies PageMeta;

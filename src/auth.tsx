@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { authApi } from '@/api/authApi';
+import { toast } from 'sonner';
+import { eventBus } from './lib/EventBus';
 
 export interface User {
   id: string;
@@ -30,12 +32,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   const refresh = async () => {
     try {
-      const res = await axios.get<User>('/api/login/me', { withCredentials: true });
-      if (res.status === 403) {
-        throw new Error();
-      }
+      const res = await authApi.me();
       setUser(res.data);
-    } catch {
+    } catch (err) {
+      console.error('Failed to refresh user:', err);
       setUser(null);
     }
   };
@@ -47,12 +47,31 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     })();
   }, []);
 
+  useEffect(() => {
+    const offUnauthorized = eventBus.on('auth:unauthorized', () => {
+      setUser(null);
+      toast.error('登入已失效', {
+        description: '請重新登入後再繼續操作。',
+      });
+    });
+
+    const offForbidden = eventBus.on('auth:forbidden', () => {
+      toast.error('沒有權限執行此操作');
+    });
+
+    return () => {
+      offUnauthorized();
+      offForbidden();
+    };
+  }, []);
+
   const signIn = (u: User) => setUser(u);
 
   const signOut = async () => {
     try {
-      await axios.post('/api/logout', null, { withCredentials: true });
-    } catch {
+      await authApi.logout();
+    } catch (err) {
+      console.error('Logout failed:', err);
     } finally {
       setUser(null);
     }
