@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus } from 'lucide-react';
 
 interface GroupSelectionDialogProps {
@@ -20,14 +20,14 @@ export const GroupSelectionDialog: React.FC<GroupSelectionDialogProps> = ({
   groups,
   selectedGroups,
   onGroupsChange,
-  onCreateGroup
+  onCreateGroup,
 }) => {
   const [isCreateGroupDialogOpen, setIsCreateGroupDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
 
   const handleGroupToggle = (groupName: string) => {
     const newGroups = selectedGroups.includes(groupName)
-      ? selectedGroups.filter(g => g !== groupName)
+      ? selectedGroups.filter((g) => g !== groupName)
       : [...selectedGroups, groupName];
     onGroupsChange(newGroups);
   };
@@ -45,41 +45,41 @@ export const GroupSelectionDialog: React.FC<GroupSelectionDialogProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md mx-auto">
+        <DialogContent className='max-w-md mx-auto'>
           <DialogHeader>
             <DialogTitle>Add to group</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
+          <div className='space-y-4'>
+            <div className='space-y-2'>
               <Button
-                variant="outline"
-                className="w-full justify-start text-blue-600"
+                variant='outline'
+                className='w-full justify-start text-blue-600'
                 onClick={() => setIsCreateGroupDialogOpen(true)}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className='h-4 w-4 mr-2' />
                 Create a new group
               </Button>
-              {groups.map(group => (
-                <div key={group.id} className="flex items-center space-x-2">
+              {groups.map((group) => (
+                <div key={group.id} className='flex items-center space-x-2'>
                   <Checkbox
                     id={`group-${group.id}`}
                     checked={selectedGroups.includes(group.name)}
                     onCheckedChange={() => handleGroupToggle(group.name)}
                   />
-                  <label htmlFor={`group-${group.id}`} className="text-sm">
+                  <label htmlFor={`group-${group.id}`} className='text-sm'>
                     {group.name}
                   </label>
                 </div>
               ))}
             </div>
-            <div className="flex gap-2 pt-4">
-              <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+            <div className='flex gap-2 pt-4'>
+              <Button variant='outline' onClick={() => onOpenChange(false)} className='flex-1'>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={() => onOpenChange(false)}
                 style={{ backgroundColor: '#7B86AA' }}
-                className="flex-1 hover:opacity-90"
+                className='flex-1 hover:opacity-90'
               >
                 Save
               </Button>
@@ -89,31 +89,31 @@ export const GroupSelectionDialog: React.FC<GroupSelectionDialogProps> = ({
       </Dialog>
 
       <Dialog open={isCreateGroupDialogOpen} onOpenChange={setIsCreateGroupDialogOpen}>
-        <DialogContent className="max-w-sm mx-auto">
+        <DialogContent className='max-w-sm mx-auto'>
           <DialogHeader>
             <DialogTitle>Create a new group</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className='space-y-4'>
             <div>
-              <label className="block text-sm font-medium mb-1">Group name</label>
+              <label className='block text-sm font-medium mb-1'>Group name</label>
               <Input
-                placeholder="enter group name"
+                placeholder='enter group name'
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
               />
             </div>
-            <div className="flex gap-2 pt-4">
-              <Button 
-                variant="outline" 
+            <div className='flex gap-2 pt-4'>
+              <Button
+                variant='outline'
                 onClick={() => setIsCreateGroupDialogOpen(false)}
-                className="flex-1"
+                className='flex-1'
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateNewGroup}
                 style={{ backgroundColor: '#7B86AA' }}
-                className="flex-1 hover:opacity-90"
+                className='flex-1 hover:opacity-90'
               >
                 Create
               </Button>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { toast } from 'sonner';
 import {
   Pagination,
   PaginationContent,
@@ -8,42 +8,29 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserManagement } from './UserManagement';
 import { GroupManagement } from './GroupManagement';
 import type {
-  UsersCollection,
   CreateUserRequest,
   PatchUserEntry,
-  GroupsCollection,
   CreateGroupRequest,
   PatchGroupEntry,
+  UsersCollection,
+  GroupsCollection,
+  UserEntry,
+  GroupEntry,
+  PatchUsersRequest,
 } from './types';
-import { type PageMeta } from '@/types';
+import { type PageMeta, type CommonResponse, ResponseType } from '@/types';
+import { user_groupApi } from '@/api/userApi';
 
-// ---------------- 前端型別 ----------------
-export interface UserEntry {
-  Username: string;
-  Group: string[];
-  Home_directory: string;
-  Shell: string;
-}
+type UsersMap = UsersCollection['Users'];
+type GroupsMap = GroupsCollection['Groups'];
 
-export interface GroupEntry {
-  Groupname: string;
-  Users: string[];
-}
+export type UserRow = UserEntry & { uid: string };
+export type GroupRow = GroupEntry & { gid: string };
 
-export interface UsersMap {
-  [uid: string]: UserEntry;
-}
-
-export interface GroupsMap {
-  [gid: string]: GroupEntry;
-}
-
-// ---------------- 前端狀態 ----------------
 const UserGroup = () => {
   const [usersMap, setUsersMap] = useState<UsersMap>({});
   const [groupsMap, setGroupsMap] = useState<GroupsMap>({});
@@ -52,11 +39,18 @@ const UserGroup = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'groups'>('users');
   const itemsPerPage = 10;
 
-  // ---------------- Fetch ----------------
+  const handleApiResult = (res: CommonResponse, defaultSuccess: string) => {
+    if (res.Type === ResponseType.Ok) {
+      toast.success(res.Message || defaultSuccess);
+    } else {
+      toast.error(res.Message || 'Operation failed.');
+    }
+  };
+
   const fetchUsers = async () => {
     try {
-      const res = await axios.get<UsersCollection>('/api/chm/user', { withCredentials: true });
-      setUsersMap(res.data.Users);
+      const { data } = await user_groupApi.getUsers();
+      setUsersMap(data.Users);
     } catch {
       toast.error('Failed to fetch user data.');
     }
@@ -64,23 +58,26 @@ const UserGroup = () => {
 
   const fetchGroups = async () => {
     try {
-      const res = await axios.get<GroupsCollection>('/api/chm/group', { withCredentials: true });
-      setGroupsMap(res.data.Groups);
+      const { data } = await user_groupApi.getGroups();
+      setGroupsMap(data.Groups);
     } catch {
       toast.error('Failed to fetch group data.');
     }
   };
 
   useEffect(() => {
-    fetchUsers();
-    fetchGroups();
-  }, []);
+    if (activeTab === 'users') {
+      void fetchUsers();
+      void fetchGroups();
+    } else {
+      void fetchGroups();
+      void fetchUsers();
+    }
+  }, [activeTab]);
 
-  // ---------------- 轉成陣列方便前端渲染 ----------------
-  const usersArray = Object.entries(usersMap).map(([uid, u]) => ({ uid, ...u }));
-  const groupsArray = Object.entries(groupsMap).map(([gid, g]) => ({ gid, ...g }));
+  const usersArray: UserRow[] = Object.entries(usersMap).map(([uid, u]) => ({ uid, ...u }));
+  const groupsArray: GroupRow[] = Object.entries(groupsMap).map(([gid, g]) => ({ gid, ...g }));
 
-  // ---------------- Filter & Pagination ----------------
   const filteredUsers = usersArray.filter(
     (user) =>
       user.Username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -95,28 +92,34 @@ const UserGroup = () => {
     (activeTab === 'users' ? filteredUsers.length : filteredGroups.length) / itemsPerPage,
   );
 
-  // ---------------- User CRUD ----------------
-  const handleAddUser = async (user: Omit<UserEntry, 'uid'>) => {
+  const handleAddUser = async (user: CreateUserRequest) => {
     try {
-      const req: CreateUserRequest = user;
-      const res = await axios.post<{ uid: string }>('/api/chm/user', req, {
-        withCredentials: true,
-      });
-      setUsersMap((prev) => ({ ...prev, [res.data.uid]: user }));
-      toast.success('User has been added.');
-      fetchGroups();
+      const { data } = await user_groupApi.addUser(user);
+      handleApiResult(data, 'User has been added.');
+      if (data.Type === ResponseType.Ok) {
+        await fetchUsers();
+        await fetchGroups();
+      }
     } catch {
       toast.error('Failed to add user.');
     }
   };
 
-  const handleUpdateUser = async (uid: string, user: Partial<UserEntry>) => {
+  const handleUpdateUser = async (uid: string, patch: PatchUserEntry) => {
     try {
-      const patch: PatchUserEntry = user;
-      await axios.patch('/api/chm/user', { [uid]: patch }, { withCredentials: true });
-      setUsersMap((prev) => ({ ...prev, [uid]: { ...prev[uid], ...user } }));
-      toast.success('User has been updated.');
-      fetchGroups();
+      if (Object.keys(patch).length === 0) {
+        toast.info('No changes to update.');
+        return;
+      }
+      const body: PatchUsersRequest = {
+        [uid]: patch,
+      };
+      const { data } = await user_groupApi.patchUsers(body);
+      handleApiResult(data, 'User has been updated.');
+      if (data.Type === ResponseType.Ok) {
+        await fetchUsers();
+        await fetchGroups();
+      }
     } catch {
       toast.error('Failed to update user.');
     }
@@ -124,36 +127,38 @@ const UserGroup = () => {
 
   const handleDeleteUser = async (uid: string) => {
     try {
-      await axios.delete('/api/chm/user', { data: { uid }, withCredentials: true });
-      const { [uid]: _, ...rest } = usersMap;
-      setUsersMap(rest);
-      toast.success('User has been deleted.');
-      fetchGroups();
+      const { data } = await user_groupApi.deleteUser({ uid });
+      handleApiResult(data, 'User has been deleted.');
+      if (data.Type === ResponseType.Ok) {
+        await fetchUsers();
+        await fetchGroups();
+      }
     } catch {
       toast.error('Failed to delete user.');
     }
   };
 
-  // ---------------- Group CRUD ----------------
-  const handleAddGroup = async (group: Omit<GroupEntry, 'gid'>) => {
+  const handleAddGroup = async (group: CreateGroupRequest) => {
     try {
-      const req: CreateGroupRequest = group;
-      const res = await axios.post<{ gid: string }>('/api/chm/group', req, {
-        withCredentials: true,
-      });
-      setGroupsMap((prev) => ({ ...prev, [res.data.gid]: group }));
-      toast.success('Group has been added.');
+      const { data } = await user_groupApi.addGroup(group);
+      handleApiResult(data, 'Group has been added.');
+      if (data.Type === ResponseType.Ok) {
+        await fetchGroups();
+        await fetchUsers();
+      }
     } catch {
       toast.error('Failed to add group.');
     }
   };
 
-  const handleUpdateGroup = async (gid: string, group: Partial<GroupEntry>) => {
+  const handleUpdateGroup = async (gid: string, patch: PatchGroupEntry) => {
     try {
-      const patch: PatchGroupEntry = group;
-      await axios.patch('/api/chm/group', { [gid]: patch }, { withCredentials: true });
-      setGroupsMap((prev) => ({ ...prev, [gid]: { ...prev[gid], ...group } }));
-      toast.success('Group has been updated.');
+      const { data } = await user_groupApi.patchGroups({ [gid]: patch });
+      handleApiResult(data, 'Group has been updated.');
+      if (data.Type === ResponseType.Ok) {
+        await fetchGroups();
+        await fetchUsers();
+      }
     } catch {
       toast.error('Failed to update group.');
     }
@@ -161,11 +166,13 @@ const UserGroup = () => {
 
   const handleDeleteGroup = async (gid: string) => {
     try {
-      await axios.delete('/api/chm/group', { data: { gid }, withCredentials: true });
-      const { [gid]: _, ...rest } = groupsMap;
-      setGroupsMap(rest);
-      toast.success('Group has been deleted.');
-    } catch {
+      const { data } = await user_groupApi.deleteGroup({ gid });
+      handleApiResult(data, 'Group has been deleted.');
+      if (data.Type === ResponseType.Ok) {
+        await fetchGroups();
+        await fetchUsers();
+      }
+    } catch (err) {
       toast.error('Failed to delete group.');
     }
   };
@@ -173,7 +180,7 @@ const UserGroup = () => {
   return (
     <div className='container mx-auto py-6 px-4'>
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
-        <h1 className='text-4xl font-extrabold text-center text-[#E6E6E6]'>User & Group</h1>
+        <h1 className='text-4xl font-extrabold text-center text-[#E6E6E6]'>User &amp; Group</h1>
       </div>
 
       <Tabs
@@ -201,7 +208,9 @@ const UserGroup = () => {
             currentPage={currentPage}
             itemsPerPage={itemsPerPage}
             onDeleteSelectedUsers={(uids: string[]) => {
-              uids.forEach((uid) => handleDeleteUser(uid));
+              uids.forEach((uid) => {
+                void handleDeleteUser(uid);
+              });
             }}
             onCreateGroup={() => {
               toast.error('Create group functionality is not implemented yet.');
@@ -218,8 +227,8 @@ const UserGroup = () => {
 
         <TabsContent value='groups' className='space-y-4'>
           <GroupManagement
-            groups={groupsMap} // <- HashMap 型別
-            users={usersArray} // <- Converted to array
+            groups={groupsMap}
+            users={usersArray}
             onAddGroup={handleAddGroup}
             onUpdateGroup={handleUpdateGroup}
             onDeleteGroup={handleDeleteGroup}
@@ -241,7 +250,6 @@ const UserGroup = () => {
   );
 };
 
-// ---------------- Pagination ----------------
 const PaginationBar = ({
   currentPage,
   totalPages,

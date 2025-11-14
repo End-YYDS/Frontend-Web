@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type PageMeta } from '../types';
+import { type PageMeta, ResponseType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/auth';
+import { authApi } from '@/api/authApi';
 
 (Login as any).meta = {
   requiresAuth: false,
@@ -20,13 +21,8 @@ function Login() {
     e.preventDefault();
     try {
       setError(null);
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Username: username, Password: password }),
-      });
-      if (!res.ok) {
+      let { data } = await authApi.login(username, password);
+      if (data.Type === ResponseType.Err) {
         setUsername('');
         setPassword('');
         throw new Error('帳號或密碼錯誤');

@@ -1,5 +1,4 @@
 import StatusCard from './MyCard';
-import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Check, AlertTriangle, X, ChevronLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-import type { GetAllInfoResponse, PostInfoGetRequest, PostInfoGetResponse } from './types';
+import type { PostInfoGetRequest } from './types';
 import {
   Table,
   TableBody,
@@ -17,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { infoApi } from '@/api/infoApi';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -110,18 +110,10 @@ export function DashboardContent() {
     return { fakeCluster, list, timestamp };
   };
 
-  /* ==============================
-     axios 串接 API
-     ============================== */
   //TODO: info要記得加上
   const fetchAllInfo = async () => {
     try {
-      // 取得總覽資料
-      const { data } = await axios.get<GetAllInfoResponse>('/api/info/getAll');
-
-      // setInfo(dataAll.Info);
-      // setCluster(dataAll.Cluster);
-
+      const { data } = await infoApi.getAllInfo();
       if (
         data &&
         data.Cluster &&
@@ -146,7 +138,7 @@ export function DashboardContent() {
       }
       // 取得各主機資料
       const reqBody: PostInfoGetRequest = { Zone: 'info', Target: 'safe', Uuid: null };
-      const resPcs = await axios.post<PostInfoGetResponse>('/api/info/get', reqBody);
+      const resPcs = await infoApi.getPcs(reqBody);
       const pcsData = resPcs.data;
 
       if (pcsData && pcsData.Pcs && typeof pcsData.Pcs === 'object') {
@@ -168,30 +160,18 @@ export function DashboardContent() {
         setComputers(list);
       }
     } catch (err: any) {
-      // console.error('Error fetching info:', err);
       toast.error('後端連線失敗，使用模擬資料');
-
       const { fakeCluster, list, timestamp } = fakeData();
-
       setCpuData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Cpu }]);
       setMemoryData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Memory }]);
       // setDiskData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Disk }]);
       setComputers(list);
-
-      // 若 API 失敗，用假資料補上
-      // const { fakeCluster, fakeInfo, list, timestamp } = fakeData();
-      // setInfo(fakeInfo);
-      // setCluster(fakeCluster);
-      // setCpuData(prev => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Cpu }]);
-      // setMemoryData(prev => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Memory }]);
-      // setDiskData(prev => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Disk }]);
-      // setComputers(list);
     }
   };
 
   useEffect(() => {
     fetchAllInfo();
-    const interval = setInterval(fetchAllInfo, 5000); // 每 5 秒更新
+    const interval = setInterval(fetchAllInfo, 5000); 
     return () => clearInterval(interval);
   }, []);
 
