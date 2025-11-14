@@ -1,86 +1,80 @@
-// ---------- UserEntry ----------
 export interface UserEntry {
   Username: string;
-  Group: string[];
+  Cn: string;
+  Sn: string;
   Home_directory: string;
   Shell: string;
+  Given_name: string;
+  Display_name: string;
+  Gid_number: string;
+  Group: string[];
+  Gecos: string;
 }
 
-// ---------- UsersCollection ----------
 export interface UsersCollection {
-  Users: Record<string, UserEntry>; // HashMap<String, UserEntry>
+  Users: Record<string, UserEntry>;
   Length: number;
 }
 
-// ---------- CreateUserRequest (POST /api/chm/user) ----------
-export interface CreateUserRequest {
-  Username: string;
-  Group: string[];
-  Home_directory: string;
-  Shell: string;
-}
+export type CreateUserRequest = Omit<UserEntry, 'Gid_number'> & {
+  Password: string;
+};
 
-// ---------- PutUsersRequest (PUT /api/chm/user) ----------
-// 接收整筆資料（用 uid 作 key）
+export type PutUserEntry = Omit<UserEntry, 'Username' | 'Gid_number'> & {
+  Password: string;
+};
+
 export interface PutUsersRequest {
-  [uid: string]: UserEntry; // 相當於 HashMap<String, UserEntry>
+  [uid: string]: PutUserEntry;
 }
 
-// ---------- PatchUserEntry (PATCH 單一內容可選) ----------
 export interface PatchUserEntry {
-  Username?: string;
-  Group?: string[];
+  Password?: string;
+  Cn?: string;
+  Sn?: string;
   Home_directory?: string;
   Shell?: string;
+  Given_name?: string;
+  Display_name?: string;
+  Group?: string[];
+  Gecos?: string;
 }
 
-// ---------- PatchUsersRequest (PATCH /api/chm/user) ----------
-// 接收部分更新（用 uid 作 key）
 export interface PatchUsersRequest {
-  [uid: string]: PatchUserEntry; // 相當於 HashMap<String, PatchUserEntry>
+  [uid: string]: PatchUserEntry;
 }
 
-// ---------- DeleteUserRequest (DELETE /api/chm/user) ----------
 export interface DeleteUserRequest {
   uid: string;
 }
 
-// ---------- GroupEntry ----------
 export interface GroupEntry {
   Groupname: string;
-  Users: string[]; // uid.username 字串
+  Users: string[];
 }
 
-// ---------- GroupsCollection ----------
 export interface GroupsCollection {
-  Groups: Record<string, GroupEntry>; // HashMap<String, GroupEntry>
+  Groups: Record<string, GroupEntry>;
 }
 
-// ---------- CreateGroupRequest (POST /api/chm/group) ----------
 export interface CreateGroupRequest {
   Groupname: string;
   Users: string[];
 }
 
-// ---------- PutGroupsRequest (PUT /api/chm/group) ----------
-// 接收整筆資料（用 gid 作 key）
 export interface PutGroupsRequest {
-  [gid: string]: GroupEntry; // HashMap<String, GroupEntry>
+  [gid: string]: GroupEntry;
 }
 
-// ---------- PatchGroupEntry (PATCH 單一內容可選) ----------
 export interface PatchGroupEntry {
   Groupname?: string;
   Users?: string[];
 }
 
-// ---------- PatchGroupsRequest (PATCH /api/chm/group) ----------
-// 局部更新，可接受任意 gid 作為 key
 export interface PatchGroupsRequest {
-  [gid: string]: PatchGroupEntry; // 建議改為 HashMap<String, PatchGroupEntry>
+  [gid: string]: PatchGroupEntry;
 }
 
-// ---------- DeleteGroupRequest (DELETE /api/chm/group) ----------
 export interface DeleteGroupRequest {
   gid: string;
 }

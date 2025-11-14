@@ -50,9 +50,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   useEffect(() => {
     const offUnauthorized = eventBus.on('auth:unauthorized', () => {
       setUser(null);
-      toast.error('登入已失效', {
-        description: '請重新登入後再繼續操作。',
-      });
+      // toast.error('登入已失效', {
+      //   description: '請重新登入後再繼續操作。',
+      // });
     });
 
     const offForbidden = eventBus.on('auth:forbidden', () => {
