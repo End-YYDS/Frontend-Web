@@ -66,6 +66,7 @@ interface GetApacheResponse {
   Cpu: number;
   Memory: number;
   Connections: number;
+  Ip: string;
   Logs: InnerLogs;
 }
 

@@ -23,6 +23,7 @@ import type {
   PostApacheActionResponse,
 } from "./types";
 import { toast } from "sonner";
+// import { apacheApi } from '@/api/apacheApi';
 
 interface ComputerDetailProps {
   computerId: string;

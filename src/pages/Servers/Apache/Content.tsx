@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import axios from 'axios';
 import type { PcsUuid, GetAllPcResponse } from './types';
 import { toast } from 'sonner';
+// import { apacheApi } from '@/api/apacheApi';
 
 interface Computer {
   id: string;
@@ -39,6 +40,7 @@ const ServerContent = () => {
   /** 取得線上電腦資料 */
   const getOnlineComputers = async () => {
     try {
+      //TODO: 調用PC的統一API
       const { data } = await axios.post<GetAllPcResponse>('/api/chm/pc/all');
 
       if (!data || !data.Pcs || Object.keys(data.Pcs).length === 0) {
