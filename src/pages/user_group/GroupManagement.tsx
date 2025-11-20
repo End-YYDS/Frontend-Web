@@ -44,7 +44,9 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
   const [isAddGroupDialogOpen, setIsAddGroupDialogOpen] = useState(false);
   const [isEditGroupDialogOpen, setIsEditGroupDialogOpen] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
-  const groupList = Object.entries(groups).map(([gid, group]) => ({ gid, ...group }));
+  const groupList = Object.entries(groups)
+    .map(([gid, group]) => ({ gid, ...group }))
+    .sort((a, b) => a.Groupname.localeCompare(b.Groupname));
   const filteredGroups = groupList.filter((group) =>
     group.Groupname.toLowerCase().includes(searchTerm.toLowerCase()),
   );
@@ -139,7 +141,7 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
                 const user = users.find((u) => u.uid === uid);
                 return (
                   <div key={uid} className='flex items-center gap-2 text-sm'>
-                    <input type='checkbox' />
+                    {/* <input type='checkbox' /> */}
                     <span>{user ? user.Username : uid}</span>
                   </div>
                 );

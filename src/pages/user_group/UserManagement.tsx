@@ -61,7 +61,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const filteredUsers = users.filter(
+  const sortedUsers = [...users].sort((a, b) => a.Username.localeCompare(b.Username));
+  const filteredUsers = sortedUsers.filter(
     (user) =>
       user.Username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.Group.some((group) => group.toLowerCase().includes(searchTerm.toLowerCase())),
@@ -211,10 +212,18 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   />
                 </TableCell>
               )}
-              <TableCell>{user.Username}</TableCell>
-              <TableCell>{user.Group.join(', ')}</TableCell>
-              <TableCell>{user.Home_directory}</TableCell>
-              <TableCell>{user.Shell}</TableCell>
+              <TableCell className='max-w-40 truncate' title={user.Username}>
+                {user.Username}
+              </TableCell>
+              <TableCell className='max-w-[200px] truncate' title={user.Group.join(', ')}>
+                {user.Group.join(', ')}
+              </TableCell>
+              <TableCell className='max-w-[220px] truncate' title={user.Home_directory}>
+                {user.Home_directory}
+              </TableCell>
+              <TableCell className='max-w-[150px] truncate' title={user.Shell}>
+                {user.Shell}
+              </TableCell>
               {isEditMode && (
                 <TableCell>
                   <div className='flex gap-1'>
