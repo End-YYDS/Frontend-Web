@@ -111,7 +111,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
           <DialogHeader>
             <DialogTitle>Edit user information</DialogTitle>
           </DialogHeader>
-          <div className='space-y-4'>
+          <div className='space-y-4 max-h-[70vh] overflow-y-auto pr-2'>
             {/* Username (不可改) */}
             <div>
               <label className='block text-sm font-medium mb-1'>Username</label>

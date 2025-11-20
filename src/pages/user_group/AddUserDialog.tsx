@@ -108,7 +108,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
           <DialogHeader>
             <DialogTitle>Create a new user</DialogTitle>
           </DialogHeader>
-          <div className='space-y-4'>
+          <div className='space-y-4 max-h-[70vh] overflow-y-auto pr-2'>
             {/* Username */}
             <div>
               <label className='block text-sm font-medium mb-1'>Username</label>
