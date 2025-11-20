@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { authApi } from '@/api/authApi';
-import { toast } from 'sonner';
 import { eventBus } from './lib/EventBus';
 
 export interface User {
@@ -55,13 +54,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       // });
     });
 
-    const offForbidden = eventBus.on('auth:forbidden', () => {
-      toast.error('沒有權限執行此操作');
-    });
+    // const offForbidden = eventBus.on('auth:forbidden', () => {
+    //   toast.error('沒有權限執行此操作');
+    // });
 
     return () => {
       offUnauthorized();
-      offForbidden();
+      // offForbidden();
     };
   }, []);
 
