@@ -98,7 +98,7 @@ export const EditGroupDialog: React.FC<EditGroupDialogProps> = ({
           {/* Users list */}
           <div>
             <label className='block text-sm font-medium mb-1'>Users</label>
-            <div className='space-y-2 max-h-40 overflow-y-auto'>
+            <div className='space-y-2 max-h-[40vh] overflow-y-auto'>
               {normalizedUsers.map((user) => (
                 <div key={user.id} className='flex items-center space-x-2'>
                   <Checkbox

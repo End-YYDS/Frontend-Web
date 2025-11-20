@@ -80,7 +80,7 @@ export const AddGroupDialog: React.FC<AddGroupDialogProps> = ({
           {/* Users list */}
           <div>
             <label className='block text-sm font-medium mb-1'>Users</label>
-            <div className='space-y-2 max-h-40 overflow-y-auto'>
+            <div className='space-y-2 max-h-[40vh] overflow-y-auto'>
               {users.map((user) => (
                 <div key={user.uid} className='flex items-center space-x-2'>
                   <Checkbox
