@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+// import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +17,14 @@ import {
   Loader2,
 } from "lucide-react";
 import type {
-  GetApacheRequest,
+  // GetApacheRequest,
   GetApacheResponse,
   PostApacheActionRequest,
-  PostApacheActionResponse,
+  // PostApacheActionResponse,
 } from "./types";
 import { toast } from "sonner";
-// import { apacheApi } from '@/api/apacheApi';
+import { apacheApi } from "@/api/apacheApi";
+import { _uuid } from "zod/v4/core";
 
 interface ComputerDetailProps {
   computerId: string;
@@ -39,8 +40,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const fetchServerStatus = async () => {
     setLoading(true);
     try {
-      const sendData: GetApacheRequest = { Uuid: computerId };
-      const res = await axios.post<GetApacheResponse>("/api/server/apache", sendData);
+      const res = await apacheApi.getApache(computerId);
       setServerStatus(res.data);
     } catch (error) {
       console.error("Fetch server status failed:", error);
@@ -57,27 +57,29 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   /** 執行 Apache 操作 (Start / Stop / Restart) */
   const performAction = async (action: "start" | "stop" | "restart") => {
     setActionLoading(action);
-    try {
-      const sendData: PostApacheActionRequest = { Uuid: computerId };
-      const res = await axios.post<PostApacheActionResponse>(
-        `/api/server/apache/action/${action}`,
-        sendData
-      );
-      const data = res.data;
 
-      if (data.Type === "Ok") {
-        toast.success('Success', { description: `Server ${action} succeeded` });
+    try {
+      const payload: PostApacheActionRequest = { Uuid: computerId };
+
+      const apiMap = {
+        start: apacheApi.startApache,
+        stop: apacheApi.stopApache,
+        restart: apacheApi.restartApache,
+      };
+
+      const res = await apiMap[action](payload);
+
+      if (res.data.Type === "Ok") {
+        toast.success("Success", { description: `${action} success` });
         fetchServerStatus();
       } else {
-        toast.error('Error', { description: data.Message || `Failed to ${action} server` });
+        toast.error("Error", { description: res.data.Message });
       }
-    } catch (error) {
-      console.error(`${action} failed`, error);
-      toast.error('Error', { description: `Failed to ${action} server` });
     } finally {
       setActionLoading("");
     }
-  };
+};
+
 
   // Loading 狀態畫面
   if (loading) {

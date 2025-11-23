@@ -1,16 +1,11 @@
+// ComputerList.tsx
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Monitor, Cpu, MemoryStick } from 'lucide-react';
-import type { GetApacheResponse } from './types';
 import { toast } from 'sonner';
-
-// interface ComputerListProps {
-//   serverId: string;
-//   searchTerm: string;
-//   onComputerSelect: (computerId: string) => void;
-// }
+import { apacheApi } from '@/api/apacheApi';
+// import type { GetApacheResponse } from './types';
 
 interface ComputerListProps {
   searchTerm: string;
@@ -25,67 +20,43 @@ interface Computer {
   Memory: number;
 }
 
-// export function ComputerList({ serverId, searchTerm, onComputerSelect }: ComputerListProps) {
 export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps) {
-  //TODO: Content.tsx SeachTerm 拿 searchTerm
-  // const searchTerm = '';
-
-  const [computers, setComputers] = useState<Computer[]>([
-    { uuid: '11111', Hostname: 'name', Status: 'active', Cpu: 12, Memory: 13 },
-    { uuid: '11112', Hostname: 'name2', Status: 'active', Cpu: 12, Memory: 13 },
-    { uuid: '11113', Hostname: 'name3', Status: 'active', Cpu: 12, Memory: 13 },
-    { uuid: '11114', Hostname: 'name4', Status: 'active', Cpu: 12, Memory: 13 },
-  ]);
+  const [computers, setComputers] = useState<Computer[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 載入伺服器清單
-  useEffect(() => {
-    fetchComputers();
-  }, []);
-
-  //TODO: 修改串接API
   const fetchComputers = async () => {
-    setLoading(false);
+    setLoading(true);
     try {
-      // 呼叫實際 API
-      const { data } = await axios.get<GetApacheResponse>('/api/server/apache');
+      // TODO: 如果要一次拿全部電腦，可能需要呼叫多個 UUID 或後端提供 list API
+      // 這裡示範單一測試電腦
+      const pcUuidList = ['11111', '11112', '11113', '11114'];
+      const results: Computer[] = [];
 
-      // 將回傳的物件轉換成陣列格式
-      if (!data || typeof data !== 'object') {
-        throw Error('fail');
+      for (const uuid of pcUuidList) {
+        const { data } = await apacheApi.getApache(uuid);
+        results.push({
+          uuid,
+          Hostname: data.Hostname ?? 'Unknown',
+          Status: data.Status ?? 'stopped',
+          Cpu: data.Cpu ?? 0,
+          Memory: data.Memory ?? 0,
+        });
       }
-      const formattedData: Computer[] = Object.keys(data).map((uuid) => ({
-        uuid,
-        Hostname: data.Hostname ?? 'Unknown',
-        Status: data.Status ?? 'stopped',
-        Cpu: data.Cpu ?? 0,
-        Memory: data.Memory ?? 0,
-      }));
 
-      setComputers(formattedData);
-      // setLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch computers:', error);
+      setComputers(results);
+    } catch (err) {
+      console.error(err);
       toast.error('Failed to fetch computers', {
         description: 'Please check the server or your network connection.',
-        duration: 4000,
       });
-      setComputers([
-        { uuid: '11111', Hostname: 'name', Status: 'active', Cpu: 12, Memory: 13 },
-        { uuid: '11112', Hostname: 'name2', Status: 'active', Cpu: 12, Memory: 13 },
-        { uuid: '11113', Hostname: 'name3', Status: 'active', Cpu: 12, Memory: 13 },
-        { uuid: '11114', Hostname: 'name4', Status: 'active', Cpu: 12, Memory: 13 },
-      ]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 避免 undefined 錯誤的安全搜尋
-  // const filteredComputers = computers.filter((computer) => {
-  //   const hostname = computer.Hostname?.toLowerCase() || '';
-  //   const uuid = computer.uuid?.toLowerCase() || '';
-  //   const search = searchTerm?.toLowerCase() || '';
-  //   return hostname.includes(search) || uuid.includes(search);
-  // });
+  useEffect(() => {
+    fetchComputers();
+  }, []);
 
   const filteredComputers = computers.filter((computer) => {
     const search = searchTerm.toLowerCase();
@@ -97,12 +68,12 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
 
   if (loading) {
     return (
-      <div className='space-y-4'>
+      <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className='animate-pulse'>
-            <CardContent className='p-6'>
-              <div className='h-4 bg-slate-200 rounded w-1/4 mb-2'></div>
-              <div className='h-3 bg-slate-200 rounded w-1/6'></div>
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-4 bg-slate-200 rounded w-1/4 mb-2"></div>
+              <div className="h-3 bg-slate-200 rounded w-1/6"></div>
             </CardContent>
           </Card>
         ))}
@@ -111,42 +82,40 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
   }
 
   return (
-    <div className='space-y-4'>
+    <div className="space-y-4">
       {filteredComputers.map((computer) => (
         <Card
           key={computer.uuid}
-          className='cursor-pointer hover:shadow-md transition-shadow'
-          // onClick={(e) => console.log(e)}
+          className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => onComputerSelect(computer.uuid)}
         >
-          <CardContent className='p-6'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-4'>
-                <div className='bg-slate-100 p-3 rounded-lg'>
-                  <Monitor className='w-6 h-6 text-slate-600' />
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-slate-100 p-3 rounded-lg">
+                  <Monitor className="w-6 h-6 text-slate-600" />
                 </div>
                 <div>
-                  <h3 className='font-semibold text-lg text-slate-800'>{computer.Hostname}</h3>
-                  {/* <p className='text-sm text-slate-500'>{computer.uuid}</p> */}
+                  <h3 className="font-semibold text-lg text-slate-800">{computer.Hostname}</h3>
                 </div>
               </div>
 
-              <div className='flex items-center gap-6'>
-                <div className='flex items-center gap-4'>
-                  <div className='text-center'>
-                    <div className='flex items-center gap-1 text-sm text-slate-600'>
-                      <Cpu className='w-4 h-4' />
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <div className="flex items-center gap-1 text-sm text-slate-600">
+                      <Cpu className="w-4 h-4" />
                       <span>{computer.Cpu}%</span>
                     </div>
-                    <p className='text-xs text-slate-500'>CPU</p>
+                    <p className="text-xs text-slate-500">CPU</p>
                   </div>
 
-                  <div className='text-center'>
-                    <div className='flex items-center gap-1 text-sm text-slate-600'>
-                      <MemoryStick className='w-4 h-4' />
+                  <div className="text-center">
+                    <div className="flex items-center gap-1 text-sm text-slate-600">
+                      <MemoryStick className="w-4 h-4" />
                       <span>{computer.Memory}%</span>
                     </div>
-                    <p className='text-xs text-slate-500'>Memory</p>
+                    <p className="text-xs text-slate-500">Memory</p>
                   </div>
                 </div>
 
@@ -164,10 +133,10 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
 
       {filteredComputers.length === 0 && (
         <Card>
-          <CardContent className='p-12 text-center'>
-            <Monitor className='w-12 h-12 text-slate-400 mx-auto mb-4' />
-            <h3 className='text-lg font-semibold text-slate-600 mb-2'>No computers found</h3>
-            <p className='text-slate-500'>
+          <CardContent className="p-12 text-center">
+            <Monitor className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-600 mb-2">No computers found</h3>
+            <p className="text-slate-500">
               {searchTerm
                 ? 'Try adjusting your search terms'
                 : 'No computers have this server installed'}

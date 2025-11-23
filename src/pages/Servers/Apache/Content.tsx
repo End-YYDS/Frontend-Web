@@ -12,10 +12,10 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, Download, Search } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import axios from 'axios';
-import type { PcsUuid, GetAllPcResponse } from './types';
+// import axios from 'axios';
+import type { PcsUuid } from './types';
 import { toast } from 'sonner';
-// import { apacheApi } from '@/api/apacheApi';
+import { apacheApi } from '@/api/apacheApi';
 
 interface Computer {
   id: string;
@@ -41,7 +41,7 @@ const ServerContent = () => {
   const getOnlineComputers = async () => {
     try {
       //TODO: 調用PC的統一API
-      const { data } = await axios.post<GetAllPcResponse>('/api/chm/pc/all');
+      const { data } = await apacheApi.getOnlinePCs();
 
       if (!data || !data.Pcs || Object.keys(data.Pcs).length === 0) {
         console.warn('API 回傳空資料，改用測試資料');
