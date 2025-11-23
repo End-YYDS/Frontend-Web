@@ -54,9 +54,9 @@ interface InnerAccessLogResponse {
 }
 
 interface InnerLogs {
-  ErrorLog: InnerErrorLog;
+  Error_log: InnerErrorLog;
   ErrLength: number;
-  AccessLog: InnerAccessLog;
+  Access_log: InnerAccessLog;
   AccLength: number;
 }
 

@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Monitor, Cpu, MemoryStick } from 'lucide-react';
 import { toast } from 'sonner';
 import { apacheApi } from '@/api/apacheApi';
-// import type { GetApacheResponse } from './types';
 
 interface ComputerListProps {
   searchTerm: string;

@@ -5,11 +5,6 @@ interface PostAddPcRequest {
   Password: string;
 }
 
-// Post /api/chm/pc/add
-// Delete /api/chm/pc
-// Post /api/chm/pc/reboot
-// Post /api/chm/pc/shutdown
-// Post、Put、Patch、Delete /api/chm/pcgroup
 interface ResponseResult {
   Type: ResultType;
   Message: string;
@@ -21,7 +16,6 @@ interface PcsUuid {
   Ip: string;
 }
 
-// Get /api/chm/pc/specific
 interface GetAllPcResponse {
   Pcs: Record<string, PcsUuid>;
   Length: number;
@@ -36,20 +30,14 @@ interface DeletePcRequest {
   Passwords: string[];
 }
 
-// Post /api/chm/pc/reboot
-// Post /api/chm/pc/shutdown
 interface DeletePcResponse {
   Pcs: Record<string, ResponseResult>;
   Length: number;
 }
 
-// Post /api/chm/pc/reboot
-// Post /api/chm/pc/shutdown
 interface PostPcActionRequest {
   Uuids: string[];
 }
-
-// === PC Group ===
 
 interface Vxlanid {
   Groupname: string;
