@@ -5,10 +5,15 @@ import type {
   PostApacheActionRequest,
   GetAllPcResponse,
 } from '@/pages/Servers/Apache/types';
-import type { CommonResponse } from '@/types';
+import type {
+  CommonResponse,
+  GetServerRequest,
+  GetInstalledServerResponse,
+  GetUninstalledServerResponse,
+  PostInstallServerRequest,
+} from '@/types';
 
 export const apacheApi = {
-  //TODO: 檢查{ data: payload }送出的是什麼
   getApache(pcUuid: string) {
     let payload: GetApacheRequest = { Uuid: pcUuid };
     return api.get<GetApacheResponse>('/server/apache', { params: payload });
@@ -24,6 +29,20 @@ export const apacheApi = {
 
   restartApache(payload: PostApacheActionRequest) {
     return api.post<CommonResponse>('/server/apache/action/restart', payload);
+  },
+
+  getInstalled(server: string) {
+    let payload: GetServerRequest = { Server: server };
+    return api.get<GetInstalledServerResponse>('/server/installed', {params: payload});
+  },
+
+  getUninstalled(server: string) {
+    let payload: GetServerRequest = { Server: server };
+    return api.get<GetUninstalledServerResponse>('/server/noinstall', {params: payload});
+  },
+
+  installServer(payload: PostInstallServerRequest) {
+    return api.post<CommonResponse>('/server/install', payload);
   },
 
   getOnlinePCs() {

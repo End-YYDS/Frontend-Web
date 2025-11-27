@@ -17,10 +17,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import type {
-  // GetApacheRequest,
   GetApacheResponse,
   PostApacheActionRequest,
-  // PostApacheActionResponse,
 } from './types';
 import { toast } from 'sonner';
 import { apacheApi } from '@/api/apacheApi';

@@ -1,4 +1,3 @@
-// ComputerList.tsx
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +12,7 @@ interface ComputerListProps {
 
 interface Computer {
   uuid: string;
+  Ip: string;
   Hostname: string;
   Status: 'active' | 'stopped';
   Cpu: number;
@@ -28,17 +28,18 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
     try {
       // TODO: 如果要一次拿全部電腦，可能需要呼叫多個 UUID 或後端提供 list API
       // 這裡示範單一測試電腦
-      const pcUuidList = ['11111', '11112', '11113', '11114'];
+      const pcUuidList = ['9c4feacc-6c68-48bc-a5ba-4282e9e8f127'];
       const results: Computer[] = [];
 
       for (const uuid of pcUuidList) {
         const { data } = await apacheApi.getApache(uuid);
         results.push({
           uuid,
+          Ip: data.Ip,
           Hostname: data.Hostname ?? 'Unknown',
           Status: data.Status ?? 'stopped',
-          Cpu: data.Cpu ?? 0,
-          Memory: data.Memory ?? 0,
+          Cpu: data.Cpu ?? -1,
+          Memory: data.Memory ?? -1,
         });
       }
 
@@ -94,8 +95,9 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
                 <div className="bg-slate-100 p-3 rounded-lg">
                   <Monitor className="w-6 h-6 text-slate-600" />
                 </div>
-                <div>
+                <div className="flex-wrap">
                   <h3 className="font-semibold text-lg text-slate-800">{computer.Hostname}</h3>
+                  <p>{computer.Ip}</p>
                 </div>
               </div>
 

@@ -1,5 +1,3 @@
-type ResultType = 'Ok' | 'Err';
-
 interface GetApacheRequest {
   Uuid: string;
 }
@@ -74,11 +72,6 @@ interface PostApacheActionRequest {
   Uuid: string;
 }
 
-interface PostApacheActionResponse {
-  Type: ResultType;
-  Message: string;
-}
-
 // 取得online主機
 
 interface PcsUuid {
@@ -97,6 +90,5 @@ export type {
   GetApacheRequest,
   GetApacheResponse,
   PostApacheActionRequest,
-  PostApacheActionResponse,
   GetAllPcResponse,
 };
