@@ -3,7 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { Check, AlertTriangle, X, ChevronLeft } from 'lucide-react';
+import { Check, AlertTriangle, X, ChevronLeft, Minus } from 'lucide-react';
+import { SiApache, SiNginx, SiFilezilla } from "react-icons/si";
+import { FaGlobe } from "react-icons/fa";
+import { LuIdCard } from "react-icons/lu";
+import { TbNetwork, TbBrandMysql, TbFolders } from "react-icons/tb";
+import { GiSquid } from "react-icons/gi";
+import { IoTerminal } from "react-icons/io5";
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -18,15 +25,16 @@ import {
 } from '@/components/ui/table';
 import { infoApi } from '@/api/infoApi';
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 3;
 
 export function DashboardContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<'safe' | 'warning' | 'danger' | null>(null);
 
-  // 系統總覽資料
-  // const [info, setInfo] = useState({ Safe: 0, Warn: 0, Dang: 0 });
-  // const [cluster, setCluster] = useState({ Cpu: 0, Memory: 0, Disk: 0 });
+  // server狀態
+  const [ApacheStatus, setApacheStatus] = useState<
+    { name: string; Apache: string }[]
+  >([]);
 
   // 圖表資料
   const [cpuData, setCpuData] = useState<{ time: string; value: number }[]>([]);
@@ -43,23 +51,6 @@ export function DashboardContent() {
     warning: { icon: AlertTriangle, color: 'text-yellow-500' },
     danger: { icon: X, color: 'text-red-500' },
   };
-
-  /* ==============================
-     mock虛擬資料 fallback
-     ============================== */
-  // const fakeData = () => {
-  //   const timestamp = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  //   const fakeCluster = { Cpu: Math.floor(Math.random() * 50) + 30, Memory: Math.floor(Math.random() * 50) + 30, Disk: Math.floor(Math.random() * 50) + 30 };
-  //   const fakeInfo = { Safe: 5, Warn: 3, Dang: 2 };
-
-  //   const list = [
-  //     ...Array(fakeInfo.Safe).fill(0).map((_, i) => ({ name: `PC-Safe-${i + 1}`, cpu: (Math.random() * 50 + 10).toFixed(0) + '%', memory: (Math.random() * 50 + 10).toFixed(0) + '%', disk: (Math.random() * 50 + 10).toFixed(0) + '%', status: 'safe' })),
-  //     ...Array(fakeInfo.Warn).fill(0).map((_, i) => ({ name: `PC-Warn-${i + 1}`, cpu: (Math.random() * 30 + 50).toFixed(0) + '%', memory: (Math.random() * 30 + 50).toFixed(0) + '%', disk: (Math.random() * 30 + 50).toFixed(0) + '%', status: 'warning' })),
-  //     ...Array(fakeInfo.Dang).fill(0).map((_, i) => ({ name: `PC-Danger-${i + 1}`, cpu: (Math.random() * 20 + 80).toFixed(0) + '%', memory: (Math.random() * 20 + 80).toFixed(0) + '%', disk: (Math.random() * 20 + 80).toFixed(0) + '%', status: 'danger' })),
-  //   ];
-
-  //   return { fakeCluster, fakeInfo, list, timestamp };
-  // };
 
   const fakeData = () => {
     const timestamp = new Date().toLocaleTimeString('zh-TW', {
@@ -105,11 +96,33 @@ export function DashboardContent() {
           disk: (Math.random() * 20 + 80).toFixed(0) + '%',
           status: 'danger',
         })),
-    ];
+      ];
 
-    return { fakeCluster, list, timestamp };
+      const serviceKeys = [
+        'A', 'N', 'B', 'D', 'L', 'M',
+        'ProFTPD', 'Samba', 'Proxy', 'SSH',
+      ];
+      const statusPool = ['active', 'stopped', 'uninstalled'];
+
+      const fakeServers = list.map(pc => ({
+      name: pc.name.replace('PC', 'host'),
+      services: Object.fromEntries(
+        serviceKeys.map(key => [key, statusPool[Math.floor(Math.random() * statusPool.length)]])
+      ),
+    }));
+    return { fakeCluster, list, timestamp, fakeServers };
   };
 
+  const ServiceStatusIcon = ({ status }: { status: string }) => { 
+    if (status === "active") { 
+      return <Check className="w-4 h-4 text-green-500" />; 
+    } 
+    if (status === "stopped") { 
+      return <X className="w-4 h-4 text-red-500" />; 
+    } 
+    return <Minus className="w-4 h-4 text-gray-400" />;
+  };
+  
   //TODO: info要記得加上
   const fetchAllInfo = async () => {
     try {
@@ -142,30 +155,52 @@ export function DashboardContent() {
       const pcsData = resPcs.data;
 
       if (pcsData && pcsData.Pcs && typeof pcsData.Pcs === 'object') {
+        const apacheStatus = await Promise.all(
+          Object.entries(pcsData.Pcs).map(async ([uuid]) => {
+            const res = await infoApi.getApache(uuid);
+            const data = res.data;
+            return {
+              uuid,
+              hostname: data.Hostname,
+              status: data.Status,
+            };
+          })
+        );
+        const hostMap = Object.fromEntries(
+          apacheStatus.map(a => [a.uuid, a.hostname])
+        );
         const list = Object.entries(pcsData?.Pcs).map(([uuid, stats]) => ({
-          name: `PC-${uuid}`,
+          name: hostMap[uuid] ?? `PC-${uuid}`,
           cpu: stats?.Cpu + '%',
           memory: stats?.Memory + '%',
           disk: stats?.Disk + '%',
-          status: (() => {
-            const cpu = stats?.Cpu,
-              mem = stats?.Memory,
-              disk = stats?.Disk;
-            if (cpu < 50 && mem < 50 && disk < 50) return 'safe';
-            if (cpu < 70 && mem < 70 && disk < 70) return 'warning';
-            return 'danger';
+          status: (() => { 
+            const cpu = stats?.Cpu_status,
+              mem = stats?.Mem_status,
+              disk = stats?.Disk_status;
+            if (cpu === 'warn' || mem === 'warn' || disk === 'warn') return 'warning';
+            if (cpu === 'dang' || mem === 'dang' || disk === 'dang') return 'danger';
+            return 'safe';
           })(),
         }));
-
         setComputers(list);
+        setApacheStatus(
+          apacheStatus.map(a => ({
+            name: a.hostname,
+            Apache: a.status,
+          }))
+        );
       }
     } catch (err: any) {
       toast.error('後端連線失敗，使用模擬資料');
-      const { fakeCluster, list, timestamp } = fakeData();
+      const { fakeCluster, list, timestamp, fakeServers } = fakeData();
       setCpuData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Cpu }]);
       setMemoryData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Memory }]);
       // setDiskData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Disk }]);
       setComputers(list);
+      setApacheStatus(
+        fakeServers.map((s) => ({ name: s.name, Apache: s.services['A'] }))
+      );
     }
   };
 
@@ -236,9 +271,9 @@ export function DashboardContent() {
                     <Badge
                       variant='outline'
                       className={`${
-                        parseInt(computer.cpu) > 70
+                        computer.status === 'danger'
                           ? 'border-red-300 text-red-700'
-                          : parseInt(computer.cpu) > 50
+                          : computer.status === 'warning'
                           ? 'border-yellow-300 text-yellow-700'
                           : 'border-green-300 text-green-700'
                       }`}
@@ -250,9 +285,9 @@ export function DashboardContent() {
                     <Badge
                       variant='outline'
                       className={`${
-                        parseInt(computer.memory) > 70
+                        computer.status === 'danger'
                           ? 'border-red-300 text-red-700'
-                          : parseInt(computer.memory) > 50
+                          : computer.status === 'warning'
                           ? 'border-yellow-300 text-yellow-700'
                           : 'border-green-300 text-green-700'
                       }`}
@@ -264,9 +299,9 @@ export function DashboardContent() {
                     <Badge
                       variant='outline'
                       className={`${
-                        parseInt(computer.disk) > 70
+                        computer.status === 'danger'
                           ? 'border-red-300 text-red-700'
-                          : parseInt(computer.disk) > 50
+                          : computer.status === 'warning'
                           ? 'border-yellow-300 text-yellow-700'
                           : 'border-green-300 text-green-700'
                       }`}
@@ -291,9 +326,148 @@ export function DashboardContent() {
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
         <h1 className='text-4xl font-extrabold text-center text-[#E6E6E6]'>Dashboard</h1>
       </div>
-
+      <div className='space-y-6 min-w-0 mb-6'>
+        <Card>
+          <CardHeader>
+            <CardTitle className='text-slate-700'>Server Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='space-y-4'>
+              <Table className="table-fixed w-full">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className='text-xs w-1/5'>Name</TableHead>
+                    <TableHead className='text-xl'>
+                      <div title="Apache">
+                        <SiApache />
+                      </div>
+                    </TableHead>
+                    <TableHead className='text-base'>
+                      <div title="Nginx">
+                        <SiNginx />
+                      </div>
+                    </TableHead>
+                    <TableHead className='text-base'>
+                      <div title="BIND DNS">
+                        <FaGlobe />
+                      </div>
+                    </TableHead>
+                    <TableHead className='text-lg'>
+                      <div title="DHCP">
+                        <TbNetwork />
+                      </div>
+                    </TableHead>
+                    <TableHead className='text-lg'>
+                      <div title="LDAP">
+                        <LuIdCard />
+                      </div>
+                    </TableHead>
+                    <TableHead className='text-lg'>
+                      <div title="MySQL Database">
+                        <TbBrandMysql />
+                      </div>
+                    </TableHead>
+                    <TableHead className='text-base'>
+                      <div title="ProFTPD">
+                        <SiFilezilla />
+                      </div>
+                    </TableHead>
+                    <TableHead className='text-lg'>
+                      <div title="Samba">
+                        <TbFolders />
+                      </div>
+                    </TableHead>
+                    <TableHead className='text-base'>
+                      <div title="Squid Proxy">
+                        <GiSquid />
+                      </div>
+                    </TableHead>
+                    <TableHead className='text-base'>
+                      <div title="SSH">
+                        <IoTerminal />
+                      </div>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {currentComputers.map((computer) => {
+                    const apache = ApacheStatus.find(a => a.name === computer.name.replace('PC', 'host'))?.Apache ?? 'uninstalled';
+                    return (
+                      <TableRow key={computer.name}>
+                        <TableCell className="text-xs truncate" title={computer.name}>
+                          {computer.name}
+                        </TableCell>
+                        <TableCell className="h-10">
+                          <ServiceStatusIcon status={apache} />
+                        </TableCell>
+                        <TableCell className="h-10">
+                          <ServiceStatusIcon status="uninstalled" />
+                        </TableCell>
+                        <TableCell className="h-10">
+                          <ServiceStatusIcon status="uninstalled" />
+                        </TableCell>
+                        <TableCell className="h-10">
+                          <ServiceStatusIcon status="uninstalled" />
+                        </TableCell>
+                        <TableCell className="h-10">
+                          <ServiceStatusIcon status="uninstalled" />
+                        </TableCell>
+                        <TableCell className="h-10">
+                          <ServiceStatusIcon status="uninstalled" />
+                        </TableCell>
+                        <TableCell className="h-10">
+                          <ServiceStatusIcon status="uninstalled" />
+                        </TableCell>
+                        <TableCell className="h-10">
+                          <ServiceStatusIcon status="uninstalled" />
+                        </TableCell>
+                        <TableCell className="h-10">
+                          <ServiceStatusIcon status="uninstalled" />
+                        </TableCell>
+                        <TableCell className="h-10">
+                          <ServiceStatusIcon status="uninstalled" />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className='flex items-center justify-between'>
+                  <div className='text-xs text-slate-500'>
+                    Showing {startIndex + 1} to {Math.min(endIndex, filteredComputers.length)} of{' '}
+                    {filteredComputers.length} computers
+                  </div>
+                  <div className='flex items-center space-x-2'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Prev
+                    </Button>
+                    <span className='text-xs text-slate-600'>
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       {/* Status Cards */}
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-6'>
         <Button variant='ghost' className='h-auto p-0' onClick={() => handleStatusClick('safe')}>
           <StatusCard status='safe' getStatusCount={getStatusCount} />
         </Button>
@@ -306,7 +480,6 @@ export function DashboardContent() {
           <StatusCard status='danger' getStatusCount={getStatusCount} />
         </Button>
       </div>
-
       {/* Charts */}
       <div className='space-y-6 min-w-0'>
         {/* CPU Chart */}
@@ -320,7 +493,7 @@ export function DashboardContent() {
                 <LineChart data={cpuData}>
                   <CartesianGrid strokeDasharray='3 3' stroke='#e2e8f0' />
                   <XAxis dataKey='time' stroke='#64748b' fontSize={12} />
-                  <YAxis stroke='#64748b' fontSize={12} />
+                  <YAxis stroke='#64748b' fontSize={12} domain={[0, 100]} />
                   <Line
                     type='monotone'
                     dataKey='value'
@@ -344,8 +517,8 @@ export function DashboardContent() {
               <ResponsiveContainer width='100%' height='100%'>
                 <LineChart data={memoryData}>
                   <CartesianGrid strokeDasharray='3 3' stroke='#e2e8f0' />
-                  <XAxis dataKey='time' stroke='#64748b' fontSize={12} />
-                  <YAxis stroke='#64748b' fontSize={12} />
+                  <XAxis dataKey='time' stroke='#64748b' fontSize={12} domain={[0, 100]} />
+                  <YAxis stroke='#64748b' fontSize={12} domain={[0, 100]} />
                   <Line
                     type='monotone'
                     dataKey='value'
@@ -429,9 +602,9 @@ export function DashboardContent() {
                         <Badge
                           variant='outline'
                           className={`text-xs ${
-                            parseInt(computer.cpu) > 70
+                            computer.status === 'danger'
                               ? 'border-red-300 text-red-700'
-                              : parseInt(computer.cpu) > 50
+                              : computer.status === 'warning'
                               ? 'border-yellow-300 text-yellow-700'
                               : 'border-green-300 text-green-700'
                           }`}
@@ -444,9 +617,9 @@ export function DashboardContent() {
                         <Badge
                           variant='outline'
                           className={`text-xs ${
-                            parseInt(computer.memory) > 70
+                            computer.status === 'danger'
                               ? 'border-red-300 text-red-700'
-                              : parseInt(computer.memory) > 50
+                              : computer.status === 'warning'
                               ? 'border-yellow-300 text-yellow-700'
                               : 'border-green-300 text-green-700'
                           }`}
@@ -459,9 +632,9 @@ export function DashboardContent() {
                         <Badge
                           variant='outline'
                           className={`text-xs ${
-                            parseInt(computer.disk) > 70
+                            computer.status === 'danger'
                               ? 'border-red-300 text-red-700'
-                              : parseInt(computer.disk) > 50
+                              : computer.status === 'warning'
                               ? 'border-yellow-300 text-yellow-700'
                               : 'border-green-300 text-green-700'
                           }`}
