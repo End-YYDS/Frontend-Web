@@ -62,7 +62,7 @@ interface InnerLogs {
 
 interface GetApacheResponse {
   Hostname: string;
-  Status: 'active' | 'stopped';
+  Status: 'active' | 'stopped' | 'uninstalled';
   Cpu: number;
   Memory: number;
   Connections: number;
