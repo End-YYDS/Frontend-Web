@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:types": "json2ts schema/all.schema.json -o src/types/chm.d.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -63,6 +64,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",
+    "json-schema-to-typescript": "^15.0.4",
     "tw-animate-css": "^1.3.5",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
