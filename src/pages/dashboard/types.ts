@@ -1,6 +1,7 @@
 type Zone = 'info' | 'cluster';
 type Target = 'safe' | 'warn' | 'dang' | 'Cpu' | 'Memory' | 'Disk';
 
+
 interface Info {
   Safe: number;
   Warn: number;
@@ -11,6 +12,15 @@ interface Cluster {
   Cpu: number;
   Memory: number;
   Disk: number;
+}
+
+interface PcInfo {
+  Cpu: number;
+  Memory: number;
+  Disk: number;
+  Cpu_status: 'safe' | 'warn' | 'dang';
+  Mem_status: 'safe' | 'warn' | 'dang';
+  Disk_status: 'safe' | 'warn' | 'dang';
 }
 
 interface GetAllInfoResponse {
@@ -26,7 +36,7 @@ interface PostInfoGetRequest {
 }
 
 interface PostInfoGetResponse {
-  Pcs: Record<string, Cluster>;
+  Pcs: Record<string, PcInfo>;
   Length: number;
 }
 

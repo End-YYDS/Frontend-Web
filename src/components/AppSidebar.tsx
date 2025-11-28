@@ -20,6 +20,12 @@ import {
   ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
+import { SiApache, SiNginx, SiFilezilla } from "react-icons/si";
+import { FaGlobe } from "react-icons/fa";
+import { LuIdCard } from "react-icons/lu";
+import { TbNetwork, TbBrandMysql, TbFolders } from "react-icons/tb";
+import { GiSquid } from "react-icons/gi";
+import { IoTerminal } from "react-icons/io5";
 
 import {
   Sidebar,
@@ -108,6 +114,20 @@ const sidebarItems: SidebarItem[] = [
   },
 ];
 
+const serverIcons: Record<string, React.ReactNode> = {
+  apache: <SiApache className="size-4" />,
+  nginx: <SiNginx className="size-4" />,
+  bind: <FaGlobe className="size-4" />,
+  dhcp: <TbNetwork className="size-4" />,
+  ldap: <LuIdCard className="size-4" />,
+  mysql: <TbBrandMysql className="size-4" />,
+  proftpd: <SiFilezilla className="size-4" />,
+  samba: <TbFolders className="size-4" />,
+  squid: <GiSquid className="size-4" />,
+  ssh: <IoTerminal className="size-4" />,
+};
+
+
 export function AppSidebar() {
   const location = useLocation();
   const [showServers, setShowServers] = useState(false);
@@ -168,6 +188,7 @@ export function AppSidebar() {
                 <SidebarMenuSubItem key={s.id}>
                   <SidebarMenuSubButton asChild isActive={isActive(to)}>
                     <Link to={to}>
+                      <span className='truncate'>{serverIcons[s.id]}</span>
                       <span className='truncate'>{s.name}</span>
                     </Link>
                   </SidebarMenuSubButton>
