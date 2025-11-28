@@ -4,7 +4,7 @@ import { type PageMeta, ResponseType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/auth';
-import { authApi } from '@/api/authApi';
+import { login } from '@/api/openapi-client';
 
 (Login as any).meta = {
   requiresAuth: false,
@@ -21,8 +21,8 @@ function Login() {
     e.preventDefault();
     try {
       setError(null);
-      let { data } = await authApi.login(username, password);
-      if (data.Type === ResponseType.Err) {
+      let { data } = await login({ body: { Username: username, Password: password } });
+      if (data?.Type === ResponseType.Err) {
         setUsername('');
         setPassword('');
         throw new Error('帳號或密碼錯誤');
