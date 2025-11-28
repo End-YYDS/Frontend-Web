@@ -14,14 +14,14 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Plus, Trash2, Edit } from 'lucide-react';
-import type { GroupEntry } from './types';
 import { AddGroupDialog } from './AddGroupDialog';
 import { EditGroupDialog } from './EditGroupDialog';
+import type { CreateGroupRequest, GroupEntry } from '@/api/openapi-client';
 
 interface GroupManagementProps {
   groups: Record<string, GroupEntry>;
   users: { uid: string; Username: string }[];
-  onAddGroup: (group: Omit<GroupEntry, 'Groupname'> & { Groupname: string }) => void;
+  onAddGroup: (group: CreateGroupRequest) => void;
   onUpdateGroup: (gid: string, group: GroupEntry) => void;
   onDeleteGroup: (gid: string) => void;
   searchTerm: string;
@@ -137,7 +137,7 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
             </div>
             <div className='text-sm text-gray-600'>users</div>
             <div className='space-y-0.5'>
-              {group.Users.map((uid) => {
+              {group.Users?.map((uid) => {
                 const user = users.find((u) => u.uid === uid);
                 return (
                   <div key={uid} className='flex items-center gap-2 text-sm'>

@@ -4,17 +4,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { Check, AlertTriangle, X, ChevronLeft, Minus } from 'lucide-react';
-import { SiApache, SiNginx, SiFilezilla } from "react-icons/si";
-import { FaGlobe } from "react-icons/fa";
-import { LuIdCard } from "react-icons/lu";
-import { TbNetwork, TbBrandMysql, TbFolders } from "react-icons/tb";
-import { GiSquid } from "react-icons/gi";
-import { IoTerminal } from "react-icons/io5";
+import { SiApache, SiNginx, SiFilezilla } from 'react-icons/si';
+import { FaGlobe } from 'react-icons/fa';
+import { LuIdCard } from 'react-icons/lu';
+import { TbNetwork, TbBrandMysql, TbFolders } from 'react-icons/tb';
+import { GiSquid } from 'react-icons/gi';
+import { IoTerminal } from 'react-icons/io5';
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-import type { PostInfoGetRequest } from './types';
 import {
   Table,
   TableBody,
@@ -23,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { infoApi } from '@/api/infoApi';
+import { getApacheAll, getInfoAll, postInfoGet, type InfoGetRequest } from '@/api/openapi-client';
 
 const ITEMS_PER_PAGE = 3;
 
@@ -32,9 +31,7 @@ export function DashboardContent() {
   const [selectedStatus, setSelectedStatus] = useState<'safe' | 'warning' | 'danger' | null>(null);
 
   // server狀態
-  const [ApacheStatus, setApacheStatus] = useState<
-    { name: string; Apache: string }[]
-  >([]);
+  const [ApacheStatus, setApacheStatus] = useState<{ name: string; Apache: string }[]>([]);
 
   // 圖表資料
   const [cpuData, setCpuData] = useState<{ time: string; value: number }[]>([]);
@@ -96,37 +93,34 @@ export function DashboardContent() {
           disk: (Math.random() * 20 + 80).toFixed(0) + '%',
           status: 'danger',
         })),
-      ];
+    ];
 
-      const serviceKeys = [
-        'A', 'N', 'B', 'D', 'L', 'M',
-        'ProFTPD', 'Samba', 'Proxy', 'SSH',
-      ];
-      const statusPool = ['active', 'stopped', 'uninstalled'];
+    const serviceKeys = ['A', 'N', 'B', 'D', 'L', 'M', 'ProFTPD', 'Samba', 'Proxy', 'SSH'];
+    const statusPool = ['active', 'stopped', 'uninstalled'];
 
-      const fakeServers = list.map(pc => ({
+    const fakeServers = list.map((pc) => ({
       name: pc.name.replace('PC', 'host'),
       services: Object.fromEntries(
-        serviceKeys.map(key => [key, statusPool[Math.floor(Math.random() * statusPool.length)]])
+        serviceKeys.map((key) => [key, statusPool[Math.floor(Math.random() * statusPool.length)]]),
       ),
     }));
     return { fakeCluster, list, timestamp, fakeServers };
   };
 
-  const ServiceStatusIcon = ({ status }: { status: string }) => { 
-    if (status === "active") { 
-      return <Check className="w-4 h-4 text-green-500" />; 
-    } 
-    if (status === "stopped") { 
-      return <X className="w-4 h-4 text-red-500" />; 
-    } 
-    return <Minus className="w-4 h-4 text-gray-400" />;
+  const ServiceStatusIcon = ({ status }: { status: string }) => {
+    if (status === 'active') {
+      return <Check className='w-4 h-4 text-green-500' />;
+    }
+    if (status === 'stopped') {
+      return <X className='w-4 h-4 text-red-500' />;
+    }
+    return <Minus className='w-4 h-4 text-gray-400' />;
   };
-  
+
   //TODO: info要記得加上
   const fetchAllInfo = async () => {
     try {
-      const { data } = await infoApi.getAllInfo();
+      const { data } = await getInfoAll();
       if (
         data &&
         data.Cluster &&
@@ -150,45 +144,43 @@ export function DashboardContent() {
         ]);
       }
       // 取得各主機資料
-      const reqBody: PostInfoGetRequest = { Zone: 'info', Target: 'safe', Uuid: null };
-      const resPcs = await infoApi.getPcs(reqBody);
+      const reqBody: InfoGetRequest = { Target: 'Safe', Uuid: null };
+      const resPcs = await postInfoGet({ body: reqBody });
       const pcsData = resPcs.data;
 
       if (pcsData && pcsData.Pcs && typeof pcsData.Pcs === 'object') {
         const apacheStatus = await Promise.all(
           Object.entries(pcsData.Pcs).map(async ([uuid]) => {
-            const res = await infoApi.getApache(uuid);
+            const res = await getApacheAll({ query: { Uuid: uuid } });
             const data = res.data;
             return {
               uuid,
-              hostname: data.Hostname,
-              status: data.Status,
+              hostname: data?.Hostname ?? `host-${uuid}`,
+              status: data?.Status ?? 'undefined',
             };
-          })
+          }),
         );
-        const hostMap = Object.fromEntries(
-          apacheStatus.map(a => [a.uuid, a.hostname])
-        );
+        const hostMap = Object.fromEntries(apacheStatus.map((a) => [a.uuid, a.hostname]));
         const list = Object.entries(pcsData?.Pcs).map(([uuid, stats]) => ({
           name: hostMap[uuid] ?? `PC-${uuid}`,
           cpu: stats?.Cpu + '%',
           memory: stats?.Memory + '%',
           disk: stats?.Disk + '%',
-          status: (() => { 
-            const cpu = stats?.Cpu_status,
-              mem = stats?.Mem_status,
-              disk = stats?.Disk_status;
-            if (cpu === 'warn' || mem === 'warn' || disk === 'warn') return 'warning';
-            if (cpu === 'dang' || mem === 'dang' || disk === 'dang') return 'danger';
+          status: (() => {
+            const cpu = stats?.CpuStatus,
+              mem = stats?.MemStatus,
+              disk = stats?.DiskStatus;
+            if (cpu === 'Warn' || mem === 'Warn' || disk === 'Warn') return 'warning';
+            if (cpu === 'Dang' || mem === 'Dang' || disk === 'Dang') return 'danger';
             return 'safe';
           })(),
         }));
         setComputers(list);
         setApacheStatus(
-          apacheStatus.map(a => ({
+          apacheStatus.map((a) => ({
             name: a.hostname,
             Apache: a.status,
-          }))
+          })),
         );
       }
     } catch (err: any) {
@@ -198,15 +190,13 @@ export function DashboardContent() {
       setMemoryData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Memory }]);
       // setDiskData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Disk }]);
       setComputers(list);
-      setApacheStatus(
-        fakeServers.map((s) => ({ name: s.name, Apache: s.services['A'] }))
-      );
+      setApacheStatus(fakeServers.map((s) => ({ name: s.name, Apache: s.services['A'] })));
     }
   };
 
   useEffect(() => {
     fetchAllInfo();
-    const interval = setInterval(fetchAllInfo, 5000); 
+    const interval = setInterval(fetchAllInfo, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -333,57 +323,57 @@ export function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className='space-y-4'>
-              <Table className="table-fixed w-full">
+              <Table className='table-fixed w-full'>
                 <TableHeader>
                   <TableRow>
                     <TableHead className='text-xs w-1/5'>Name</TableHead>
                     <TableHead className='text-xl'>
-                      <div title="Apache">
+                      <div title='Apache'>
                         <SiApache />
                       </div>
                     </TableHead>
                     <TableHead className='text-base'>
-                      <div title="Nginx">
+                      <div title='Nginx'>
                         <SiNginx />
                       </div>
                     </TableHead>
                     <TableHead className='text-base'>
-                      <div title="BIND DNS">
+                      <div title='BIND DNS'>
                         <FaGlobe />
                       </div>
                     </TableHead>
                     <TableHead className='text-lg'>
-                      <div title="DHCP">
+                      <div title='DHCP'>
                         <TbNetwork />
                       </div>
                     </TableHead>
                     <TableHead className='text-lg'>
-                      <div title="LDAP">
+                      <div title='LDAP'>
                         <LuIdCard />
                       </div>
                     </TableHead>
                     <TableHead className='text-lg'>
-                      <div title="MySQL Database">
+                      <div title='MySQL Database'>
                         <TbBrandMysql />
                       </div>
                     </TableHead>
                     <TableHead className='text-base'>
-                      <div title="ProFTPD">
+                      <div title='ProFTPD'>
                         <SiFilezilla />
                       </div>
                     </TableHead>
                     <TableHead className='text-lg'>
-                      <div title="Samba">
+                      <div title='Samba'>
                         <TbFolders />
                       </div>
                     </TableHead>
                     <TableHead className='text-base'>
-                      <div title="Squid Proxy">
+                      <div title='Squid Proxy'>
                         <GiSquid />
                       </div>
                     </TableHead>
                     <TableHead className='text-base'>
-                      <div title="SSH">
+                      <div title='SSH'>
                         <IoTerminal />
                       </div>
                     </TableHead>
@@ -391,41 +381,43 @@ export function DashboardContent() {
                 </TableHeader>
                 <TableBody>
                   {currentComputers.map((computer) => {
-                    const apache = ApacheStatus.find(a => a.name === computer.name.replace('PC', 'host'))?.Apache ?? 'uninstalled';
+                    const apache =
+                      ApacheStatus.find((a) => a.name === computer.name.replace('PC', 'host'))
+                        ?.Apache ?? 'uninstalled';
                     return (
                       <TableRow key={computer.name}>
-                        <TableCell className="text-xs truncate" title={computer.name}>
+                        <TableCell className='text-xs truncate' title={computer.name}>
                           {computer.name}
                         </TableCell>
-                        <TableCell className="h-10">
+                        <TableCell className='h-10'>
                           <ServiceStatusIcon status={apache} />
                         </TableCell>
-                        <TableCell className="h-10">
-                          <ServiceStatusIcon status="uninstalled" />
+                        <TableCell className='h-10'>
+                          <ServiceStatusIcon status='uninstalled' />
                         </TableCell>
-                        <TableCell className="h-10">
-                          <ServiceStatusIcon status="uninstalled" />
+                        <TableCell className='h-10'>
+                          <ServiceStatusIcon status='uninstalled' />
                         </TableCell>
-                        <TableCell className="h-10">
-                          <ServiceStatusIcon status="uninstalled" />
+                        <TableCell className='h-10'>
+                          <ServiceStatusIcon status='uninstalled' />
                         </TableCell>
-                        <TableCell className="h-10">
-                          <ServiceStatusIcon status="uninstalled" />
+                        <TableCell className='h-10'>
+                          <ServiceStatusIcon status='uninstalled' />
                         </TableCell>
-                        <TableCell className="h-10">
-                          <ServiceStatusIcon status="uninstalled" />
+                        <TableCell className='h-10'>
+                          <ServiceStatusIcon status='uninstalled' />
                         </TableCell>
-                        <TableCell className="h-10">
-                          <ServiceStatusIcon status="uninstalled" />
+                        <TableCell className='h-10'>
+                          <ServiceStatusIcon status='uninstalled' />
                         </TableCell>
-                        <TableCell className="h-10">
-                          <ServiceStatusIcon status="uninstalled" />
+                        <TableCell className='h-10'>
+                          <ServiceStatusIcon status='uninstalled' />
                         </TableCell>
-                        <TableCell className="h-10">
-                          <ServiceStatusIcon status="uninstalled" />
+                        <TableCell className='h-10'>
+                          <ServiceStatusIcon status='uninstalled' />
                         </TableCell>
-                        <TableCell className="h-10">
-                          <ServiceStatusIcon status="uninstalled" />
+                        <TableCell className='h-10'>
+                          <ServiceStatusIcon status='uninstalled' />
                         </TableCell>
                       </TableRow>
                     );

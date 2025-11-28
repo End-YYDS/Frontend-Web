@@ -32,15 +32,17 @@ import { Plus, Computer, Users, Edit2, UserPlus, Trash2 } from 'lucide-react';
 import { DataTable } from './data-table';
 import type { ColumnDef } from '@tanstack/react-table';
 import axios from 'axios';
-import type {
-  DeletePcGroupRequest,
-  GetAllPcResponse,
-  GetPcgroupResponse,
-  PostAddPcRequest,
-  PostPcgroupRequest,
-  ResponseResult,
-} from './types';
 import { toast } from 'sonner';
+import {
+  addPc,
+  getAllPc,
+  getPcgroup,
+  type DeletePcGroupRequest,
+  type GetPcgroupResponseResult,
+  type PcManagerRequest,
+  type PostPcgroupRequest,
+  type ResponseResult,
+} from '@/api/openapi-client';
 
 interface Computer {
   id: string;
@@ -138,7 +140,7 @@ export function PCManagerContent() {
   // 取得所有主機
   const fetchAllComputers = async () => {
     try {
-      const res = await axios.get<GetAllPcResponse>('/api/chm/pc/all', { withCredentials: true });
+      const res = await getAllPc();
       const data = res.data;
       if (data && data.Pcs && typeof data.Pcs === 'object') {
         const pcs: Computer[] = Object.entries(data.Pcs).map(([uuid, pc]) => ({
@@ -148,10 +150,10 @@ export function PCManagerContent() {
           status: pc.Status ? 'Online' : 'Offline',
         }));
         setComputers(pcs);
-        const raw = await axios
-          .get<GetPcgroupResponse>('/api/chm/pcgroup', { withCredentials: true })
-          .then((r) => r.data);
-        setComputers((prev) => applyServerGrouping(raw, prev));
+        const raw = await getPcgroup().then((r) => r.data);
+        if (raw && raw.Groups && typeof raw.Groups === 'object') {
+          setComputers((prev) => applyServerGrouping(raw, prev));
+        }
       } else {
         setComputers([]);
       }
@@ -167,12 +169,10 @@ export function PCManagerContent() {
     if (!isValidIpOrIpPort(ip)) {
       return { Type: 'Err', Message: 'Invalid IP address or IP:Port format.' };
     }
-    const body: PostAddPcRequest = { Ip: ip, Password: password };
+    const body: PcManagerRequest = { Ip: ip, Password: password };
     try {
-      const { data } = await axios.post<ResponseResult>('/api/chm/pc/add', body, {
-        withCredentials: true,
-      });
-      return data;
+      const { data } = await addPc({ body: body });
+      return data ?? { Type: 'Err', Message: 'No response from server.' };
     } catch (err) {
       console.error('Add PC API failed:', err);
       return { Type: 'Err', Message: String(err) };
@@ -182,7 +182,7 @@ export function PCManagerContent() {
   // -------------------- PC Group --------------------
 
   const applyServerGrouping = (
-    groupsRaw: GetPcgroupResponse,
+    groupsRaw: GetPcgroupResponseResult,
     currentComputers: Computer[],
   ): Computer[] => {
     const uuidToGroup = new Map<string, string>();
@@ -200,9 +200,7 @@ export function PCManagerContent() {
 
   const fetchAllGroups = async () => {
     try {
-      const { data } = await axios.get<GetPcgroupResponse>('/api/chm/pcgroup', {
-        withCredentials: true,
-      });
+      const { data } = await getPcgroup();
       if (data && data.Groups && typeof data.Groups === 'object') {
         // data.Groups 是 Record<string, Vxlanid>
         const groupList: ComputerGroup[] = Object.entries(data.Groups).map(([vxlanid, g]) => ({
@@ -236,11 +234,9 @@ export function PCManagerContent() {
       return { Type: 'Err', Message: String(err) };
     }
   };
-  const fetchAllGroupsRaw = async () => {
-    const { data } = await axios.get<GetPcgroupResponse>('/api/chm/pcgroup', {
-      withCredentials: true,
-    });
-    return data;
+  const fetchAllGroupsRaw = async (): Promise<GetPcgroupResponseResult> => {
+    const { data } = await getPcgroup();
+    return data ?? { Groups: {}, Length: 0 };
   };
 
   const patchGroupPcs = async (vxlanid: string, pcs: string[]) => {
@@ -256,29 +252,29 @@ export function PCManagerContent() {
 
     (async () => {
       try {
-        const [pcResp, groupResp] = await Promise.all([
-          axios.get<GetAllPcResponse>('/api/chm/pc/all', { withCredentials: true }),
-          axios.get<GetPcgroupResponse>('/api/chm/pcgroup', { withCredentials: true }),
-        ]);
+        const [pcResp, groupResp] = await Promise.all([getAllPc(), getPcgroup()]);
         if (cancelled) return;
 
-        const pcs: Computer[] = Object.entries(pcResp.data.Pcs ?? {}).map(([uuid, pc]) => ({
+        const pcs: Computer[] = Object.entries(pcResp.data?.Pcs ?? {}).map(([uuid, pc]) => ({
           id: uuid,
           name: pc.Hostname,
           ip: pc.Ip,
           status: pc.Status ? 'Online' : 'Offline',
         }));
 
-        const groupsList: ComputerGroup[] = Object.entries(groupResp.data.Groups ?? {}).map(
+        const groupsList: ComputerGroup[] = Object.entries(groupResp.data?.Groups ?? {}).map(
           ([vxlanid, g]) => ({
             id: vxlanid,
             name: g.Groupname,
             computerCount: g.Pcs?.length ?? 0,
           }),
         );
-
         setGroups(groupsList);
-        setComputers(applyServerGrouping(groupResp.data, pcs));
+        if (groupResp.data && groupResp.data.Groups && typeof groupResp.data.Groups === 'object') {
+          setComputers(applyServerGrouping(groupResp.data, pcs));
+        } else {
+          throw new Error('Invalid group data');
+        }
       } catch (e) {
         if (!cancelled) {
           console.error(e);

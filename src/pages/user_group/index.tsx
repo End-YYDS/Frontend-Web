@@ -11,24 +11,32 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserManagement } from './UserManagement';
 import { GroupManagement } from './GroupManagement';
-import type {
-  CreateUserRequest,
-  PatchUserEntry,
-  CreateGroupRequest,
-  PatchGroupEntry,
-  UsersCollection,
-  GroupsCollection,
-  UserEntry,
-  GroupEntry,
-  PatchUsersRequest,
-} from './types';
-import { type PageMeta, type CommonResponse, ResponseType } from '@/types';
-import { user_groupApi } from '@/api/userApi';
+import { type PageMeta, ResponseType } from '@/types';
+import {
+  deleteGroup,
+  deleteUser,
+  getGroup,
+  getUser,
+  patchGroup,
+  patchUser,
+  postGroup,
+  postUser,
+  type CreateGroupRequest,
+  type CreateUserRequest,
+  type GetUserEntry,
+  type GroupEntry,
+  type GroupsCollection,
+  type PatchGroupEntry,
+  type PatchUserEntry,
+  type PatchUsersRequest,
+  type ResponseResult,
+  type UsersCollection,
+} from '@/api/openapi-client';
 
 type UsersMap = UsersCollection['Users'];
 type GroupsMap = GroupsCollection['Groups'];
 
-export type UserRow = UserEntry & { uid: string };
+export type UserRow = GetUserEntry & { uid: string };
 export type GroupRow = GroupEntry & { gid: string };
 
 const UserGroup = () => {
@@ -39,7 +47,11 @@ const UserGroup = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'groups'>('users');
   const itemsPerPage = 10;
 
-  const handleApiResult = (res: CommonResponse, defaultSuccess: string) => {
+  const handleApiResult = (res: ResponseResult | undefined, defaultSuccess: string) => {
+    if (!res) {
+      toast.error('No response from server.');
+      return;
+    }
     if (res.Type === ResponseType.Ok) {
       toast.success(res.Message || defaultSuccess);
     } else {
@@ -49,7 +61,11 @@ const UserGroup = () => {
 
   const fetchUsers = async () => {
     try {
-      const { data } = await user_groupApi.getUsers();
+      const { data } = await getUser();
+      if (!data || !data.Users || Object.keys(data.Users).length === 0) {
+        toast.error('No user data received.');
+        return;
+      }
       setUsersMap(data.Users);
     } catch {
       toast.error('Failed to fetch user data.');
@@ -58,7 +74,11 @@ const UserGroup = () => {
 
   const fetchGroups = async () => {
     try {
-      const { data } = await user_groupApi.getGroups();
+      const { data } = await getGroup();
+      if (!data || !data.Groups || Object.keys(data.Groups).length === 0) {
+        toast.error('No group data received.');
+        return;
+      }
       setGroupsMap(data.Groups);
     } catch {
       toast.error('Failed to fetch group data.');
@@ -94,9 +114,9 @@ const UserGroup = () => {
 
   const handleAddUser = async (user: CreateUserRequest) => {
     try {
-      const { data } = await user_groupApi.addUser(user);
+      const { data } = await postUser({ body: user });
       handleApiResult(data, 'User has been added.');
-      if (data.Type === ResponseType.Ok) {
+      if (data?.Type === ResponseType.Ok) {
         await fetchUsers();
         await fetchGroups();
       }
@@ -114,9 +134,9 @@ const UserGroup = () => {
       const body: PatchUsersRequest = {
         [uid]: patch,
       };
-      const { data } = await user_groupApi.patchUsers(body);
+      const { data } = await patchUser({ body });
       handleApiResult(data, 'User has been updated.');
-      if (data.Type === ResponseType.Ok) {
+      if (data?.Type === ResponseType.Ok) {
         await fetchUsers();
         await fetchGroups();
       }
@@ -127,9 +147,9 @@ const UserGroup = () => {
 
   const handleDeleteUser = async (uid: string) => {
     try {
-      const { data } = await user_groupApi.deleteUser({ uid });
+      const { data } = await deleteUser({ body: { Uid: uid } });
       handleApiResult(data, 'User has been deleted.');
-      if (data.Type === ResponseType.Ok) {
+      if (data?.Type === ResponseType.Ok) {
         await fetchUsers();
         await fetchGroups();
       }
@@ -140,9 +160,9 @@ const UserGroup = () => {
 
   const handleAddGroup = async (group: CreateGroupRequest) => {
     try {
-      const { data } = await user_groupApi.addGroup(group);
+      const { data } = await postGroup({ body: group });
       handleApiResult(data, 'Group has been added.');
-      if (data.Type === ResponseType.Ok) {
+      if (data?.Type === ResponseType.Ok) {
         await fetchGroups();
         await fetchUsers();
       }
@@ -153,9 +173,10 @@ const UserGroup = () => {
 
   const handleUpdateGroup = async (gid: string, patch: PatchGroupEntry) => {
     try {
-      const { data } = await user_groupApi.patchGroups({ [gid]: patch });
+      // const { data } = await user_groupApi.patchGroups({ [gid]: patch });
+      const { data } = await patchGroup({ body: { [gid]: patch } });
       handleApiResult(data, 'Group has been updated.');
-      if (data.Type === ResponseType.Ok) {
+      if (data?.Type === ResponseType.Ok) {
         await fetchGroups();
         await fetchUsers();
       }
@@ -166,9 +187,9 @@ const UserGroup = () => {
 
   const handleDeleteGroup = async (gid: string) => {
     try {
-      const { data } = await user_groupApi.deleteGroup({ gid });
+      const { data } = await deleteGroup({ body: { Gid: gid } });
       handleApiResult(data, 'Group has been deleted.');
-      if (data.Type === ResponseType.Ok) {
+      if (data?.Type === ResponseType.Ok) {
         await fetchGroups();
         await fetchUsers();
       }

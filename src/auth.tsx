@@ -1,24 +1,19 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { authApi } from '@/api/authApi';
+import { logout, me } from './api/openapi-client';
+import type { AuthUser } from './api/openapi-client';
 import { eventBus } from './lib/EventBus';
 
-export interface User {
-  id: string;
-  role: string;
-  username: string;
-}
-
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | undefined;
   loading: boolean;
   refresh: () => Promise<void>;
-  signIn: (u: User) => void;
+  signIn: (u: AuthUser) => void;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  user: null,
+  user: undefined,
   loading: true,
   refresh: async () => {},
   signIn: () => {},
@@ -26,16 +21,16 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
     try {
-      const res = await authApi.me();
+      const res = await me();
       setUser(res.data);
     } catch (err) {
       console.error('Failed to refresh user:', err);
-      setUser(null);
+      setUser(undefined);
     }
   };
 
@@ -48,7 +43,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   useEffect(() => {
     const offUnauthorized = eventBus.on('auth:unauthorized', () => {
-      setUser(null);
+      setUser(undefined);
       // toast.error('登入已失效', {
       //   description: '請重新登入後再繼續操作。',
       // });
@@ -64,15 +59,15 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     };
   }, []);
 
-  const signIn = (u: User) => setUser(u);
+  const signIn = (u: AuthUser) => setUser(u);
 
   const signOut = async () => {
     try {
-      await authApi.logout();
+      await logout();
     } catch (err) {
       console.error('Logout failed:', err);
     } finally {
-      setUser(null);
+      setUser(undefined);
     }
   };
 
@@ -104,9 +99,11 @@ export function RequireAuth({ allowedRoles }: RequireAuthProps) {
 
   if (loading) return <div>驗證中…</div>;
   if (!user) return <Navigate to='/login' state={{ from: location }} replace />;
-
-  if (allowedRoles?.length && !allowedRoles.includes(user.role)) {
-    return <Navigate to='/unauthorized' replace />;
+  const role = user.Role;
+  if (allowedRoles?.length) {
+    if (!role || !allowedRoles.includes(role)) {
+      return <Navigate to='/unauthorized' replace />;
+    }
   }
   return <Outlet />;
 }

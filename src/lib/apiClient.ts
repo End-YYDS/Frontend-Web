@@ -1,14 +1,17 @@
 import axios, { AxiosError } from 'axios';
 import { eventBus } from './EventBus';
+import { client } from '@/api/openapi-client/client.gen';
 
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? '',
   withCredentials: true,
   timeout: 10_000,
 });
 
 api.interceptors.request.use(
   (config) => {
+    const url = `${config.baseURL ?? ''}${config.url ?? ''}`;
+    console.log('[OpenAPI Request URL]:', url);
     return config;
   },
   (error) => Promise.reject(error),
@@ -32,3 +35,8 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+client.setConfig({
+  axios: api,
+});
+
+export { client };
