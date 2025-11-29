@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-// import axios from "axios";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +21,6 @@ import type {
 } from './types';
 import { toast } from 'sonner';
 import { apacheApi } from '@/api/apacheApi';
-import { _uuid } from 'zod/v4/core';
 
 interface ComputerDetailProps {
   computerId: string;
@@ -44,7 +42,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
     } catch (error) {
       console.error('Fetch server status failed:', error);
       toast.error('Error', { description: 'Failed to fetch server status' });
-      setLoading(true);
+      setLoading(false);
     }
   };
 
@@ -126,9 +124,9 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
           </Button>
           <div>
             <h1 className='text-2xl font-bold text-slate-800'>
-              Apache Webserver - {serverStatus.Hostname}
+              {serverStatus.Hostname}
             </h1>
-            <p className='text-slate-600'>{computerId}</p>
+            <p className='text-slate-600'>{serverStatus.Ip}</p>
           </div>
         </div>
 

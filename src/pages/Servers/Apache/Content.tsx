@@ -82,7 +82,15 @@ const ServerContent = () => {
 
   useEffect(() => {
     getOnlineComputers();
+    // getUninstalledComputers();
   }, []);
+
+  // const getUninstalledComputers = async () => {
+  //   const pcRes = await apacheApi.getUninstalled("Apache");
+  //   const pcs = pcRes.data.Pcs;
+
+
+  // }
 
   /** 切換主機勾選 */
   const handleComputerToggle = (computerId: string) => {
