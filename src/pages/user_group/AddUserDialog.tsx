@@ -90,7 +90,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
   useEffect(() => {
     setNewUser((prev) => ({
       ...prev,
-      Home_directory: prev.Username ? `/home/${prev.Username}` : '',
+      HomeDirectory: prev.Username ? `/home/${prev.Username}` : '',
     }));
   }, [newUser.Username]);
 

@@ -89,9 +89,13 @@ export type _Date = {
 };
 
 export type DePatchVxlanid = {
-    groupname: string;
+    Groupname: {
+        groupname: string;
+    };
 } | {
-    pcs: Array<string>;
+    Pcs: {
+        pcs: Array<string>;
+    };
 };
 
 export type DePutVxlanid = {
@@ -248,7 +252,7 @@ export type PatchGroupsRequest = {
 };
 
 export type PatchPcgroupRequest = {
-    [key: string]: never;
+    [key: string]: DePatchVxlanid;
 };
 
 export type PatchUserEntry = {
@@ -293,7 +297,7 @@ export type PutGroupsRequest = {
 };
 
 export type PutPcgroupRequest = {
-    [key: string]: never;
+    [key: string]: DePutVxlanid;
 };
 
 export type PutUserEntry = {

@@ -209,7 +209,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
               <Input
                 value={editUser.HomeDirectory}
                 onChange={(e) =>
-                  setEditUser((prev) => ({ ...prev, Home_directory: e.target.value }))
+                  setEditUser((prev) => ({ ...prev, HomeDirectory: e.target.value }))
                 }
               />
             </div>

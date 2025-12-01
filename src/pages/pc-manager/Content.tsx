@@ -31,14 +31,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Computer, Users, Edit2, UserPlus, Trash2 } from 'lucide-react';
 import { DataTable } from './data-table';
 import type { ColumnDef } from '@tanstack/react-table';
-import axios from 'axios';
+// import axios from 'axios';
 import { toast } from 'sonner';
 import {
   addPc,
+  deletePcgroup,
   getAllPc,
   getPcgroup,
+  patchPcgroup,
+  postPcgroup,
   type DeletePcGroupRequest,
   type GetPcgroupResponseResult,
+  type PatchPcgroupRequest,
   type PcManagerRequest,
   type PostPcgroupRequest,
   type ResponseResult,
@@ -224,10 +228,10 @@ export function PCManagerContent() {
   const deleteGroupAPI = async (vxlanid: string): Promise<ResponseResult> => {
     const body: DeletePcGroupRequest = { Vxlanid: Number(vxlanid) };
     try {
-      const { data } = await axios.delete<ResponseResult>('/api/chm/pcgroup', {
-        data: body,
-        withCredentials: true,
-      });
+      const { data } = await deletePcgroup({ body: body });
+      if (!data) {
+        return { Type: 'Err', Message: 'No response from server.' };
+      }
       return data;
     } catch (err) {
       console.error('Delete group API failed:', err);
@@ -239,11 +243,12 @@ export function PCManagerContent() {
     return data ?? { Groups: {}, Length: 0 };
   };
 
-  const patchGroupPcs = async (vxlanid: string, pcs: string[]) => {
-    const body = { [vxlanid]: { Pcs: pcs } };
-    const { data } = await axios.patch<ResponseResult>('/api/chm/pcgroup', body, {
-      withCredentials: true,
-    });
+  const patchGroupPcs = async (vxlanid: string, pcs: string[]): Promise<ResponseResult> => {
+    const body: PatchPcgroupRequest = { [vxlanid]: { Pcs: { pcs } } };
+    const { data } = await patchPcgroup({ body: body });
+    if (!data) {
+      return { Type: 'Err', Message: 'No response from server.' };
+    }
     return data;
   };
 
@@ -344,8 +349,8 @@ export function PCManagerContent() {
       Cidr: newGroup.cidr,
     };
     try {
-      const { data } = await axios.post<ResponseResult>('/api/chm/pcgroup', body);
-      if (data.Type === 'Ok') {
+      const { data } = await postPcgroup({ body: body });
+      if (data?.Type === 'Ok') {
         const group: ComputerGroup = {
           id: (groups.length + 1).toString(), // 後端沒有回傳 vxlanid，暫時用長度+1 作為 id
           name: newGroup.name,
@@ -355,7 +360,7 @@ export function PCManagerContent() {
         setNewGroup({ name: '', cidr: '' });
         setIsAddGroupOpen(false);
       } else {
-        toast.error(`Failed to add group: ${data.Message}`);
+        toast.error(`Failed to add group: ${data?.Message}`);
       }
     } catch (error) {
       console.error('Error adding group:', error);
