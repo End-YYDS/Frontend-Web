@@ -204,7 +204,7 @@ export default function Topbar({ onLogout }: TopbarProps) {
               variant='ghost'
               className='flex items-center space-x-1 text-sm font-medium text-gray-800 hover:bg-transparent'
             >
-              <span>{user?.username}</span>
+              <span>{user?.Username}</span>
               <ChevronDown className='w-4 h-4 text-gray-500' />
             </Button>
           </DropdownMenuTrigger>

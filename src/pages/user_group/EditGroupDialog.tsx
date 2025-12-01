@@ -3,9 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-
-// 從 types.ts 匯入
-import type { GroupEntry, UserEntry } from './types';
+import type { GetUserEntry, GroupEntry } from '@/api/openapi-client';
 
 interface UserArrayItem {
   id: number;
@@ -17,7 +15,7 @@ interface EditGroupDialogProps {
   onOpenChange: (open: boolean) => void;
   group: GroupEntry & { id?: number; gid?: string };
   onUpdateGroup: (group: GroupEntry) => void;
-  users: UserArrayItem[] | Record<string, UserEntry>;
+  users: UserArrayItem[] | Record<string, GetUserEntry>;
   existingGroups: (GroupEntry & { id?: number })[];
 }
 
@@ -35,7 +33,7 @@ export const EditGroupDialog: React.FC<EditGroupDialogProps> = ({
   });
   const normalizedUsers: UserArrayItem[] = React.useMemo(() => {
     if (Array.isArray(users)) return users;
-    const recordUsers = users as Record<string, UserEntry>;
+    const recordUsers = users as Record<string, GetUserEntry>;
     return Object.entries(recordUsers).map(([, user], idx) => ({
       id: idx,
       username: user.Username,
@@ -67,9 +65,9 @@ export const EditGroupDialog: React.FC<EditGroupDialogProps> = ({
   const handleGroupUserToggle = (username: string) => {
     setEditGroup((prev) => ({
       ...prev,
-      Users: prev.Users.includes(username)
+      Users: prev.Users?.includes(username)
         ? prev.Users.filter((u) => u !== username)
-        : [...prev.Users, username],
+        : [...(prev.Users ?? []), username],
     }));
   };
 
@@ -103,7 +101,7 @@ export const EditGroupDialog: React.FC<EditGroupDialogProps> = ({
                 <div key={user.id} className='flex items-center space-x-2'>
                   <Checkbox
                     id={`edit-user-${user.id}`}
-                    checked={editGroup.Users.includes(user.username)}
+                    checked={editGroup.Users?.includes(user.username)}
                     onCheckedChange={() => handleGroupUserToggle(user.username)}
                   />
                   <label htmlFor={`edit-user-${user.id}`} className='text-sm'>

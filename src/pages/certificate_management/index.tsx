@@ -24,9 +24,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, ShieldX } from 'lucide-react';
 import type { PageMeta } from '@/types';
-import type { RevokeRequest } from './types';
 import { toast } from 'sonner';
-import { mcaApi } from '@/api/mcaApi';
+import { revoke, revoked, valid, type RevokeRequest } from '@/api/openapi-client';
 interface Certificate {
   id: string;
   commonName: string;
@@ -54,22 +53,23 @@ const CertificateManagementPage = () => {
   }, []);
   const fetchValids = async () => {
     try {
-      const { data } = await mcaApi.getValidCerts();
-      const mapped = data.Valid.map((v, idx) => {
-        const time = v.Period.trim();
-        const local_time = new Date(time);
-        const formatted_time = local_time.toLocaleString();
-        return {
-          id: `${idx + 1}`,
-          commonName: v.Name,
-          issuer: v.Signer,
-          serialNumber: `SN-${idx + 1}`,
-          validTo: formatted_time,
-          status: 'active',
-          keySize: 4096,
-          algorithm: 'RSA',
-        } as Certificate;
-      });
+      const { data } = await valid();
+      const mapped =
+        data?.Valid.map((v, idx) => {
+          const time = v.Period.trim();
+          const local_time = new Date(time);
+          const formatted_time = local_time.toLocaleString();
+          return {
+            id: `${idx + 1}`,
+            commonName: v.Name,
+            issuer: v.Signer,
+            serialNumber: `SN-${idx + 1}`,
+            validTo: formatted_time,
+            status: 'active',
+            keySize: 4096,
+            algorithm: 'RSA',
+          } as Certificate;
+        }) ?? [];
       setCertificates(mapped);
     } catch (err) {
       console.error('Failed to fetch valids:', err);
@@ -79,13 +79,14 @@ const CertificateManagementPage = () => {
 
   const fetchRevoked = async () => {
     try {
-      const { data } = await mcaApi.getRevokedCerts();
-      const mapped = data.Revoke.map((r, idx) => ({
-        id: `${idx + 1}`,
-        serialNumber: r.Number,
-        revokedAt: new Date(r.Time).toLocaleString(),
-        reason: r.Reason,
-      }));
+      const { data } = await revoked();
+      const mapped =
+        data?.Revoke.map((r, idx) => ({
+          id: `${idx + 1}`,
+          serialNumber: r.Number,
+          revokedAt: new Date(r.Time).toLocaleString(),
+          reason: r.Reason,
+        })) ?? [];
       setRevokedCertificates(mapped);
     } catch (err) {
       console.error('Failed to fetch revoked list:', err);
@@ -104,7 +105,7 @@ const CertificateManagementPage = () => {
 
     try {
       const payload: RevokeRequest = { Name: commonName, Reason: reason };
-      await mcaApi.revokeCert(payload);
+      await revoke({ body: payload });
       toast.success('Success', { description: `Certificate ${commonName} has been revoked.` });
       setRevokeReason('');
       fetchValids();

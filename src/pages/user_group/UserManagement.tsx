@@ -23,19 +23,21 @@ import {
 import { Plus, Trash2, Edit, X } from 'lucide-react';
 import { AddUserDialog } from './AddUserDialog';
 import { EditUserDialog } from './EditUserDialog';
-import type { CreateUserRequest, PatchUserEntry, UserEntry } from './types';
+import type { CreateUserRequest, PatchUserEntry } from '@/api/openapi-client';
+import type { GroupRow, UserRow } from '.';
 
-export interface User extends UserEntry {
-  uid: string;
-}
+// export interface User extends UserEntry {
+//   uid: string;
+// }
 
 interface UserManagementProps {
-  users: User[];
+  users: UserRow[];
   onAddUser: (user: CreateUserRequest) => void;
   onUpdateUser: (uid: string, patch: PatchUserEntry) => void;
   onDeleteUser: (uid: string) => void;
   onDeleteSelectedUsers: (uids: string[]) => void;
-  groups: { gid: string; Groupname: string; Users: string[] }[];
+  // groups: { gid: string; Groupname: string; Users: string[] }[];
+  groups: GroupRow[];
   onCreateGroup: (name: string) => void;
   searchTerm: string;
   onSearchChange: (term: string) => void;
@@ -59,7 +61,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const sortedUsers = [...users].sort((a, b) => a.Username.localeCompare(b.Username));
   const filteredUsers = sortedUsers.filter(
@@ -86,7 +88,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     }
   };
 
-  const handleEditUser = (user: User) => {
+  const handleEditUser = (user: UserRow) => {
     setEditingUser(user);
     setIsEditUserDialogOpen(true);
   };
@@ -114,7 +116,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               groups={groups.map((group, idx) => ({
                 id: idx,
                 name: group.Groupname,
-                users: group.Users,
+                users: group.Users ?? [],
                 gid: group.gid,
               }))}
               onCreateGroup={onCreateGroup}
@@ -218,8 +220,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               <TableCell className='max-w-[200px] truncate' title={user.Group.join(', ')}>
                 {user.Group.join(', ')}
               </TableCell>
-              <TableCell className='max-w-[220px] truncate' title={user.Home_directory}>
-                {user.Home_directory}
+              <TableCell className='max-w-[220px] truncate' title={user.HomeDirectory}>
+                {user.HomeDirectory}
               </TableCell>
               <TableCell className='max-w-[150px] truncate' title={user.Shell}>
                 {user.Shell}
@@ -277,7 +279,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           groups={groups.map((group, idx) => ({
             id: idx,
             name: group.Groupname,
-            users: group.Users,
+            users: group.Users ?? [],
           }))}
           onCreateGroup={onCreateGroup}
           existingUsers={Object.fromEntries(

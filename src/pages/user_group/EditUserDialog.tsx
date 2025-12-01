@@ -9,17 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { UserEntry, PatchUserEntry } from './types';
 import { GroupSelectionDialog } from './GroupSelectionDialog';
+import type { UserRow } from '.';
+import type { GetUserEntry, PatchUserEntry } from '@/api/openapi-client';
 
 interface EditUserDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  user: UserEntry;
+  user: UserRow;
   onUpdateUser: (patch: PatchUserEntry) => void;
   groups: { id: number; name: string; users: string[] }[];
   onCreateGroup: (name: string) => void;
-  existingUsers: Record<string, Pick<UserEntry, 'Username'>>;
+  existingUsers: Record<string, Pick<GetUserEntry, 'Username'>>;
 }
 
 const shellOptions = [
@@ -32,8 +33,8 @@ const shellOptions = [
 type EditableUser = {
   Password: string;
 } & Pick<
-  UserEntry,
-  'Cn' | 'Sn' | 'Home_directory' | 'Shell' | 'Given_name' | 'Display_name' | 'Group' | 'Gecos'
+  GetUserEntry,
+  'Cn' | 'Sn' | 'HomeDirectory' | 'Shell' | 'GivenName' | 'DisplayName' | 'Group' | 'Gecos'
 >;
 
 export const EditUserDialog: React.FC<EditUserDialogProps> = ({
@@ -48,10 +49,10 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
     Password: '',
     Cn: '',
     Sn: '',
-    Home_directory: '',
+    HomeDirectory: '',
     Shell: '/bin/bash',
-    Given_name: '',
-    Display_name: '',
+    GivenName: '',
+    DisplayName: '',
     Group: [],
     Gecos: '',
   });
@@ -64,10 +65,10 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
       Password: '',
       Cn: user.Cn,
       Sn: user.Sn,
-      Home_directory: user.Home_directory,
+      HomeDirectory: user.HomeDirectory,
       Shell: user.Shell,
-      Given_name: user.Given_name,
-      Display_name: user.Display_name,
+      GivenName: user.GivenName,
+      DisplayName: user.DisplayName,
       Group: user.Group ?? [],
       Gecos: user.Gecos,
     });
@@ -80,13 +81,13 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
     }
     if (editUser.Cn !== user.Cn) patch.Cn = editUser.Cn;
     if (editUser.Sn !== user.Sn) patch.Sn = editUser.Sn;
-    if (editUser.Home_directory !== user.Home_directory) {
-      patch.Home_directory = editUser.Home_directory;
+    if (editUser.HomeDirectory !== user.HomeDirectory) {
+      patch.HomeDirectory = editUser.HomeDirectory;
     }
     if (editUser.Shell !== user.Shell) patch.Shell = editUser.Shell;
-    if (editUser.Given_name !== user.Given_name) patch.Given_name = editUser.Given_name;
-    if (editUser.Display_name !== user.Display_name) {
-      patch.Display_name = editUser.Display_name;
+    if (editUser.GivenName !== user.GivenName) patch.GivenName = editUser.GivenName;
+    if (editUser.DisplayName !== user.DisplayName) {
+      patch.DisplayName = editUser.DisplayName;
     }
     if (editUser.Gecos !== user.Gecos) patch.Gecos = editUser.Gecos;
     if (
@@ -153,7 +154,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
               <label className='block text-sm font-medium mb-1'>Given name</label>
               <Input
                 placeholder='enter given name'
-                value={editUser.Given_name}
+                value={editUser.GivenName}
                 onChange={(e) => setEditUser((prev) => ({ ...prev, Given_name: e.target.value }))}
               />
             </div>
@@ -163,7 +164,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
               <label className='block text-sm font-medium mb-1'>Display name</label>
               <Input
                 placeholder='enter display name'
-                value={editUser.Display_name}
+                value={editUser.DisplayName}
                 onChange={(e) => setEditUser((prev) => ({ ...prev, Display_name: e.target.value }))}
               />
             </div>
@@ -206,9 +207,9 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
             <div>
               <label className='block text-sm font-medium mb-1'>Home directory</label>
               <Input
-                value={editUser.Home_directory}
+                value={editUser.HomeDirectory}
                 onChange={(e) =>
-                  setEditUser((prev) => ({ ...prev, Home_directory: e.target.value }))
+                  setEditUser((prev) => ({ ...prev, HomeDirectory: e.target.value }))
                 }
               />
             </div>

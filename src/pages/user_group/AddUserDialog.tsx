@@ -16,7 +16,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { GroupSelectionDialog } from './GroupSelectionDialog';
-import type { CreateUserRequest, GroupsCollection, UserEntry, GroupEntry } from './types';
+import type {
+  CreateUserRequest,
+  GetUserEntry,
+  GroupEntry,
+  GroupsCollection,
+} from '@/api/openapi-client';
 
 interface GroupArrayItem {
   id: number;
@@ -32,7 +37,7 @@ interface AddUserDialogProps {
   groups: GroupsCollection | GroupArrayItem[];
   onCreateGroup: (name: string) => void;
   trigger: React.ReactNode;
-  existingUsers: Record<string, Pick<UserEntry, 'Username'>>;
+  existingUsers: Record<string, Pick<GetUserEntry, 'Username'>>;
 }
 
 const shellOptions = [
@@ -56,10 +61,10 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
     Password: '',
     Cn: '',
     Sn: '',
-    Home_directory: '',
+    HomeDirectory: '',
     Shell: '/bin/bash',
-    Given_name: '',
-    Display_name: '',
+    GivenName: '',
+    DisplayName: '',
     Group: [],
     Gecos: '',
   };
@@ -85,7 +90,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
   useEffect(() => {
     setNewUser((prev) => ({
       ...prev,
-      Home_directory: prev.Username ? `/home/${prev.Username}` : '',
+      HomeDirectory: prev.Username ? `/home/${prev.Username}` : '',
     }));
   }, [newUser.Username]);
 
@@ -160,8 +165,8 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
               <label className='block text-sm font-medium mb-1'>Given name</label>
               <Input
                 placeholder='enter given name'
-                value={newUser.Given_name}
-                onChange={(e) => setNewUser({ ...newUser, Given_name: e.target.value })}
+                value={newUser.GivenName}
+                onChange={(e) => setNewUser({ ...newUser, GivenName: e.target.value })}
               />
             </div>
 
@@ -170,8 +175,8 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
               <label className='block text-sm font-medium mb-1'>Display name</label>
               <Input
                 placeholder='enter display name'
-                value={newUser.Display_name}
-                onChange={(e) => setNewUser({ ...newUser, Display_name: e.target.value })}
+                value={newUser.DisplayName}
+                onChange={(e) => setNewUser({ ...newUser, DisplayName: e.target.value })}
               />
             </div>
 
@@ -213,7 +218,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
             <div>
               <label className='block text-sm font-medium mb-1'>Home directory</label>
               <Input
-                value={newUser.Home_directory}
+                value={newUser.HomeDirectory}
                 readOnly
                 className='bg-gray-100'
                 placeholder='Auto-generated based on username'
