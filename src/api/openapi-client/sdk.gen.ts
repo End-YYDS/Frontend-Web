@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ActionRestartData, ActionRestartResponses, ActionStartData, ActionStartResponses, ActionStopData, ActionStopResponses, AddPcData, AddPcErrors, AddPcResponses, DeleteGroupData, DeleteGroupResponses, DeletePcData, DeletePcErrors, DeletePcgroupData, DeletePcgroupErrors, DeletePcgroupResponses, DeletePcResponses, DeleteUserData, DeleteUserResponses, GetAllPcData, GetAllPcErrors, GetAllPcResponses, GetApacheAllData, GetApacheAllResponses, GetBackupRootData, GetBackupRootResponses, GetGroupData, GetGroupResponses, GetInfoAllData, GetInfoAllErrors, GetInfoAllResponses, GetPcgroupData, GetPcgroupErrors, GetPcgroupResponses, GetSpecificPcData, GetSpecificPcErrors, GetSpecificPcResponses, GetUserData, GetUserResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MeData, MeErrors, MeResponses, PatchGroupData, PatchGroupResponses, PatchPcgroupData, PatchPcgroupErrors, PatchPcgroupResponses, PatchUserData, PatchUserResponses, PostBackupRootData, PostBackupRootResponses, PostGroupData, PostGroupResponses, PostInfoGetData, PostInfoGetErrors, PostInfoGetResponses, PostPcgroupData, PostPcgroupErrors, PostPcgroupResponses, PostReductionData, PostReductionResponses, PostUserData, PostUserResponses, PutGroupData, PutGroupResponses, PutPcgroupData, PutPcgroupErrors, PutPcgroupResponses, PutUserData, PutUserResponses, RebootPcData, RebootPcErrors, RebootPcResponses, RevokeData, RevokedData, RevokedErrors, RevokedResponses, RevokeErrors, RevokeResponses, ShutdownPcData, ShutdownPcErrors, ShutdownPcResponses, ValidData, ValidErrors, ValidResponses } from './types.gen';
+import type { ActionRestartData, ActionRestartResponses, ActionStartData, ActionStartResponses, ActionStopData, ActionStopResponses, AddPcData, AddPcErrors, AddPcResponses, DeleteGroupData, DeleteGroupResponses, DeletePcData, DeletePcErrors, DeletePcgroupData, DeletePcgroupErrors, DeletePcgroupResponses, DeletePcResponses, DeleteUserData, DeleteUserResponses, GetAllPcData, GetAllPcErrors, GetAllPcResponses, GetApacheAllData, GetApacheAllResponses, GetBackupRootData, GetBackupRootResponses, GetGroupData, GetGroupResponses, GetInfoAllData, GetInfoAllErrors, GetInfoAllResponses, GetInstalledData, GetInstalledResponses, GetNoinstallData, GetNoinstallResponses, GetPcgroupData, GetPcgroupErrors, GetPcgroupResponses, GetSpecificPcData, GetSpecificPcErrors, GetSpecificPcResponses, GetUserData, GetUserResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MeData, MeErrors, MeResponses, PatchGroupData, PatchGroupResponses, PatchPcgroupData, PatchPcgroupErrors, PatchPcgroupResponses, PatchUserData, PatchUserResponses, PostBackupRootData, PostBackupRootResponses, PostGroupData, PostGroupResponses, PostInfoGetData, PostInfoGetErrors, PostInfoGetResponses, PostInstallData, PostInstallResponses, PostPcgroupData, PostPcgroupErrors, PostPcgroupResponses, PostReductionData, PostReductionResponses, PostUserData, PostUserResponses, PutGroupData, PutGroupResponses, PutPcgroupData, PutPcgroupErrors, PutPcgroupResponses, PutUserData, PutUserResponses, RebootPcData, RebootPcErrors, RebootPcResponses, RevokeData, RevokedData, RevokedErrors, RevokedResponses, RevokeErrors, RevokeResponses, ShutdownPcData, ShutdownPcErrors, ShutdownPcResponses, ValidData, ValidErrors, ValidResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -363,6 +363,32 @@ export const actionStart = <ThrowOnError extends boolean = false>(options: Optio
 export const actionStop = <ThrowOnError extends boolean = false>(options: Options<ActionStopData, ThrowOnError>) => (options.client ?? client).post<ActionStopResponses, unknown, ThrowOnError>({
     responseType: 'json',
     url: '/server/apache/action/stop',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postInstall = <ThrowOnError extends boolean = false>(options: Options<PostInstallData, ThrowOnError>) => (options.client ?? client).post<PostInstallResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    url: '/server/install',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getInstalled = <ThrowOnError extends boolean = false>(options: Options<GetInstalledData, ThrowOnError>) => (options.client ?? client).get<GetInstalledResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    url: '/server/installed',
+    ...options
+});
+
+export const getNoinstall = <ThrowOnError extends boolean = false>(options: Options<GetNoinstallData, ThrowOnError>) => (options.client ?? client).get<GetNoinstallResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    url: '/server/noinstall',
     ...options,
     headers: {
         'Content-Type': 'application/json',

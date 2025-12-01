@@ -287,6 +287,16 @@ export type PcMetrics = {
     Memory: number;
 };
 
+export type Pcs = {
+    Installed: {
+        [key: string]: CommonInfo;
+    };
+} | {
+    NotInstalled: {
+        [key: string]: string;
+    };
+};
+
 export type PostPcgroupRequest = {
     Cidr: string;
     Groupname: string;
@@ -442,6 +452,20 @@ export type GetRevokeds = {
 export type GetValids = {
     Length: number;
     Valid: Array<Valid>;
+};
+
+export type StallRequest = {
+    Server: string;
+    Uuids: Array<string>;
+};
+
+export type StalledResponse = {
+    Length: number;
+    Pcs: Pcs;
+};
+
+export type StalledRequest = {
+    Server: string;
 };
 
 export type GetBackupRootData = {
@@ -1159,3 +1183,46 @@ export type ActionStopResponses = {
 };
 
 export type ActionStopResponse = ActionStopResponses[keyof ActionStopResponses];
+
+export type PostInstallData = {
+    body: StallRequest;
+    path?: never;
+    query?: never;
+    url: '/server/install';
+};
+
+export type PostInstallResponses = {
+    200: ResponseResult;
+};
+
+export type PostInstallResponse = PostInstallResponses[keyof PostInstallResponses];
+
+export type GetInstalledData = {
+    body?: never;
+    path?: never;
+    query: {
+        Server: string;
+    };
+    url: '/server/installed';
+};
+
+export type GetInstalledResponses = {
+    200: StalledResponse;
+};
+
+export type GetInstalledResponse = GetInstalledResponses[keyof GetInstalledResponses];
+
+export type GetNoinstallData = {
+    body: StalledRequest;
+    path: {
+        Server: string;
+    };
+    query?: never;
+    url: '/server/noinstall';
+};
+
+export type GetNoinstallResponses = {
+    200: StalledResponse;
+};
+
+export type GetNoinstallResponse = GetNoinstallResponses[keyof GetNoinstallResponses];
