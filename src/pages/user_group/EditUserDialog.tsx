@@ -19,7 +19,7 @@ interface EditUserDialogProps {
   user: UserRow;
   onUpdateUser: (patch: PatchUserEntry) => void;
   groups: { id: number; name: string; users: string[] }[];
-  onCreateGroup: (name: string) => void;
+  onCreateGroup: (name: string) => Promise<void> | void;
   existingUsers: Record<string, Pick<GetUserEntry, 'Username'>>;
 }
 

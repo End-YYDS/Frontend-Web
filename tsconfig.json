@@ -5,5 +5,13 @@
     "paths": {
       "@/*": ["./src/*"]
     }
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "public",
+    "src/api/openapi-client",
+    "src/components/ui",
+    "src/lib/utils.ts"
+  ]
 }

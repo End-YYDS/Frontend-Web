@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ComputerList } from './ComputerList';
 import { ComputerDetail } from './ComputerDetail';
 import {
@@ -20,7 +20,7 @@ interface Computer {
   id: string;
   name: string;
   uuid: string;
-  status: 'online' | 'offline'
+  status: 'online' | 'offline';
 }
 
 const ServerContent = () => {
@@ -38,12 +38,11 @@ const ServerContent = () => {
   ]);
 
   /** 取得線上電腦資料 */
-  const getOnlineComputers = async () => {
+  const getOnlineComputers = useCallback(async () => {
     try {
       const { data } = await axios.post<GetAllPcResponse>('/api/chm/pc/all');
 
       if (!data || !data.Pcs || Object.keys(data.Pcs).length === 0) {
-        console.warn('API 回傳空資料，改用測試資料');
         setComputers(
           installComputer.map((pc, idx) => ({
             id: `mock-${idx}`,
@@ -63,11 +62,8 @@ const ServerContent = () => {
       }));
 
       setComputers(pcsArray);
-      console.log('從 API 取得電腦清單:', pcsArray);
-    } catch (error) {
-      console.error('取得線上電腦資料失敗:', error);
+    } catch {
       toast.error('Error', { description: 'Failed to fetch computer list, using test data.' });
-
       setComputers(
         installComputer.map((pc, idx) => ({
           id: `mock-${idx}`,
@@ -77,11 +73,11 @@ const ServerContent = () => {
         })),
       );
     }
-  };
+  }, [installComputer]);
 
   useEffect(() => {
-    getOnlineComputers();
-  }, []);
+    void getOnlineComputers();
+  }, [getOnlineComputers]);
 
   /** 切換主機勾選 */
   const handleComputerToggle = (computerId: string) => {
@@ -112,10 +108,12 @@ const ServerContent = () => {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success('Success', { description: `Successfully installed Bind on ${selectedComputersForInstall.length} computers.` });
+      toast.success('Success', {
+        description: `Successfully installed Bind on ${selectedComputersForInstall.length} computers.`,
+      });
       setInstallDialogOpen(false);
       setSelectedComputersForInstall([]);
-    } catch (err) {
+    } catch {
       toast.error('Error', { description: 'Installation failed, please try again later.' });
     } finally {
       setIsInstalling(false);

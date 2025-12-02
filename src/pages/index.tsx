@@ -1,11 +1,8 @@
-import { type PageMeta } from '../types';
+import { type PageComponent } from '../types';
 import { DashboardContent } from './dashboard/Content';
-function Home() {
-  return <DashboardContent />;
-}
-(Home as any).meta = {
-  requiresAuth: true, //驗證
+const Home: PageComponent = () => <DashboardContent />;
+Home.meta = {
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default Home;

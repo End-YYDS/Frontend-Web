@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ComputerList } from './ComputerList';
 import { ComputerDetail } from './ComputerDetail';
 import {
@@ -23,6 +23,13 @@ interface Computer {
   status: 'online' | 'offline';
 }
 
+/** 測試用 fallback 資料，放在 component 外面就不會重新建立 */
+const FALLBACK_INSTALL_COMPUTERS: PcsUuid[] = [
+  { Status: true, Hostname: 'ServerA', Ip: '192.168.0.10' },
+  { Status: true, Hostname: 'ServerB', Ip: '192.168.0.11' },
+  { Status: false, Hostname: 'ServerC', Ip: '192.168.0.12' },
+];
+
 const ServerContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isInstalling, setIsInstalling] = useState(false);
@@ -31,21 +38,15 @@ const ServerContent = () => {
   const [computers, setComputers] = useState<Computer[]>([]);
   const [selectedComputerId, setSelectedComputerId] = useState<string | null>(null);
 
-  const [installComputer] = useState<PcsUuid[]>([
-    { Status: true, Hostname: 'ServerA', Ip: '192.168.0.10' },
-    { Status: true, Hostname: 'ServerB', Ip: '192.168.0.11' },
-    { Status: false, Hostname: 'ServerC', Ip: '192.168.0.12' },
-  ]);
-
   /** 取得線上電腦資料 */
-  const getOnlineComputers = async () => {
+  const getOnlineComputers = useCallback(async () => {
     try {
       const { data } = await axios.post<GetAllPcResponse>('/api/chm/pc/all');
 
       if (!data || !data.Pcs || Object.keys(data.Pcs).length === 0) {
         console.warn('API 回傳空資料，改用測試資料');
         setComputers(
-          installComputer.map((pc, idx) => ({
+          FALLBACK_INSTALL_COMPUTERS.map((pc, idx) => ({
             id: `mock-${idx}`,
             name: pc.Hostname,
             uuid: `uuid-${idx}`,
@@ -68,7 +69,7 @@ const ServerContent = () => {
       console.error('取得線上電腦資料失敗:', error);
       toast.error('Error', { description: 'Failed to fetch computer list, using test data.' });
       setComputers(
-        installComputer.map((pc, idx) => ({
+        FALLBACK_INSTALL_COMPUTERS.map((pc, idx) => ({
           id: `mock-${idx}`,
           name: pc.Hostname,
           uuid: `uuid-${idx}`,
@@ -76,11 +77,11 @@ const ServerContent = () => {
         })),
       );
     }
-  };
+  }, []);
 
   useEffect(() => {
-    getOnlineComputers();
-  }, []);
+    void getOnlineComputers();
+  }, [getOnlineComputers]);
 
   /** 切換主機勾選 */
   const handleComputerToggle = (computerId: string) => {
@@ -105,16 +106,20 @@ const ServerContent = () => {
       toast.error('Error', { description: 'Please select at least one computer to install on.' });
       return;
     }
+
     setIsInstalling(true);
     console.log('安裝中電腦:', selectedComputersForInstall);
+
     try {
+      // 之後這裡換成實際安裝 API
       await new Promise((resolve) => setTimeout(resolve, 2000));
+
       toast.success('Success', {
         description: `已成功在 ${selectedComputersForInstall.length} 台電腦安裝 Bind。`,
       });
       setInstallDialogOpen(false);
       setSelectedComputersForInstall([]);
-    } catch (err) {
+    } catch {
       toast.error('Error', { description: 'Installation failed, please try again later.' });
     } finally {
       setIsInstalling(false);
@@ -131,7 +136,7 @@ const ServerContent = () => {
     <div>
       <div className='mb-6'>
         <div className='flex items-center justify-between mb-4'>
-          <div></div>
+          <div />
           <div className='flex items-center gap-2'>
             <Dialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
               <DialogTrigger asChild>

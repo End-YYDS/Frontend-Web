@@ -1,0 +1,59 @@
+name: Frontend Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test --if-present
+
+      - name: Build
+        run: pnpm build
+
+      - name: Archive dist
+        run: |
+          # github.ref_name 會是 v1.2.3 這種
+          ARCHIVE_NAME="frontend-${{ github.ref_name }}.zip"
+          cd dist
+          zip -r "../${ARCHIVE_NAME}" .
+        shell: bash
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Frontend ${{ github.ref_name }}"
+          files: |
+            frontend-${{ github.ref_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

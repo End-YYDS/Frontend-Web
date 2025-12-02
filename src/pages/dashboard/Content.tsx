@@ -11,7 +11,7 @@ import { TbNetwork, TbBrandMysql, TbFolders } from 'react-icons/tb';
 import { GiSquid } from 'react-icons/gi';
 import { IoTerminal } from 'react-icons/io5';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -105,21 +105,101 @@ export function DashboardContent() {
     danger: { icon: X, color: 'text-red-500' },
   };
 
-  const fakeData = () => {
-    const timestamp = new Date().toLocaleTimeString('zh-TW', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+  const ServiceStatusIcon = ({ status }: { status: string }) => {
+    if (status === 'active') {
+      return <Check className='w-4 h-4 text-green-500' />;
+    }
+    if (status === 'stopped') {
+      return <X className='w-4 h-4 text-red-500' />;
+    }
+    return <Minus className='w-4 h-4 text-gray-400' />;
+  };
 
-    const fakeCluster = {
-      Cpu: Math.floor(Math.random() * 50) + 30,
-      Memory: Math.floor(Math.random() * 50) + 30,
-      Disk: Math.floor(Math.random() * 50) + 30,
-    };
+  //TODO: info要記得加上
+  const fetchAllInfo = useCallback(async () => {
+    try {
+      const { data } = await getInfoAll();
+      if (
+        data &&
+        data.Cluster &&
+        data.Info &&
+        typeof data.Cluster === 'object' &&
+        typeof data.Info === 'object'
+      ) {
+        const timestamp = new Date().toLocaleTimeString('zh-TW', {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        });
 
-    const fakeInfo = { Safe: 5, Warn: 3, Dang: 2 };
+        setCpuData((prev) => [
+          ...prev.slice(-5),
+          { time: timestamp, value: data?.Cluster?.Cpu ?? 1 },
+        ]);
+        setMemoryData((prev) => [
+          ...prev.slice(-5),
+          { time: timestamp, value: data?.Cluster?.Memory ?? 1 },
+        ]);
+      }
+
+      const reqBody: InfoGetRequest = { Target: 'Safe', Uuid: null };
+      const resPcs = await postInfoGet({ body: reqBody });
+      const pcsData = resPcs.data;
+
+      if (pcsData && pcsData.Pcs && typeof pcsData.Pcs === 'object') {
+        const apacheStatus = await Promise.all(
+          Object.entries(pcsData.Pcs).map(async ([uuid]) => {
+            const res = await getApacheAll({ query: { Uuid: uuid } });
+            const data = res.data;
+            return {
+              uuid,
+              hostname: data?.Hostname ?? `host-${uuid}`,
+              status: data?.Status ?? 'undefined',
+            };
+          }),
+        );
+
+        const hostMap = Object.fromEntries(apacheStatus.map((a) => [a.uuid, a.hostname]));
+        const list = Object.entries(pcsData?.Pcs).map(([uuid, stats]) => ({
+          name: hostMap[uuid] ?? `PC-${uuid}`,
+          cpu: stats?.Cpu + '%',
+          memory: stats?.Memory + '%',
+          disk: stats?.Disk + '%',
+          status: (() => {
+            const cpu = stats?.CpuStatus,
+              mem = stats?.MemStatus,
+              disk = stats?.DiskStatus;
+            if (cpu === 'Warn' || mem === 'Warn' || disk === 'Warn') return 'warning';
+            if (cpu === 'Dang' || mem === 'Dang' || disk === 'Dang') return 'danger';
+            return 'safe';
+          })(),
+        }));
+        setComputers(list);
+        setApacheStatus(
+          apacheStatus.map((a) => ({
+            name: a.hostname,
+            Apache: a.status,
+          })),
+        );
+      }
+    } catch {
+      toast.error('後端連線失敗，使用模擬資料');
+
+      const timestamp = new Date().toLocaleTimeString('zh-TW', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+
+      const fakeCluster = {
+        Cpu: Math.floor(Math.random() * 50) + 30,
+        Memory: Math.floor(Math.random() * 50) + 30,
+        Disk: Math.floor(Math.random() * 50) + 30,
+      };
+
+      const fakeInfo = { Safe: 5, Warn: 3, Dang: 2 };
 
     const list = [
       ...Array(fakeInfo.Safe)
@@ -160,102 +240,33 @@ export function DashboardContent() {
         })),
     ];
 
-    const serviceKeys = ['A', 'N', 'B', 'D', 'L', 'M', 'ProFTPD', 'Samba', 'Proxy', 'SSH'];
-    const statusPool = ['active', 'stopped', 'uninstalled'];
+      const serviceKeys = ['A', 'N', 'B', 'D', 'L', 'M', 'ProFTPD', 'Samba', 'Proxy', 'SSH'];
+      const statusPool = ['active', 'stopped', 'uninstalled'];
 
-    const fakeServers = list.map((pc) => ({
-      name: pc.name.replace('PC', 'host'),
-      services: Object.fromEntries(
-        serviceKeys.map((key) => [key, statusPool[Math.floor(Math.random() * statusPool.length)]]),
-      ),
-    }));
-    return { fakeCluster, list, timestamp, fakeServers };
-  };
+      const fakeServers = list.map((pc) => ({
+        name: pc.name.replace('PC', 'host'),
+        services: Object.fromEntries(
+          serviceKeys.map((key) => [
+            key,
+            statusPool[Math.floor(Math.random() * statusPool.length)],
+          ]),
+        ),
+      }));
 
-  const ServiceStatusIcon = ({ status }: { status: string }) => {
-    if (status === 'active') {
-      return <Check className='w-4 h-4 text-green-500' />;
-    }
-    if (status === 'stopped') {
-      return <X className='w-4 h-4 text-red-500' />;
-    }
-    return <Minus className='w-4 h-4 text-gray-400' />;
-  };
-
-  const fetchAllInfo = async () => {
-    if (isFetchingRef.current) return;
-    isFetchingRef.current = true;
-    try {
-      // 併行抓 Cluster/Info 及全部主機列表
-      const [infoRes, pcsRes] = await Promise.all([
-        getInfoAll(),
-        postInfoGet({ body: { Target: null as Target | null, Uuid: null } }),
-      ]);
-
-      const infoData = infoRes.data;
-      if (
-        infoData &&
-        infoData.Cluster &&
-        infoData.Info &&
-        typeof infoData.Cluster === 'object' &&
-        typeof infoData.Info === 'object'
-      ) {
-        const timestamp = new Date().toLocaleTimeString('zh-TW', {
-          hour12: false,
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        });
-        setCpuData((prev) => [
-          ...prev.slice(-5),
-          { time: timestamp, value: infoData?.Cluster?.Cpu ?? 1 },
-        ]);
-        setMemoryData((prev) => [
-          ...prev.slice(-5),
-          { time: timestamp, value: infoData?.Cluster?.Memory ?? 1 },
-        ]);
-      }
-
-      const mergedPcs = pcsRes.data?.Pcs ?? {};
-
-      if (mergedPcs && typeof mergedPcs === 'object') {
-        const hasHostMap = Object.keys(hostMapRef.current).length > 0;
-
-        if (!hasHostMap) {
-          // 首次載入時等待 Apache 取得，避免閃回 PC-uuid
-          try {
-            const hostMap = await fetchApacheStatuses(mergedPcs);
-            buildComputers(mergedPcs, hostMap);
-          } catch (apacheErr) {
-            console.error('fetchApacheStatuses error', apacheErr);
-            buildComputers(mergedPcs);
-          }
-        } else {
-          // 之後的輪詢：先用已知 hostname 立即渲染，再非阻塞更新
-          buildComputers(mergedPcs);
-          fetchApacheStatuses(mergedPcs)
-            .then((hostMap) => buildComputers(mergedPcs, hostMap))
-            .catch((apacheErr) => console.error('fetchApacheStatuses error', apacheErr));
-        }
-      }
-    } catch (err: any) {
-      toast.error('後端連線失敗，使用模擬資料');
-      const { fakeCluster, list, timestamp, fakeServers } = fakeData();
       setCpuData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Cpu }]);
       setMemoryData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Memory }]);
-      // setDiskData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Disk }]);
+
       setComputers(list);
       setApacheStatus(fakeServers.map((s) => ({ name: s.name, Apache: s.services['A'] })));
     } finally {
       isFetchingRef.current = false;
     }
-  };
-
+  }, []);
   useEffect(() => {
     fetchAllInfo();
     const interval = setInterval(fetchAllInfo, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchAllInfo]);
 
   const filteredComputers = selectedStatus
     ? computers.filter((c) => c.status === selectedStatus)

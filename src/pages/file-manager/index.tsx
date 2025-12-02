@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileBrowser } from './FileBrowser';
 import { VirtualDirectoryManager } from './VirtualDirectoryManager';
-import type { PageMeta } from '@/types';
-const File_manager = () => {
+import type { PageComponent } from '@/types';
+const File_manager: PageComponent = () => {
   const [activeTab, setActiveTab] = useState('physical');
 
   return (
@@ -28,9 +28,8 @@ const File_manager = () => {
   );
 };
 
-(File_manager as any).meta = {
-  requiresAuth: true, //驗證
+File_manager.meta = {
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default File_manager;

@@ -33,9 +33,9 @@ interface GroupArrayItem {
 interface AddUserDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddUser: (user: CreateUserRequest) => void;
+  onAddUser: (user: CreateUserRequest) => Promise<void> | void;
   groups: GroupsCollection | GroupArrayItem[];
-  onCreateGroup: (name: string) => void;
+  onCreateGroup: (name: string) => Promise<void> | void;
   trigger: React.ReactNode;
   existingUsers: Record<string, Pick<GetUserEntry, 'Username'>>;
 }
@@ -72,6 +72,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
   const [newUser, setNewUser] = useState<CreateUserRequest>(InitUser);
 
   const [isGroupSelectionDialogOpen, setIsGroupSelectionDialogOpen] = useState(false);
+  const [pendingGroups, setPendingGroups] = useState<string[]>([]);
 
   const normalizedGroups: GroupArrayItem[] = React.useMemo(() => {
     if (Array.isArray(groups)) {
@@ -87,6 +88,29 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
     }));
   }, [groups]);
 
+  const existingGroupNames = React.useMemo(
+    () => new Set(normalizedGroups.map((g) => g.name)),
+    [normalizedGroups],
+  );
+
+  const combinedGroups: GroupArrayItem[] = React.useMemo(() => {
+    const extraGroups = pendingGroups
+      .filter((name) => !existingGroupNames.has(name))
+      .map((name, idx) => ({
+        id: normalizedGroups.length + idx,
+        name,
+        users: [],
+      }));
+    return [...normalizedGroups, ...extraGroups];
+  }, [normalizedGroups, pendingGroups, existingGroupNames]);
+
+  const handleCreateGroupDraft = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (existingGroupNames.has(trimmed) || pendingGroups.includes(trimmed)) return;
+    setPendingGroups((prev) => [...prev, trimmed]);
+  };
+
   useEffect(() => {
     setNewUser((prev) => ({
       ...prev,
@@ -98,11 +122,22 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
     (user) => user.Username === newUser.Username && newUser.Username !== '',
   );
 
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     if (isDuplicateName) return;
-    onAddUser(newUser);
-    setNewUser(InitUser);
-    onOpenChange(false);
+    try {
+      await Promise.resolve(onAddUser(newUser));
+      const groupsToCreate = pendingGroups.filter(
+        (name) => newUser.Group.includes(name) && !existingGroupNames.has(name),
+      );
+      for (const groupName of groupsToCreate) {
+        await Promise.resolve(onCreateGroup(groupName));
+      }
+      setNewUser(InitUser);
+      setPendingGroups([]);
+      onOpenChange(false);
+    } catch (err) {
+      console.error('Failed to add user or create groups', err);
+    }
   };
 
   return (
@@ -265,10 +300,10 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
       <GroupSelectionDialog
         isOpen={isGroupSelectionDialogOpen}
         onOpenChange={setIsGroupSelectionDialogOpen}
-        groups={normalizedGroups}
+        groups={combinedGroups}
         selectedGroups={newUser.Group}
         onGroupsChange={(selected) => setNewUser((prev) => ({ ...prev, Group: selected }))}
-        onCreateGroup={onCreateGroup}
+        onCreateGroup={handleCreateGroupDraft}
       />
     </>
   );

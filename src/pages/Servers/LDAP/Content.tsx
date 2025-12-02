@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { ComputerList } from './ComputerList';
 import { ComputerDetail } from './ComputerDetail';
 import {
@@ -20,7 +20,7 @@ interface Computer {
   id: string;
   name: string;
   uuid: string;
-  status: 'online' | 'offline'
+  status: 'online' | 'offline';
 }
 
 const ServerContent = () => {
@@ -31,19 +31,20 @@ const ServerContent = () => {
   const [computers, setComputers] = useState<Computer[]>([]);
   const [selectedComputerId, setSelectedComputerId] = useState<string | null>(null);
 
-  const [installComputer] = useState<PcsUuid[]>([
-    { Status: true, Hostname: 'ServerA', Ip: '192.168.0.10' },
-    { Status: true, Hostname: 'ServerB', Ip: '192.168.0.11' },
-    { Status: false, Hostname: 'ServerC', Ip: '192.168.0.12' },
-  ]);
+  const installComputer = useMemo<PcsUuid[]>(
+    () => [
+      { Status: true, Hostname: 'ServerA', Ip: '192.168.0.10' },
+      { Status: true, Hostname: 'ServerB', Ip: '192.168.0.11' },
+      { Status: false, Hostname: 'ServerC', Ip: '192.168.0.12' },
+    ],
+    [],
+  );
 
-  /** 取得線上電腦資料 */
-  const getOnlineComputers = async () => {
+  const getOnlineComputers = useCallback(async () => {
     try {
       const { data } = await axios.post<GetAllPcResponse>('/api/chm/pc/all');
 
       if (!data || !data.Pcs || Object.keys(data.Pcs).length === 0) {
-        console.warn('API 回傳空資料，改用測試資料');
         setComputers(
           installComputer.map((pc, idx) => ({
             id: `mock-${idx}`,
@@ -63,11 +64,8 @@ const ServerContent = () => {
       }));
 
       setComputers(pcsArray);
-      console.log('從 API 取得電腦清單:', pcsArray);
-    } catch (error) {
-      console.error('取得線上電腦資料失敗:', error);
+    } catch {
       toast.error('Error', { description: 'Failed to fetch computer list, using test data.' });
-
       setComputers(
         installComputer.map((pc, idx) => ({
           id: `mock-${idx}`,
@@ -77,30 +75,26 @@ const ServerContent = () => {
         })),
       );
     }
-  };
+  }, [installComputer]);
 
   useEffect(() => {
-    getOnlineComputers();
-  }, []);
+    void getOnlineComputers();
+  }, [getOnlineComputers]);
 
-  /** 切換主機勾選 */
   const handleComputerToggle = (computerId: string) => {
     setSelectedComputersForInstall((prev) =>
       prev.includes(computerId) ? prev.filter((id) => id !== computerId) : [...prev, computerId],
     );
   };
 
-  /** 點擊主機卡片時：顯示詳細資訊畫面 */
   const handleComputerSelect = (computerId: string) => {
     setSelectedComputerId(computerId);
   };
 
-  /** 從詳細資訊返回清單 */
   const handleBackToList = () => {
     setSelectedComputerId(null);
   };
 
-  /** 安裝流程 */
   const handleInstallServer = async () => {
     if (selectedComputersForInstall.length === 0) {
       toast.error('Error', { description: 'Please select at least one computer to install on.' });
@@ -108,26 +102,25 @@ const ServerContent = () => {
     }
 
     setIsInstalling(true);
-    console.log('安裝中電腦:', selectedComputersForInstall);
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success('Success', { description: `Successfully installed Bind on ${selectedComputersForInstall.length} computers.` });
+      toast.success('Success', {
+        description: `Successfully installed Bind on ${selectedComputersForInstall.length} computers.`,
+      });
       setInstallDialogOpen(false);
       setSelectedComputersForInstall([]);
-    } catch (err) {
+    } catch {
       toast.error('Error', { description: 'Installation failed, please try again later.' });
     } finally {
       setIsInstalling(false);
     }
   };
 
-  /** 若有選取主機，顯示詳細資訊畫面 */
   if (selectedComputerId) {
     return <ComputerDetail computerId={selectedComputerId} onBack={handleBackToList} />;
   }
 
-  /** 主畫面（清單 + 搜尋 + 安裝 Dialog） */
   return (
     <div>
       <div className='mb-6'>
@@ -155,24 +148,17 @@ const ServerContent = () => {
 
                   <div className='space-y-2 max-h-60 overflow-y-auto'>
                     {computers
-                      .filter((computer) =>
-                        computer.name.toLowerCase().includes(searchTerm.toLowerCase()),
-                      )
-                      .filter((computer) => computer.status === 'online')
-                      .map((computer) => (
-                        <div
-                          key={computer.id}
-                          className='flex items-center space-x-2 p-2 border rounded'
-                        >
+                      .filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                      .filter((c) => c.status === 'online')
+                      .map((c) => (
+                        <div key={c.id} className='flex items-center space-x-2 p-2 border rounded'>
                           <Checkbox
-                            id={computer.id}
-                            checked={selectedComputersForInstall.includes(computer.id)}
-                            onCheckedChange={() => handleComputerToggle(computer.id)}
+                            id={c.id}
+                            checked={selectedComputersForInstall.includes(c.id)}
+                            onCheckedChange={() => handleComputerToggle(c.id)}
                           />
-                          <label htmlFor={computer.id} className='flex-1 cursor-pointer'>
-                            <div className='flex items-center justify-between'>
-                              <span className='font-medium'>{computer.name}</span>
-                            </div>
+                          <label htmlFor={c.id} className='flex-1 cursor-pointer'>
+                            <span className='font-medium'>{c.name}</span>
                           </label>
                         </div>
                       ))}
@@ -209,7 +195,6 @@ const ServerContent = () => {
               </DialogContent>
             </Dialog>
 
-            {/* 搜尋欄 */}
             <div className='relative'>
               <Search className='w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400' />
               <Input
@@ -223,7 +208,6 @@ const ServerContent = () => {
         </div>
       </div>
 
-      {/* 電腦清單顯示 */}
       <ComputerList searchTerm={searchTerm} onComputerSelect={handleComputerSelect} />
     </div>
   );

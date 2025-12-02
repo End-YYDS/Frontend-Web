@@ -1,27 +1,35 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Card, CardContent, CardHeader, CardTitle
-} from '@/components/ui/card';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
 import {
-  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import {
-  Folder, File, HardDrive, Copy, Trash2, Download, Upload, Edit2
-} from 'lucide-react';
+import { Folder, File, HardDrive, Copy, Trash2, Download, Upload, Edit2 } from 'lucide-react';
 import { Breadcrumb } from './Breadcrumb';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // 匯入 types
-import type {GetVdirFileResponse, PostDownloadVdirFileRequest} from './types';
+import type { GetVdirFileResponse, PostDownloadVdirFileRequest } from './types';
 import { toast } from 'sonner';
 
 interface FileItem {
@@ -46,7 +54,6 @@ interface UploadResponse {
 }
 
 export const VirtualDirectoryManager = () => {
-
   // ---------------------- Hosts ----------------------
   const [hosts] = useState<Host[]>([
     { uuid: 'host-001', hostname: 'PC-OFFICE-001', ip: '192.168.1.101', status: 'online' },
@@ -58,11 +65,42 @@ export const VirtualDirectoryManager = () => {
   // ---------------------- Files ----------------------
   const [currentPath, setCurrentPath] = useState('/');
   const [files, setFiles] = useState<FileItem[]>([
-    { name: 'Applications', type: 'folder', owner: 'root:root', mode: '0775', modified: '2025/05/23 - 14:38:38' },
-    { name: 'bin', type: 'folder', owner: 'root:root', mode: '0777', modified: '2024/04/22 - 21:08:03' },
-    { name: 'boot', type: 'folder', owner: 'root:root', mode: '0755', modified: '2024/04/22 - 21:08:03' },
-    { name: 'home', type: 'folder', owner: 'root:root', mode: '0755', modified: '2025/03/21 - 14:26:57' },
-    { name: 'example.txt', type: 'file', size: '1.2 KB', owner: 'root:root', mode: '0644', modified: '2025/05/23 - 14:38:38' },
+    {
+      name: 'Applications',
+      type: 'folder',
+      owner: 'root:root',
+      mode: '0775',
+      modified: '2025/05/23 - 14:38:38',
+    },
+    {
+      name: 'bin',
+      type: 'folder',
+      owner: 'root:root',
+      mode: '0777',
+      modified: '2024/04/22 - 21:08:03',
+    },
+    {
+      name: 'boot',
+      type: 'folder',
+      owner: 'root:root',
+      mode: '0755',
+      modified: '2024/04/22 - 21:08:03',
+    },
+    {
+      name: 'home',
+      type: 'folder',
+      owner: 'root:root',
+      mode: '0755',
+      modified: '2025/03/21 - 14:26:57',
+    },
+    {
+      name: 'example.txt',
+      type: 'file',
+      size: '1.2 KB',
+      owner: 'root:root',
+      mode: '0644',
+      modified: '2025/05/23 - 14:38:38',
+    },
   ]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -93,15 +131,13 @@ export const VirtualDirectoryManager = () => {
         ? prev.includes(itemName)
           ? prev.filter((n) => n !== itemName)
           : [...prev, itemName]
-        : [itemName]
+        : [itemName],
     );
   };
 
   const handleCheckboxChange = (itemName: string) => {
     setSelectedItems((prev) =>
-      prev.includes(itemName)
-        ? prev.filter((n) => n !== itemName)
-        : [...prev, itemName]
+      prev.includes(itemName) ? prev.filter((n) => n !== itemName) : [...prev, itemName],
     );
   };
 
@@ -148,7 +184,8 @@ export const VirtualDirectoryManager = () => {
   };
 
   // ---------------------- Upload (axios) ----------------------
-  const handleUploadToSelectedHosts = async (_selectedUploadHosts?: string[]) => {
+  const handleUploadToSelectedHosts = async (selectedUploadHosts?: string[]) => {
+    console.log('Uploading to hosts:', selectedUploadHosts);
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
@@ -160,18 +197,14 @@ export const VirtualDirectoryManager = () => {
       Array.from(files).forEach((f) => formData.append('File', f));
 
       try {
-        const res = await axios.post<UploadResponse>(
-          '/api/file/vdir/action/upload',
-          formData,
-          {
-            headers: { 'Content-Type': 'multipart/form-data' },
-            onUploadProgress: (event) => {
-              if (event.total) {
-                setUploadProgress(Math.round((event.loaded / event.total) * 100));
-              }
-            },
-          }
-        );
+        const res = await axios.post<UploadResponse>('/api/file/vdir/action/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (event) => {
+            if (event.total) {
+              setUploadProgress(Math.round((event.loaded / event.total) * 100));
+            }
+          },
+        });
 
         if (res.data.Type === 'OK') {
           toast.success('Upload Success', { description: res.data.Message });
@@ -194,10 +227,7 @@ export const VirtualDirectoryManager = () => {
   const handleDownload = async (fileName: string) => {
     try {
       const body: PostDownloadVdirFileRequest = { Filename: fileName };
-      const res = await axios.post<UploadResponse>(
-        '/api/file/vdir/action/download',
-        body
-      );
+      const res = await axios.post<UploadResponse>('/api/file/vdir/action/download', body);
 
       if (res.data.Type === 'OK') {
         toast.success('Download Success', { description: res.data.Message });
@@ -211,23 +241,27 @@ export const VirtualDirectoryManager = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       {/* Host Selection */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <HardDrive className="w-5 h-5" />
+          <div className='flex items-center gap-4'>
+            <CardTitle className='flex items-center gap-2'>
+              <HardDrive className='w-5 h-5' />
               Host Selection
             </CardTitle>
             <Select value={selectedHost} onValueChange={setSelectedHost}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select Host" />
+              <SelectTrigger className='w-48'>
+                <SelectValue placeholder='Select Host' />
               </SelectTrigger>
               <SelectContent>
-                {hosts.filter(h => h.status === 'online').map(h => (
-                  <SelectItem key={h.uuid} value={h.uuid}>{h.hostname}</SelectItem>
-                ))}
+                {hosts
+                  .filter((h) => h.status === 'online')
+                  .map((h) => (
+                    <SelectItem key={h.uuid} value={h.uuid}>
+                      {h.hostname}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -240,26 +274,32 @@ export const VirtualDirectoryManager = () => {
           <CardHeader>
             <CardTitle>File Browser</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="flex items-center justify-between p-4 border-b bg-gray-50">
-              <div className="flex items-center gap-2 overflow-x-auto">
-                <Breadcrumb path={currentPath} onNavigate={navigateToPath} rootPath="/" />
+          <CardContent className='p-0'>
+            <div className='flex items-center justify-between p-4 border-b bg-gray-50'>
+              <div className='flex items-center gap-2 overflow-x-auto'>
+                <Breadcrumb path={currentPath} onNavigate={navigateToPath} rootPath='/' />
               </div>
-              <Button variant="outline" size="sm" onClick={() => setShowUploadDialog(true)}>
-                <Upload className="w-4 h-4 mr-1" /> Upload
+              <Button variant='outline' size='sm' onClick={() => setShowUploadDialog(true)}>
+                <Upload className='w-4 h-4 mr-1' /> Upload
               </Button>
             </div>
 
-            <div className="px-4 py-2 text-sm text-gray-600 border-b">
-              Total: {files.filter(f => f.type === 'file').length} files, {files.filter(f => f.type === 'folder').length} folders. Selected: {selectedItems.length}
+            <div className='px-4 py-2 text-sm text-gray-600 border-b'>
+              Total: {files.filter((f) => f.type === 'file').length} files,{' '}
+              {files.filter((f) => f.type === 'folder').length} folders. Selected:{' '}
+              {selectedItems.length}
             </div>
 
-            <div className="overflow-auto max-h-96">
+            <div className='overflow-auto max-h-96'>
               <Table>
                 <TableHeader>
-                  <TableRow className="sticky top-0 bg-white z-10">
-                    <TableHead className="w-8">
-                      <input type="checkbox" checked={selectedItems.length === files.length && files.length > 0} onChange={(e) => handleSelectAll(e.target.checked)} />
+                  <TableRow className='sticky top-0 bg-white z-10'>
+                    <TableHead className='w-8'>
+                      <input
+                        type='checkbox'
+                        checked={selectedItems.length === files.length && files.length > 0}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                      />
                     </TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Size</TableHead>
@@ -273,15 +313,26 @@ export const VirtualDirectoryManager = () => {
                     <ContextMenu key={index}>
                       <ContextMenuTrigger asChild>
                         <TableRow
-                          className={`cursor-pointer ${selectedItems.includes(file.name) ? 'bg-blue-50' : ''}`}
+                          className={`cursor-pointer ${
+                            selectedItems.includes(file.name) ? 'bg-blue-50' : ''
+                          }`}
                           onClick={(e) => handleItemSelect(file.name, e.ctrlKey)}
                           onDoubleClick={() => handleDoubleClick(file)}
                         >
                           <TableCell>
-                            <input type="checkbox" checked={selectedItems.includes(file.name)} onChange={() => handleCheckboxChange(file.name)} onClick={(e) => e.stopPropagation()} />
+                            <input
+                              type='checkbox'
+                              checked={selectedItems.includes(file.name)}
+                              onChange={() => handleCheckboxChange(file.name)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
                           </TableCell>
-                          <TableCell className="flex items-center gap-2">
-                            {file.type === 'folder' ? <Folder className="w-4 h-4 text-blue-500" /> : <File className="w-4 h-4 text-gray-500" />}
+                          <TableCell className='flex items-center gap-2'>
+                            {file.type === 'folder' ? (
+                              <Folder className='w-4 h-4 text-blue-500' />
+                            ) : (
+                              <File className='w-4 h-4 text-gray-500' />
+                            )}
                             {file.name}
                           </TableCell>
                           <TableCell>{file.size || '-'}</TableCell>
@@ -292,16 +343,16 @@ export const VirtualDirectoryManager = () => {
                       </ContextMenuTrigger>
                       <ContextMenuContent>
                         <ContextMenuItem onClick={() => handleContextAction('copy', file.name)}>
-                          <Copy className="w-4 h-4 mr-2" /> Copy
+                          <Copy className='w-4 h-4 mr-2' /> Copy
                         </ContextMenuItem>
                         <ContextMenuItem onClick={() => handleContextAction('delete', file.name)}>
-                          <Trash2 className="w-4 h-4 mr-2" /> Delete
+                          <Trash2 className='w-4 h-4 mr-2' /> Delete
                         </ContextMenuItem>
                         <ContextMenuItem onClick={() => handleContextAction('rename', file.name)}>
-                          <Edit2 className="w-4 h-4 mr-2" /> Rename
+                          <Edit2 className='w-4 h-4 mr-2' /> Rename
                         </ContextMenuItem>
                         <ContextMenuItem onClick={() => handleContextAction('download', file.name)}>
-                          <Download className="w-4 h-4 mr-2" /> Download
+                          <Download className='w-4 h-4 mr-2' /> Download
                         </ContextMenuItem>
                       </ContextMenuContent>
                     </ContextMenu>
@@ -319,15 +370,20 @@ export const VirtualDirectoryManager = () => {
                   <DialogTitle>Select Hosts to Upload</DialogTitle>
                 </DialogHeader>
 
-                <div className="flex flex-col space-y-2 max-h-60 overflow-y-auto">
-                  <div className="flex items-center justify-between p-2 rounded">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                <div className='flex flex-col space-y-2 max-h-60 overflow-y-auto'>
+                  <div className='flex items-center justify-between p-2 rounded'>
+                    <label className='flex items-center gap-2 cursor-pointer'>
                       <input
-                        type="checkbox"
-                        checked={selectedUploadHosts.length === hosts.filter(h => h.status === 'online').length}
+                        type='checkbox'
+                        checked={
+                          selectedUploadHosts.length ===
+                          hosts.filter((h) => h.status === 'online').length
+                        }
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedUploadHosts(hosts.filter(h => h.status === 'online').map(h => h.uuid));
+                            setSelectedUploadHosts(
+                              hosts.filter((h) => h.status === 'online').map((h) => h.uuid),
+                            );
                           } else setSelectedUploadHosts([]);
                         }}
                       />
@@ -335,40 +391,51 @@ export const VirtualDirectoryManager = () => {
                     </label>
                   </div>
 
-                  {hosts.filter(h => h.status === 'online').map(h => (
-                    <div
-                      key={h.uuid}
-                      className="flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-gray-50"
-                      onClick={() => {
-                        setSelectedUploadHosts(prev =>
-                          prev.includes(h.uuid)
-                            ? prev.filter(id => id !== h.uuid)
-                            : [...prev, h.uuid]
-                        );
-                      }}
-                    >
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={selectedUploadHosts.includes(h.uuid)} onChange={() => {}} />
-                        <span>{h.hostname}</span>
-                      </label>
-                      <Badge>Online</Badge>
-                    </div>
-                  ))}
+                  {hosts
+                    .filter((h) => h.status === 'online')
+                    .map((h) => (
+                      <div
+                        key={h.uuid}
+                        className='flex items-center justify-between p-2 border rounded cursor-pointer hover:bg-gray-50'
+                        onClick={() => {
+                          setSelectedUploadHosts((prev) =>
+                            prev.includes(h.uuid)
+                              ? prev.filter((id) => id !== h.uuid)
+                              : [...prev, h.uuid],
+                          );
+                        }}
+                      >
+                        <label className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedUploadHosts.includes(h.uuid)}
+                            onChange={() => {}}
+                          />
+                          <span>{h.hostname}</span>
+                        </label>
+                        <Badge>Online</Badge>
+                      </div>
+                    ))}
                 </div>
 
                 {uploadProgress > 0 && (
-                  <div className="mt-2 w-full bg-gray-200 rounded h-2">
-                    <div className="bg-blue-500 h-2 rounded" style={{ width: `${uploadProgress}%` }}></div>
+                  <div className='mt-2 w-full bg-gray-200 rounded h-2'>
+                    <div
+                      className='bg-blue-500 h-2 rounded'
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
                   </div>
                 )}
 
-                <div className="mt-4 flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowUploadDialog(false)}>Cancel</Button>
+                <div className='mt-4 flex justify-end gap-2'>
+                  <Button variant='outline' onClick={() => setShowUploadDialog(false)}>
+                    Cancel
+                  </Button>
                   <Button
                     onClick={() => handleUploadToSelectedHosts(selectedUploadHosts)}
                     disabled={selectedUploadHosts.length === 0}
                     style={{ backgroundColor: '#7B86AA' }}
-                    className="hover:opacity-90 text-white"
+                    className='hover:opacity-90 text-white'
                   >
                     Upload
                   </Button>

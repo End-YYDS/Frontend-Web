@@ -20,7 +20,7 @@ interface ComputerListProps {
 interface Computer {
   uuid: string;
   Hostname: string;
-  Status: 'active' | 'stopped';
+  Status: 'active' | 'stopped' | 'uninstalled';
   Cpu: number;
   Memory: number;
 }

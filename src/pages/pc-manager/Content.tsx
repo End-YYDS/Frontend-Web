@@ -30,7 +30,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Computer, Users, Edit2, UserPlus, Trash2 } from 'lucide-react';
 import { DataTable } from './data-table';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, CellContext, Row } from '@tanstack/react-table';
 // import axios from 'axios';
 import { toast } from 'sonner';
 import {
@@ -336,9 +336,9 @@ export function PCManagerContent() {
       const res = await patchGroupPcs(vxlanid, nextPcs);
       if (res.Type !== 'Ok') throw new Error(res.Message || 'PATCH 群組失敗');
       fetchAllGroups();
-    } catch (err: any) {
+    } catch {
       setComputers(prev);
-      toast.error(`加入群組失敗：${err?.message ?? 'unknown error'}`);
+      toast.error('加入群組失敗');
     }
   };
 
@@ -389,9 +389,9 @@ export function PCManagerContent() {
       if (res.Type !== 'Ok') throw new Error(res.Message || 'PATCH 群組失敗');
       setGroupSelectedComputers((s) => ({ ...s, [groupName]: [] }));
       fetchAllGroups();
-    } catch (err: any) {
+    } catch {
       setComputers(prev);
-      toast.error(`移除失敗：${err?.message ?? 'unknown error'}`);
+      toast.error('移除失敗');
     }
   };
 
@@ -434,7 +434,60 @@ export function PCManagerContent() {
     return groups.filter((group) => group.name === selectedGroupFilter);
   };
 
-  // Default group columns
+  type AddToGroupCellProps = {
+    row: Row<Computer>;
+    groups: ComputerGroup[];
+    onAddToGroup: (computerId: string, groupName: string) => Promise<void> | void;
+  };
+
+  const AddToGroupCell: React.FC<AddToGroupCellProps> = ({ row, groups, onAddToGroup }) => {
+    const [selectedGroup, setSelectedGroup] = useState<string>('');
+
+    const handleConfirm = () => {
+      if (!selectedGroup) return;
+      void onAddToGroup(row.original.id, selectedGroup);
+      setSelectedGroup('');
+    };
+
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button style={{ backgroundColor: '#7B86AA' }} className='hover:opacity-90 text-white'>
+            <UserPlus className='w-4 h-4' />
+            Add to Group
+          </Button>
+        </DialogTrigger>
+        <DialogContent className='w-[350px] max-w-full' aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>Add {row.getValue('name')} to Group</DialogTitle>
+          </DialogHeader>
+          <div className='flex items-center gap-2 mt-4'>
+            <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+              <SelectTrigger className='w-48'>
+                <SelectValue placeholder='Choose a group' />
+              </SelectTrigger>
+              <SelectContent className='whitespace-nowrap'>
+                {groups.map((group) => (
+                  <SelectItem key={group.id} value={group.name}>
+                    {group.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={handleConfirm}
+              disabled={!selectedGroup}
+              style={{ backgroundColor: '#7B86AA' }}
+              className='hover:opacity-90 text-white'
+            >
+              Confirm
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
   const defaultGroupColumns: ColumnDef<Computer>[] = [
     {
       accessorKey: 'name',
@@ -474,57 +527,9 @@ export function PCManagerContent() {
     {
       id: 'actions',
       header: 'Actions',
-      cell: ({ row }) => {
-        const [selectedGroup, setSelectedGroup] = useState<string>('');
-
-        const handleConfirm = () => {
-          if (selectedGroup) {
-            handleAddToGroup(row.original.id, selectedGroup);
-            setSelectedGroup('');
-          }
-        };
-
-        return (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                style={{ backgroundColor: '#7B86AA' }}
-                className='hover:opacity-90 text-white'
-              >
-                <UserPlus className='w-4 h-4' />
-                Add to Group
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='w-[350px] max-w-full' aria-describedby={undefined}>
-              <DialogHeader>
-                <DialogTitle>Add {row.getValue('name')} to Group</DialogTitle>
-              </DialogHeader>
-              <div className='flex items-center gap-2 mt-4'>
-                <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                  <SelectTrigger className='w-48'>
-                    <SelectValue placeholder='Choose a group' />
-                  </SelectTrigger>
-                  <SelectContent className='whitespace-nowrap'>
-                    {groups.map((group) => (
-                      <SelectItem key={group.id} value={group.name}>
-                        {group.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={handleConfirm}
-                  disabled={!selectedGroup}
-                  style={{ backgroundColor: '#7B86AA' }}
-                  className='hover:opacity-90 text-white'
-                >
-                  Confirm
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        );
-      },
+      cell: (ctx: CellContext<Computer, unknown>) => (
+        <AddToGroupCell row={ctx.row} groups={groups} onAddToGroup={handleAddToGroup} />
+      ),
     },
   ];
 
@@ -547,7 +552,7 @@ export function PCManagerContent() {
                 }
               />
             ),
-            cell: ({ row }: any) => (
+            cell: ({ row }: CellContext<Computer, unknown>) => (
               <Checkbox
                 checked={groupSelectedComputers[groupName]?.includes(row.original.id) || false}
                 onCheckedChange={() => toggleComputerSelection(row.original.id, groupName)}
@@ -596,7 +601,7 @@ export function PCManagerContent() {
           {
             id: 'actions',
             header: 'Actions',
-            cell: ({ row }: any) => (
+            cell: ({ row }: CellContext<Computer, unknown>) => (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button

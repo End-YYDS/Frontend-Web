@@ -1,8 +1,7 @@
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import { ProcessManager } from './Content';
 
-
-const Process_manager = () => {
+const Process_manager: PageComponent = () => {
   return (
     <div className='container mx-auto py-6 px-4'>
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
@@ -12,9 +11,8 @@ const Process_manager = () => {
     </div>
   );
 };
-(Process_manager as any).meta = {
-  requiresAuth: true, //驗證
+Process_manager.meta = {
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default Process_manager;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ComputerList } from './ComputerList';
 import { ComputerDetail } from './ComputerDetail';
 import {
@@ -23,6 +23,12 @@ interface Computer {
   status: 'online' | 'offline';
 }
 
+const FALLBACK_INSTALL_COMPUTERS: PcsUuid[] = [
+  { Status: true, Hostname: 'ServerA', Ip: '192.168.0.10' },
+  { Status: true, Hostname: 'ServerB', Ip: '192.168.0.11' },
+  { Status: false, Hostname: 'ServerC', Ip: '192.168.0.12' },
+];
+
 const ServerContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isInstalling, setIsInstalling] = useState(false);
@@ -31,21 +37,15 @@ const ServerContent = () => {
   const [computers, setComputers] = useState<Computer[]>([]);
   const [selectedComputerId, setSelectedComputerId] = useState<string | null>(null);
 
-  const [installComputer] = useState<PcsUuid[]>([
-    { Status: true, Hostname: 'ServerA', Ip: '192.168.0.10' },
-    { Status: true, Hostname: 'ServerB', Ip: '192.168.0.11' },
-    { Status: false, Hostname: 'ServerC', Ip: '192.168.0.12' },
-  ]);
-
   /** 取得線上電腦資料 */
-  const getOnlineComputers = async () => {
+  const getOnlineComputers = useCallback(async () => {
     try {
       const { data } = await axios.post<GetAllPcResponse>('/api/chm/pc/all');
 
       if (!data || !data.Pcs || Object.keys(data.Pcs).length === 0) {
         console.warn('API 回傳空資料，改用測試資料');
         setComputers(
-          installComputer.map((pc, idx) => ({
+          FALLBACK_INSTALL_COMPUTERS.map((pc, idx) => ({
             id: `mock-${idx}`,
             name: pc.Hostname,
             uuid: `uuid-${idx}`,
@@ -66,9 +66,12 @@ const ServerContent = () => {
       console.log('從 API 取得電腦清單:', pcsArray);
     } catch (error) {
       console.error('取得線上電腦資料失敗:', error);
-      toast.error('Error', { description: 'Failed to fetch computer list, using test data.' });
+      toast.error('Error', {
+        description: 'Failed to fetch computer list, using test data.',
+      });
+
       setComputers(
-        installComputer.map((pc, idx) => ({
+        FALLBACK_INSTALL_COMPUTERS.map((pc, idx) => ({
           id: `mock-${idx}`,
           name: pc.Hostname,
           uuid: `uuid-${idx}`,
@@ -76,30 +79,26 @@ const ServerContent = () => {
         })),
       );
     }
-  };
-
-  useEffect(() => {
-    getOnlineComputers();
   }, []);
 
-  /** 切換主機勾選 */
+  useEffect(() => {
+    void getOnlineComputers();
+  }, [getOnlineComputers]);
+
   const handleComputerToggle = (computerId: string) => {
     setSelectedComputersForInstall((prev) =>
       prev.includes(computerId) ? prev.filter((id) => id !== computerId) : [...prev, computerId],
     );
   };
 
-  /** 點擊主機卡片時：顯示詳細資訊畫面 */
   const handleComputerSelect = (computerId: string) => {
     setSelectedComputerId(computerId);
   };
 
-  /** 從詳細資訊返回清單 */
   const handleBackToList = () => {
     setSelectedComputerId(null);
   };
 
-  /** 安裝流程 */
   const handleInstallServer = async () => {
     if (selectedComputersForInstall.length === 0) {
       toast.error('Error', { description: 'Please select at least one computer to install.' });
@@ -110,23 +109,26 @@ const ServerContent = () => {
     console.log('安裝中電腦:', selectedComputersForInstall);
 
     try {
+      // TODO: 之後這邊換成實際安裝 API
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success('Success', { description: `已成功在 ${selectedComputersForInstall.length} 台電腦安裝 Bind。` });
+
+      toast.success('Success', {
+        description: `已成功在 ${selectedComputersForInstall.length} 台電腦安裝 Bind。`,
+      });
+
       setInstallDialogOpen(false);
       setSelectedComputersForInstall([]);
-    } catch (err) {
+    } catch {
       toast.error('Error', { description: 'Installation failed, please try again later.' });
     } finally {
       setIsInstalling(false);
     }
   };
 
-  /** 若有選取主機，顯示詳細資訊畫面 */
   if (selectedComputerId) {
     return <ComputerDetail computerId={selectedComputerId} onBack={handleBackToList} />;
   }
 
-  /** 主畫面（清單 + 搜尋 + 安裝 Dialog） */
   return (
     <div>
       <div className='mb-6'>
@@ -221,8 +223,6 @@ const ServerContent = () => {
           </div>
         </div>
       </div>
-
-      {/* 電腦清單顯示 */}
       <ComputerList searchTerm={searchTerm} onComputerSelect={handleComputerSelect} />
     </div>
   );

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint --max-warnings=0 .",
+    "type-check": "tsc --noEmit",
     "preview": "vite preview",
     "gen:api-client": "NODE_EXTRA_CA_CERTS=../certs/rootCA.pem openapi-ts"
   },
@@ -70,6 +71,7 @@
     "tw-animate-css": "^1.3.5",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vite-plugin-checker": "^0.11.0"
   }
 }

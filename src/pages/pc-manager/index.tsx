@@ -1,10 +1,9 @@
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import { PCManagerContent } from './Content';
 
-const Pc_manager = () => <PCManagerContent />;
-(Pc_manager as any).meta = {
-  requiresAuth: true, //驗證
+const Pc_manager: PageComponent = () => <PCManagerContent />;
+Pc_manager.meta = {
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default Pc_manager;

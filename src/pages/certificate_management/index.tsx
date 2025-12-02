@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, ShieldX } from 'lucide-react';
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import { toast } from 'sonner';
 import { revoke, revoked, valid, type RevokeRequest } from '@/api/openapi-client';
 interface Certificate {
@@ -43,7 +43,7 @@ interface RevokedCertificateInfo {
   reason: string;
 }
 
-const CertificateManagementPage = () => {
+const CertificateManagementPage: PageComponent = () => {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [revokedCertificates, setRevokedCertificates] = useState<RevokedCertificateInfo[]>([]);
   const [revokeReason, setRevokeReason] = useState('');
@@ -95,12 +95,7 @@ const CertificateManagementPage = () => {
       });
     }
   };
-  const handleRevokeCertificate = async (
-    _certificateId: string,
-    commonName: string,
-    _issuer: string,
-    _serialNumber: string,
-  ) => {
+  const handleRevokeCertificate = async (_certificateId: string, commonName: string) => {
     const reason = revokeReason.trim() || 'Manually revoked by certificate administrator';
 
     try {
@@ -215,14 +210,7 @@ const CertificateManagementPage = () => {
                               Cancel
                             </AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() =>
-                                handleRevokeCertificate(
-                                  cert.id,
-                                  cert.commonName,
-                                  cert.issuer,
-                                  cert.serialNumber,
-                                )
-                              }
+                              onClick={() => handleRevokeCertificate(cert.id, cert.commonName)}
                               className='bg-red-600 hover:bg-red-700'
                             >
                               Confirm Revocation
@@ -291,10 +279,9 @@ const CertificateManagementPage = () => {
   );
 };
 
-(CertificateManagementPage as any).meta = {
+CertificateManagementPage.meta = {
   requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 
 export default CertificateManagementPage;

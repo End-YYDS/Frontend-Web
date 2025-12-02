@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ComputerList } from './ComputerList';
 import { ComputerDetail } from './ComputerDetail';
 import {
@@ -38,7 +38,7 @@ const ServerContent = () => {
   ]);
 
   /** 取得線上電腦資料 */
-  const getOnlineComputers = async () => {
+  const getOnlineComputers = useCallback(async () => {
     try {
       const { data } = await axios.post<GetAllPcResponse>('/api/chm/pc/all');
 
@@ -67,6 +67,7 @@ const ServerContent = () => {
     } catch (error) {
       console.error('取得線上電腦資料失敗:', error);
       toast.error('Error', { description: 'Failed to fetch computer list, using test data.' });
+
       setComputers(
         installComputer.map((pc, idx) => ({
           id: `mock-${idx}`,
@@ -76,11 +77,11 @@ const ServerContent = () => {
         })),
       );
     }
-  };
+  }, [installComputer]);
 
   useEffect(() => {
     getOnlineComputers();
-  }, []);
+  }, [getOnlineComputers]);
 
   /** 切換主機勾選 */
   const handleComputerToggle = (computerId: string) => {
@@ -116,7 +117,7 @@ const ServerContent = () => {
       });
       setInstallDialogOpen(false);
       setSelectedComputersForInstall([]);
-    } catch (err) {
+    } catch {
       toast.error('Error', { description: 'Installation failed, please try again later.' });
     } finally {
       setIsInstalling(false);

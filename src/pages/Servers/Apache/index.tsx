@@ -1,6 +1,6 @@
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import ServerContent from './Content';
-const Apache = () => {
+const Apache: PageComponent = () => {
   return (
     <div className='container mx-auto py-6 px-4'>
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
@@ -10,9 +10,8 @@ const Apache = () => {
     </div>
   );
 };
-(Apache as any).meta = {
-  requiresAuth: true, 
+Apache.meta = {
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default Apache;

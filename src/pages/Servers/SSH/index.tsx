@@ -1,6 +1,6 @@
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import ServerContent from './Content';
-const Ssh = () => {
+const Ssh: PageComponent = () => {
   return (
     <div className='container mx-auto py-8 px-6'>
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
@@ -10,9 +10,8 @@ const Ssh = () => {
     </div>
   );
 };
-(Ssh as any).meta = {
-  requiresAuth: true, //驗證
+Ssh.meta = {
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default Ssh;

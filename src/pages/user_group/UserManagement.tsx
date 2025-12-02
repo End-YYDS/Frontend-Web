@@ -32,13 +32,13 @@ import type { GroupRow, UserRow } from '.';
 
 interface UserManagementProps {
   users: UserRow[];
-  onAddUser: (user: CreateUserRequest) => void;
+  onAddUser: (user: CreateUserRequest) => Promise<void> | void;
   onUpdateUser: (uid: string, patch: PatchUserEntry) => void;
   onDeleteUser: (uid: string) => void;
   onDeleteSelectedUsers: (uids: string[]) => void;
   // groups: { gid: string; Groupname: string; Users: string[] }[];
   groups: GroupRow[];
-  onCreateGroup: (name: string) => void;
+  onCreateGroup: (name: string) => Promise<void> | void;
   searchTerm: string;
   onSearchChange: (term: string) => void;
   currentPage: number;
