@@ -1,8 +1,5 @@
 import type { PageComponent } from '@/types';
 import ServerContent from './Content';
-
-export const meta = { requiresAuth: true };
-
 const Squid: PageComponent = () => {
   return (
     <div className='container mx-auto py-8 px-6'>

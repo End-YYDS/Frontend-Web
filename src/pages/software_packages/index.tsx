@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,12 +71,8 @@ const SoftwarePackagesPage: PageComponent = () => {
     name: string;
   } | null>(null);
 
-  useEffect(() => {
-    fetchPCs();
-  }, []);
-
   // -------------------- API --------------------
-  const fetchPCs = async () => {
+  const fetchPCs = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await axios.get<{
@@ -85,6 +81,7 @@ const SoftwarePackagesPage: PageComponent = () => {
           { Packages: Record<string, { Version: string; Status: 'Installed' | 'Notinstall' }> }
         >;
       }>('/api/software', { withCredentials: true });
+
       const pcList: PC[] = Object.entries(res.data.Pcs).map(([uuid, pc]) => ({
         uuid,
         name: `PC-${uuid}`,
@@ -93,15 +90,20 @@ const SoftwarePackagesPage: PageComponent = () => {
           return acc;
         }, {} as Record<string, Package>),
       }));
+
       setPcs(pcList);
-      if (pcList.length > 0) setSelectedPc(pcList[0].uuid);
+      if (pcList.length > 0) setSelectedPc((prev) => prev || pcList[0].uuid);
     } catch (error) {
       console.error('Error fetching PCs:', error);
       toast.error('Failed to fetch PCs');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPCs();
+  }, [fetchPCs]);
 
   const handleUninstallPackage = async (packageKey: string) => {
     if (!selectedPc || !packageToUninstall) return;
@@ -148,7 +150,6 @@ const SoftwarePackagesPage: PageComponent = () => {
     if (!selectedPc) return;
     setIsLoading(true);
     try {
-      // 假設後端同樣用 POST /api/software 安裝最新版本
       const payload: InstallRequest = { uuid: [selectedPc], Packages: [packageKey] };
       const res = await axios.post<ActionResponse>('/api/software', payload, {
         withCredentials: true,
@@ -258,23 +259,15 @@ const SoftwarePackagesPage: PageComponent = () => {
     packages: Record<string, Package>;
   }
   const renderPagination = () => {
-    // 只在桌面版顯示分頁
     if (isMobile || totalPages <= 1) return null;
-
     const renderPageNumbers = () => {
       const pages = [];
       const maxVisiblePages = 5;
-
-      // Calculate start and end page numbers
       let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-      // Adjust start page if we're near the end
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
       if (endPage - startPage + 1 < maxVisiblePages) {
         startPage = Math.max(1, endPage - maxVisiblePages + 1);
       }
-
-      // Add first page if not visible
       if (startPage > 1) {
         pages.push(
           <PaginationItem key={1}>
@@ -291,8 +284,6 @@ const SoftwarePackagesPage: PageComponent = () => {
           );
         }
       }
-
-      // Add visible page numbers
       for (let i = startPage; i <= endPage; i++) {
         pages.push(
           <PaginationItem key={i}>
@@ -303,7 +294,6 @@ const SoftwarePackagesPage: PageComponent = () => {
         );
       }
 
-      // Add last page if not visible
       if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
           pages.push(
@@ -353,7 +343,6 @@ const SoftwarePackagesPage: PageComponent = () => {
   };
 
   const renderLoadMoreButton = () => {
-    // 只在手機版顯示載入更多按鈕
     if (!isMobile || mobileDisplayCount >= installedPackages.length) return null;
 
     return (

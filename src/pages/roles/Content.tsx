@@ -13,8 +13,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-  AlertDialogAction
-} from "@/components/ui/alert-dialog";
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import axios from 'axios';
 import type { GetRoleResponse, GetRoleUsersResponse, RoleActionResponse } from './types';
 
@@ -50,15 +50,15 @@ interface ApiResponse {
 // ];
 
 // const mockRoles: Role[] = [
-//   { 
+//   {
 //     id: 'role-0',
 //     name: 'role1',
 //     color: '#E5E7EB',
-//     permissions: 3, 
+//     permissions: 3,
 //     members: [mockUsers[0], mockUsers[1]],
 //     memberCount: 2
 //   },
-//   { 
+//   {
 //     id: 'role-1',
 //     name: 'role2',
 //     color: '#F59E0B',
@@ -66,7 +66,7 @@ interface ApiResponse {
 //     members: [mockUsers[2]],
 //     memberCount: 1
 //   },
-//   { 
+//   {
 //     id: 'role-2',
 //     name: 'role3',
 //     color: '#3B82F6',
@@ -91,7 +91,7 @@ const fetchAllUsers = async (): Promise<Member[]> => {
     return Object.entries(data.Users).map(([uid, name]) => ({
       id: uid,
       name: String(name),
-      avatar: '/placeholder.svg'
+      avatar: '/placeholder.svg',
     }));
   } catch (err) {
     console.error(err);
@@ -99,7 +99,6 @@ const fetchAllUsers = async (): Promise<Member[]> => {
     return [];
   }
 };
-
 
 const fetchAllRoles = async (usersList: Member[]): Promise<Role[]> => {
   try {
@@ -112,17 +111,17 @@ const fetchAllRoles = async (usersList: Member[]): Promise<Role[]> => {
       return [];
     }
 
-    return data.Roles.map((r: any, idx: number) => ({
+    return data.Roles.map((r, idx) => ({
       id: `role-${idx}`,
       name: String(r.RoleName ?? 'Unnamed Role'),
       color: String(r.Color ?? '#E5E7EB'),
       permissions: Number(r.Permissions ?? 0),
       members: Array.isArray(r.Members)
-        ? r.Members
-            .map((uid: string) => usersList.find(u => u.id === String(uid)))
-            .filter((u: Member | undefined): u is Member => u !== undefined)
+        ? r.Members.map((uid: number) => usersList.find((u) => u.id === String(uid))).filter(
+            (u: Member | undefined): u is Member => u !== undefined,
+          )
         : [],
-      memberCount: Number(r.Length ?? 0)
+      memberCount: Number(r.Length ?? 0),
     }));
   } catch (err) {
     console.error('fetchAllRoles error:', err);
@@ -137,8 +136,8 @@ const createRole = async (role: Role): Promise<ApiResponse> => {
       RoleName: role.name,
       Permissions: role.permissions,
       Color: role.color,
-      Members: role.members.map(m => Number(m.id)),
-      Length: role.members.length
+      Members: role.members.map((m) => Number(m.id)),
+      Length: role.members.length,
     };
     const res = await axios.post<RoleActionResponse>('/api/chm/role', body);
     return res.data;
@@ -151,7 +150,9 @@ const createRole = async (role: Role): Promise<ApiResponse> => {
 
 const deleteRoleApi = async (roleName: string): Promise<ApiResponse> => {
   try {
-    const res = await axios.delete<RoleActionResponse>('/api/chm/role', { data: { RoleName: roleName } });
+    const res = await axios.delete<RoleActionResponse>('/api/chm/role', {
+      data: { RoleName: roleName },
+    });
     return res.data;
   } catch (err) {
     console.error(err);
@@ -164,7 +165,7 @@ const updateRoleMembers = async (roleName: string, members: Member[]): Promise<A
   try {
     const res = await axios.put<RoleActionResponse>('/api/chm/role', {
       RoleName: roleName,
-      Members: members.map(m => Number(m.id))
+      Members: members.map((m) => Number(m.id)),
     });
     return res.data;
   } catch (err) {
@@ -179,7 +180,7 @@ const updateRolePermissions = async (role: Role): Promise<ApiResponse> => {
     const res = await axios.patch<RoleActionResponse>('/api/chm/role', {
       RoleName: role.name,
       Permissions: role.permissions,
-      Color: role.color
+      Color: role.color,
     });
     return res.data;
   } catch (err) {
@@ -202,7 +203,7 @@ export function RolesContent() {
     color: '#6B7280',
     permissions: 1,
     members: allUsers,
-    memberCount: allUsers.length
+    memberCount: allUsers.length,
   };
 
   const allRolesIncludingEveryone = [everyoneRole, ...roles];
@@ -243,7 +244,7 @@ export function RolesContent() {
     }
     const res = await deleteRoleApi(roleName);
     if (res.Type === 'Ok') {
-      setRoles(roles.filter(role => role.id !== roleId));
+      setRoles(roles.filter((role) => role.id !== roleId));
       toast.success(`Role "${roleName}" has been deleted`);
     } else {
       toast.error(res.Message);
@@ -262,7 +263,10 @@ export function RolesContent() {
       if (updatedRole.id === 'new-role') {
         const res = await createRole(updatedRole);
         if (res.Type === 'Ok') {
-          setRoles([...roles, { ...updatedRole, id: `role-${roles.length}`, memberCount: updatedRole.members.length }]);
+          setRoles([
+            ...roles,
+            { ...updatedRole, id: `role-${roles.length}`, memberCount: updatedRole.members.length },
+          ]);
           toast.success(`Role "${updatedRole.name}" has been created`);
         } else {
           toast.error(res.Message);
@@ -274,11 +278,19 @@ export function RolesContent() {
         const res2 = await updateRolePermissions(updatedRole);
         if (res2.Type !== 'Ok') throw new Error(res2.Message);
 
-        setRoles(roles.map(r => r.id === updatedRole.id ? { ...updatedRole, memberCount: updatedRole.members.length } : r));
+        setRoles(
+          roles.map((r) =>
+            r.id === updatedRole.id
+              ? { ...updatedRole, memberCount: updatedRole.members.length }
+              : r,
+          ),
+        );
         toast.success(`Role "${updatedRole.name}" has been updated`);
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      console.error(err);
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(message);
     }
 
     setEditingRole(null);
@@ -286,8 +298,8 @@ export function RolesContent() {
 
   if (editingRole) {
     return (
-      <RoleEditor 
-        role={editingRole} 
+      <RoleEditor
+        role={editingRole}
         allRoles={allRolesIncludingEveryone}
         allUsers={allUsers}
         onBack={handleBackToList}
@@ -297,78 +309,99 @@ export function RolesContent() {
     );
   }
 
-  const filteredRoles = roles.filter(role => role.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredRoles = roles.filter((role) =>
+    role.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   return (
-    <div className="bg-linear-to-br">
+    <div className='bg-linear-to-br'>
       {/* Default Role Card */}
-      <div 
-        className="bg-white rounded-lg shadow-sm p-6 mb-6 cursor-pointer hover:bg-gray-50 transition-colors"
+      <div
+        className='bg-white rounded-lg shadow-sm p-6 mb-6 cursor-pointer hover:bg-gray-50 transition-colors'
         onClick={() => setEditingRole(everyoneRole)}
       >
-        <div className="flex items-center">
-          <Users className="w-6 h-6 text-gray-600 mr-3" />
+        <div className='flex items-center'>
+          <Users className='w-6 h-6 text-gray-600 mr-3' />
           <div>
-            <h3 className="font-semibold text-lg">Default Role</h3>
-            <p className="text-gray-600">@everyone</p>
+            <h3 className='font-semibold text-lg'>Default Role</h3>
+            <p className='text-gray-600'>@everyone</p>
           </div>
         </div>
       </div>
 
       {/* Search and Create */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+      <div className='flex justify-between items-center mb-6'>
+        <div className='relative flex-1 max-w-md'>
+          <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
           <Input
-            placeholder="Search roles"
+            placeholder='Search roles'
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className='pl-10'
           />
         </div>
-        <Button onClick={handleCreateRole} style={{ backgroundColor: '#7B86AA' }} className="hover:opacity-90 text-white ml-4">
+        <Button
+          onClick={handleCreateRole}
+          style={{ backgroundColor: '#7B86AA' }}
+          className='hover:opacity-90 text-white ml-4'
+        >
           Create Role
         </Button>
       </div>
 
       {/* Roles Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b bg-gray-50">
-          <div className="grid grid-cols-4 gap-4">
-            <div className="font-semibold text-gray-700">Roles - {roles.length}</div>
-            <div className="font-semibold text-gray-700">Members</div>
-            <div className="font-semibold text-gray-700">Permissions</div>
+      <div className='bg-white rounded-lg shadow-sm overflow-hidden'>
+        <div className='px-6 py-4 border-b bg-gray-50'>
+          <div className='grid grid-cols-4 gap-4'>
+            <div className='font-semibold text-gray-700'>Roles - {roles.length}</div>
+            <div className='font-semibold text-gray-700'>Members</div>
+            <div className='font-semibold text-gray-700'>Permissions</div>
             <div></div>
           </div>
         </div>
-        
-        <div className="divide-y divide-gray-200">
+
+        <div className='divide-y divide-gray-200'>
           {filteredRoles.map((role) => (
-            <div key={role.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer grid grid-cols-4 gap-4 items-center">
-              <div className="flex items-center" onClick={() => handleEditRole(role)}>
-                <div className="w-4 h-4 rounded-full mr-3" style={{ backgroundColor: role.color }}></div>
-                <span className="font-medium">{role.name}</span>
+            <div
+              key={role.id}
+              className='px-6 py-4 hover:bg-gray-50 cursor-pointer grid grid-cols-4 gap-4 items-center'
+            >
+              <div className='flex items-center' onClick={() => handleEditRole(role)}>
+                <div
+                  className='w-4 h-4 rounded-full mr-3'
+                  style={{ backgroundColor: role.color }}
+                ></div>
+                <span className='font-medium'>{role.name}</span>
               </div>
-              <div className="text-gray-600" onClick={() => handleEditRole(role)}>{role.memberCount}</div>
-              <div className="text-gray-600" onClick={() => handleEditRole(role)}>{role.permissions}</div>
-              <div className="flex justify-end">
+              <div className='text-gray-600' onClick={() => handleEditRole(role)}>
+                {role.memberCount}
+              </div>
+              <div className='text-gray-600' onClick={() => handleEditRole(role)}>
+                {role.permissions}
+              </div>
+              <div className='flex justify-end'>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                      <Trash2 className="w-4 h-4" />
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='text-red-500 hover:text-red-700 hover:bg-red-50'
+                    >
+                      <Trash2 className='w-4 h-4' />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Confirm Delete Role</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete the role "{role.name}"? This action cannot be undone.
+                        Are you sure you want to delete the role "{role.name}"? This action cannot
+                        be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        className="bg-red-500 text-white hover:bg-red-600"
+                        className='bg-red-500 text-white hover:bg-red-600'
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteRole(role.id, role.name);

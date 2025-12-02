@@ -116,7 +116,7 @@ const ServerContent = () => {
       });
       setInstallDialogOpen(false);
       setSelectedComputersForInstall([]);
-    } catch (_err) {
+    } catch {
       toast.error('Error', { description: 'Installation failed, please try again later.' });
     } finally {
       setIsInstalling(false);

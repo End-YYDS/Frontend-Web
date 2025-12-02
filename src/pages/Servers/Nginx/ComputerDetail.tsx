@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,23 +35,22 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const [actionLoading, setActionLoading] = useState<'' | 'start' | 'stop' | 'restart'>('');
 
   /** 取得 Nginx 狀態 */
-  const fetchNginxStatus = async () => {
+  const fetchNginxStatus = useCallback(async () => {
     setLoading(true);
     try {
       const sendData: GetNginxRequest = { Uuid: computerId };
       const res = await axios.post<GetNginxResponse>('/api/server/nginx', sendData);
       setNginxStatus(res.data);
-    } catch (error) {
-      console.error('Fetch Nginx status failed:', error);
+    } catch {
       toast.error('Error', { description: 'Failed to fetch Nginx status' });
     } finally {
       setLoading(false);
     }
-  };
+  }, [computerId]);
 
   useEffect(() => {
-    fetchNginxStatus();
-  }, [computerId]);
+    void fetchNginxStatus();
+  }, [fetchNginxStatus]);
 
   /** 執行 Nginx 操作 (Start / Stop / Restart) */
   const performAction = async (action: 'start' | 'stop' | 'restart') => {

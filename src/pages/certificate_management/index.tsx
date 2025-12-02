@@ -95,12 +95,7 @@ const CertificateManagementPage: PageComponent = () => {
       });
     }
   };
-  const handleRevokeCertificate = async (
-    _certificateId: string,
-    commonName: string,
-    _issuer: string,
-    _serialNumber: string,
-  ) => {
+  const handleRevokeCertificate = async (_certificateId: string, commonName: string) => {
     const reason = revokeReason.trim() || 'Manually revoked by certificate administrator';
 
     try {
@@ -215,14 +210,7 @@ const CertificateManagementPage: PageComponent = () => {
                               Cancel
                             </AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() =>
-                                handleRevokeCertificate(
-                                  cert.id,
-                                  cert.commonName,
-                                  cert.issuer,
-                                  cert.serialNumber,
-                                )
-                              }
+                              onClick={() => handleRevokeCertificate(cert.id, cert.commonName)}
                               className='bg-red-600 hover:bg-red-700'
                             >
                               Confirm Revocation

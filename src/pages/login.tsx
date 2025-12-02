@@ -17,7 +17,7 @@ const Login: PageComponent = () => {
     e.preventDefault();
     try {
       setError(null);
-      let { data } = await login({ body: { Username: username, Password: password } });
+      const { data } = await login({ body: { Username: username, Password: password } });
       if (data?.Type === 'Err') {
         setUsername('');
         setPassword('');
@@ -25,7 +25,7 @@ const Login: PageComponent = () => {
       }
       await refresh();
       navigate('/dashboard', { replace: true });
-    } catch (err: any) {
+    } catch {
       setUsername('');
       setPassword('');
       setError('帳號或密碼錯誤');

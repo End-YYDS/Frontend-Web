@@ -193,7 +193,7 @@ const UserGroup: PageComponent = () => {
         await fetchGroups();
         await fetchUsers();
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to delete group.');
     }
   };

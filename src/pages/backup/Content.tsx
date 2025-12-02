@@ -68,14 +68,14 @@ export function BackupContent() {
         time: `${String(b.Time.Hour).padStart(2, '0')}:${String(b.Time.Min).padStart(2, '0')}`,
       }));
       setBackupHistory(backups);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       toast.error('Failed to fetch backup history');
     }
   };
 
   const backupNowApi = async (name: string, location: BackupLocation): Promise<Backup> => {
-    let sendData: PostBackupRequest = {
+    const sendData: PostBackupRequest = {
       Type: location,
       Name: name,
     };
@@ -83,7 +83,7 @@ export function BackupContent() {
     const data = res.data;
     if (data.Type !== 'Ok') throw new Error(data.Message);
 
-    let returnData: Backup = {
+    const returnData: Backup = {
       id: data?.Id,
       filename: name,
       date: new Date().toISOString().split('T')[0],
@@ -94,7 +94,7 @@ export function BackupContent() {
   };
 
   const restoreBackupApi = async (backup: Backup, location: BackupLocation) => {
-    let sendData: PostBackupReductionRequest =
+    const sendData: PostBackupReductionRequest =
       location === 'Local'
         ? { Type: 'Local', Name: backup.filename }
         : { Type: 'Remote', File: backup.filename }; // TODO: 要轉成二進制 Blob
@@ -116,8 +116,8 @@ export function BackupContent() {
       setFilename('');
       setIsBackupDialogOpen(false);
       toast.success(`Backup file "${newBackup.filename}" has been created`);
-    } catch (err: any) {
-      toast.error(err.message || 'Backup failed');
+    } catch {
+      toast.error('Backup failed');
     }
   };
 
@@ -125,8 +125,8 @@ export function BackupContent() {
     try {
       await restoreBackupApi(backup, 'Local');
       toast.success(`Restored from "${backup.filename}"`);
-    } catch (err: any) {
-      toast.error(err.message || 'Restore failed');
+    } catch {
+      toast.error('Restore failed');
     }
   };
 

@@ -63,7 +63,20 @@ interface CronJob {
   schedule: string;
   status: 'active' | 'inactive';
 }
-
+type NewJobState = {
+  username: string;
+  jobName: string;
+  command: string;
+  schedule: string;
+  status: 'active' | 'inactive';
+  scheduleType: 'quick' | 'custom';
+  quickSchedule: string;
+  minute: string;
+  hour: string;
+  date: string;
+  month: string;
+  week: string;
+};
 const CronManagement: PageComponent = () => {
   const [jobs, setJobs] = useState<CronJob[]>([]);
   const [selectedJobs, setSelectedJobs] = useState<number[]>([]);
@@ -71,7 +84,7 @@ const CronManagement: PageComponent = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<CronJob | null>(null);
-  const [newJob, setNewJob] = useState<any>({
+  const [newJob, setNewJob] = useState<NewJobState>({
     username: '',
     jobName: '',
     command: '',
@@ -112,7 +125,7 @@ const CronManagement: PageComponent = () => {
       await axios.post('/api/cron', job, { withCredentials: true });
       toast.info('Success', { description: 'Cron job added' });
       fetchJobs();
-    } catch (error) {
+    } catch {
       toast.error('Failed', { description: 'Failed to add cron job' });
     }
   };
@@ -123,7 +136,7 @@ const CronManagement: PageComponent = () => {
       await axios.put('/api/cron', data, { withCredentials: true });
       toast.info('Success', { description: 'Cron job updated' });
       fetchJobs();
-    } catch (error) {
+    } catch {
       toast.error('Failed', { description: 'Failed to update cron job' });
     }
   };
@@ -134,7 +147,7 @@ const CronManagement: PageComponent = () => {
       await axios.delete('/api/cron', { data, withCredentials: true });
       toast.info('Success', { description: 'Cron job deleted' });
       fetchJobs();
-    } catch (error) {
+    } catch {
       toast.error('Failed', { description: 'Failed to delete cron job' });
     }
   };
@@ -149,7 +162,7 @@ const CronManagement: PageComponent = () => {
       });
       toast.info('Success', { description: 'Cron jobs imported' });
       fetchJobs();
-    } catch (error) {
+    } catch {
       toast.error('Failed', { description: 'Failed to import cron jobs' });
     }
   };
@@ -170,7 +183,7 @@ const CronManagement: PageComponent = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       toast.info('Success', { description: 'Cron jobs exported' });
-    } catch (error) {
+    } catch {
       toast.error('Failed', { description: 'Failed to export cron jobs' });
     }
   };
@@ -446,7 +459,6 @@ const CronManagement: PageComponent = () => {
                           name='scheduleType'
                           value='quick'
                           checked={newJob.scheduleType === 'quick'}
-                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
                           onChange={() =>
                             setNewJob({
                               ...newJob,
@@ -469,7 +481,6 @@ const CronManagement: PageComponent = () => {
                           name='scheduleType'
                           value='custom'
                           checked={newJob.scheduleType === 'custom'}
-                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
                           onChange={() =>
                             setNewJob({ ...newJob, scheduleType: 'custom', quickSchedule: '' })
                           }
@@ -920,7 +931,7 @@ const CronManagement: PageComponent = () => {
   );
 };
 
-(CronManagement as any).meta = {
+CronManagement.meta = {
   requiresAuth: true,
   layout: true,
 };

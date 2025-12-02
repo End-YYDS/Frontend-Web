@@ -10,7 +10,7 @@ const Firewall: PageComponent = () => {
     </div>
   );
 };
-(Firewall as any).meta = {
+Firewall.meta = {
   requiresAuth: true,
   layout: true,
 };

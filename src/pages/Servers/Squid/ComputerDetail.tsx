@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +36,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const [actionLoading, setActionLoading] = useState<'' | 'start' | 'stop' | 'restart'>('');
 
   /** 取得 Squid 狀態 */
-  const fetchSquidStatus = async () => {
+  const fetchSquidStatus = useCallback(async () => {
     setLoading(true);
     try {
       const sendData: GetSquidRequest = { Uuid: computerId };
@@ -48,11 +48,11 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [computerId]);
 
   useEffect(() => {
     fetchSquidStatus();
-  }, [computerId]);
+  }, [fetchSquidStatus]);
 
   /** 執行 Squid 操作 (Start / Stop / Restart) */
   const performAction = async (action: 'start' | 'stop' | 'restart') => {

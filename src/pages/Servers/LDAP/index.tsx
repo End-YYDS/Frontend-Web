@@ -11,7 +11,7 @@ const Ldap: PageComponent = () => {
     </div>
   );
 };
-(Ldap as any).meta = {
+Ldap.meta = {
   requiresAuth: true,
   layout: true,
 };

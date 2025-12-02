@@ -1,6 +1,6 @@
 //TODO: 選擇電腦請依照後端
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,7 +74,6 @@ import type { PutDnsRequest, PatchHostnameRequest } from './types';
 
 import axios from 'axios';
 
-// Validation schemas
 const ipAddressRegex =
   /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 const cidrRegex =
@@ -119,16 +118,6 @@ const routeSchema = z.object({
       message: 'Please enter a valid source IP address',
     }),
 });
-//TODO: 檢查DNS
-// const dnsSchema = z.object({
-//   hostname: z.string().min(1, "請輸入主機名稱"),
-//   primary: z.string().refine((val) => ipAddressRegex.test(val), {
-//     message: "請輸入有效的主要DNS伺服器IP位址",
-//   }),
-//   secondary: z.string().optional().refine((val) => !val || ipAddressRegex.test(val), {
-//     message: "請輸入有效的次要DNS伺服器IP位址",
-//   }),
-// });
 
 interface NetworkInterface {
   id: string;
@@ -142,23 +131,6 @@ interface NetworkInterface {
   dhcp: boolean;
   type: 'physical' | 'virtual';
 }
-
-// interface Route {
-//   id: string;
-//   destinationNetwork: string;
-//   nextHop: string;
-//   dev: string;
-//   metric: number;
-//   src: string;
-// }
-
-// interface DNSConfig {
-//   hostname: string;
-//   dns: {
-//     primary: string;
-//     secondary: string;
-//   };
-// }
 
 interface Computer {
   id: string;
@@ -187,11 +159,6 @@ const NetworkConfigurationPage: PageComponent = () => {
     null,
   );
   const [originalDnsConfig, setOriginalDnsConfig] = useState<DNSConfig | null>(null);
-
-  // Mock data
-  useEffect(() => {
-    fetchNetworkData();
-  }, []);
 
   interface NetworkInterface {
     id: string;
@@ -223,12 +190,11 @@ const NetworkConfigurationPage: PageComponent = () => {
     };
   }
 
-  const fetchNetworkData = async () => {
+  const fetchNetworkData = useCallback(async () => {
     if (!selectedComputer) return;
     setIsLoading(true);
 
     try {
-      // --------- 取得網路介面 ---------
       const netRes = await axios.get<GetAllNetResponse>('/api/network/net');
       const pcs = netRes.data.pcs || {};
       const pcNetworks = pcs[selectedComputer]?.networks || {};
@@ -236,19 +202,18 @@ const NetworkConfigurationPage: PageComponent = () => {
       const interfacesData: NetworkInterface[] = Object.entries(pcNetworks).map(
         ([nid, net]: [string, NetworkItem]) => ({
           id: nid,
-          name: net.nic_type + '-' + nid, // 原本沒有 Name，使用 nic_type+nid
+          name: net.nic_type + '-' + nid,
           ipv4: net.ipv4,
           netmask: net.netmask,
           mac: net.mac,
-          gateway: '', // 從 route 或其他 API 補
+          gateway: '',
           mtu: net.mtu,
           status: net.status,
-          dhcp: false, // 可從其他 API 判斷
+          dhcp: false,
           type: net.nic_type.toLowerCase() as 'physical' | 'virtual',
         }),
       );
 
-      // --------- 取得路由 ---------
       const routeRes = await axios.get<GetAllRouteResponse>('/api/network/route');
       const routePcs = routeRes.data.Pcs || {};
       const routeDataRaw = routePcs[selectedComputer]?.Routes || {};
@@ -264,7 +229,6 @@ const NetworkConfigurationPage: PageComponent = () => {
         }),
       );
 
-      // --------- 取得 DNS / Hostname ---------
       const dnsRes = await axios.get<GetAllDnsResponse>('/api/network/dns');
       const dnsPcs = dnsRes.data.Pcs || {};
       const dnsData: PcDns = dnsPcs[selectedComputer] || {
@@ -280,18 +244,21 @@ const NetworkConfigurationPage: PageComponent = () => {
         },
       };
 
-      // --------- 更新 state ---------
       setInterfaces(interfacesData);
       setRoutes(routesData);
       setDnsConfig(dnsConfigData);
-      setOriginalDnsConfig(dnsConfigData); // <- 存原始值
+      setOriginalDnsConfig(dnsConfigData);
     } catch (err) {
       console.error(err);
       toast.error('Failed to fetch network data.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedComputer]);
+
+  useEffect(() => {
+    fetchNetworkData();
+  }, [fetchNetworkData]);
 
   const handleSaveInterface = async (interfaceData: Partial<NetworkInterface>) => {
     if (!editingInterface) return;
