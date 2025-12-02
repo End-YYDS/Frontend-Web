@@ -11,7 +11,7 @@ import { TbNetwork, TbBrandMysql, TbFolders } from 'react-icons/tb';
 import { GiSquid } from 'react-icons/gi';
 import { IoTerminal } from 'react-icons/io5';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -22,7 +22,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getApacheAll, getInfoAll, postInfoGet, type InfoGetRequest } from '@/api/openapi-client';
+import {
+  getApacheAll,
+  getInfoAll,
+  postInfoGet,
+  type Target,
+} from '@/api/openapi-client';
 
 const ITEMS_PER_PAGE = 3;
 
@@ -40,8 +45,59 @@ export function DashboardContent() {
 
   // 電腦列表
   const [computers, setComputers] = useState<
-    { name: string; cpu: string; memory: string; disk: string; status: string }[]
+    { name: string; cpu: string; memory: string; disk: string; status: string; 
+      cpuStatus: string; memStatus: string; diskStatus: string }[]
   >([]);
+
+  const isFetchingRef = useRef(false);
+  const hostMapRef = useRef<Record<string, string>>({});
+
+  const buildComputers = (
+    pcs: Record<string, any>,
+    hostMap: Record<string, string> = hostMapRef.current,
+  ) => {
+    const list = Object.entries(pcs).map(([uuid, stats]) => ({
+      name: hostMap[uuid] ?? `PC-${uuid}`,
+      cpu: stats?.Cpu + '%',
+      memory: stats?.Memory + '%',
+      disk: stats?.Disk + '%',
+      status: (() => {
+        const cpu = stats?.CpuStatus,
+          mem = stats?.MemStatus,
+          disk = stats?.DiskStatus;
+        if (cpu === 'Warn' || mem === 'Warn' || disk === 'Warn') return 'warning';
+        if (cpu === 'Dang' || mem === 'Dang' || disk === 'Dang') return 'danger';
+        return 'safe';
+      })(),
+      cpuStatus: stats?.CpuStatus,
+      memStatus: stats?.MemStatus,
+      diskStatus: stats?.DiskStatus,
+    }));
+    setComputers(list);
+  };
+
+  const fetchApacheStatuses = async (pcs: Record<string, any>) => {
+    const apacheStatus = await Promise.all(
+      Object.entries(pcs).map(async ([uuid]) => {
+        const res = await getApacheAll({ query: { Uuid: uuid } });
+        const data = res.data;
+        return {
+          uuid,
+          hostname: data?.Hostname ?? `host-${uuid}`,
+          status: data?.Status ?? 'undefined',
+        };
+      }),
+    );
+    const hostMap = Object.fromEntries(apacheStatus.map((a) => [a.uuid, a.hostname]));
+    setApacheStatus(
+      apacheStatus.map((a) => ({
+        name: a.hostname,
+        Apache: a.status,
+      })),
+    );
+    hostMapRef.current = hostMap;
+    return hostMap;
+  };
 
   const statusIconMap: Record<string, { icon: React.ElementType; color: string }> = {
     safe: { icon: Check, color: 'text-green-600' },
@@ -74,6 +130,9 @@ export function DashboardContent() {
           memory: (Math.random() * 50 + 10).toFixed(0) + '%',
           disk: (Math.random() * 50 + 10).toFixed(0) + '%',
           status: 'safe',
+          cpuStatus: 'safe',
+          memStatus: 'safe',
+          diskStatus: 'safe',
         })),
       ...Array(fakeInfo.Warn)
         .fill(0)
@@ -83,6 +142,9 @@ export function DashboardContent() {
           memory: (Math.random() * 30 + 50).toFixed(0) + '%',
           disk: (Math.random() * 30 + 50).toFixed(0) + '%',
           status: 'warning',
+          cpuStatus: 'Warn',
+          memStatus: 'Warn',
+          diskStatus: 'Warn',
         })),
       ...Array(fakeInfo.Dang)
         .fill(0)
@@ -92,6 +154,9 @@ export function DashboardContent() {
           memory: (Math.random() * 20 + 80).toFixed(0) + '%',
           disk: (Math.random() * 20 + 80).toFixed(0) + '%',
           status: 'danger',
+          cpuStatus: 'Dang',
+          memStatus: 'Dang',
+          diskStatus: 'Dang',
         })),
     ];
 
@@ -117,16 +182,23 @@ export function DashboardContent() {
     return <Minus className='w-4 h-4 text-gray-400' />;
   };
 
-  //TODO: info要記得加上
   const fetchAllInfo = async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     try {
-      const { data } = await getInfoAll();
+      // 併行抓 Cluster/Info 及全部主機列表
+      const [infoRes, pcsRes] = await Promise.all([
+        getInfoAll(),
+        postInfoGet({ body: { Target: null as Target | null, Uuid: null } }),
+      ]);
+
+      const infoData = infoRes.data;
       if (
-        data &&
-        data.Cluster &&
-        data.Info &&
-        typeof data.Cluster === 'object' &&
-        typeof data.Info === 'object'
+        infoData &&
+        infoData.Cluster &&
+        infoData.Info &&
+        typeof infoData.Cluster === 'object' &&
+        typeof infoData.Info === 'object'
       ) {
         const timestamp = new Date().toLocaleTimeString('zh-TW', {
           hour12: false,
@@ -136,52 +208,35 @@ export function DashboardContent() {
         });
         setCpuData((prev) => [
           ...prev.slice(-5),
-          { time: timestamp, value: data?.Cluster?.Cpu ?? 1 },
+          { time: timestamp, value: infoData?.Cluster?.Cpu ?? 1 },
         ]);
         setMemoryData((prev) => [
           ...prev.slice(-5),
-          { time: timestamp, value: data?.Cluster?.Memory ?? 1 },
+          { time: timestamp, value: infoData?.Cluster?.Memory ?? 1 },
         ]);
       }
-      // 取得各主機資料
-      const reqBody: InfoGetRequest = { Target: 'Safe', Uuid: null };
-      const resPcs = await postInfoGet({ body: reqBody });
-      const pcsData = resPcs.data;
 
-      if (pcsData && pcsData.Pcs && typeof pcsData.Pcs === 'object') {
-        const apacheStatus = await Promise.all(
-          Object.entries(pcsData.Pcs).map(async ([uuid]) => {
-            const res = await getApacheAll({ query: { Uuid: uuid } });
-            const data = res.data;
-            return {
-              uuid,
-              hostname: data?.Hostname ?? `host-${uuid}`,
-              status: data?.Status ?? 'undefined',
-            };
-          }),
-        );
-        const hostMap = Object.fromEntries(apacheStatus.map((a) => [a.uuid, a.hostname]));
-        const list = Object.entries(pcsData?.Pcs).map(([uuid, stats]) => ({
-          name: hostMap[uuid] ?? `PC-${uuid}`,
-          cpu: stats?.Cpu + '%',
-          memory: stats?.Memory + '%',
-          disk: stats?.Disk + '%',
-          status: (() => {
-            const cpu = stats?.CpuStatus,
-              mem = stats?.MemStatus,
-              disk = stats?.DiskStatus;
-            if (cpu === 'Warn' || mem === 'Warn' || disk === 'Warn') return 'warning';
-            if (cpu === 'Dang' || mem === 'Dang' || disk === 'Dang') return 'danger';
-            return 'safe';
-          })(),
-        }));
-        setComputers(list);
-        setApacheStatus(
-          apacheStatus.map((a) => ({
-            name: a.hostname,
-            Apache: a.status,
-          })),
-        );
+      const mergedPcs = pcsRes.data?.Pcs ?? {};
+
+      if (mergedPcs && typeof mergedPcs === 'object') {
+        const hasHostMap = Object.keys(hostMapRef.current).length > 0;
+
+        if (!hasHostMap) {
+          // 首次載入時等待 Apache 取得，避免閃回 PC-uuid
+          try {
+            const hostMap = await fetchApacheStatuses(mergedPcs);
+            buildComputers(mergedPcs, hostMap);
+          } catch (apacheErr) {
+            console.error('fetchApacheStatuses error', apacheErr);
+            buildComputers(mergedPcs);
+          }
+        } else {
+          // 之後的輪詢：先用已知 hostname 立即渲染，再非阻塞更新
+          buildComputers(mergedPcs);
+          fetchApacheStatuses(mergedPcs)
+            .then((hostMap) => buildComputers(mergedPcs, hostMap))
+            .catch((apacheErr) => console.error('fetchApacheStatuses error', apacheErr));
+        }
       }
     } catch (err: any) {
       toast.error('後端連線失敗，使用模擬資料');
@@ -191,6 +246,8 @@ export function DashboardContent() {
       // setDiskData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Disk }]);
       setComputers(list);
       setApacheStatus(fakeServers.map((s) => ({ name: s.name, Apache: s.services['A'] })));
+    } finally {
+      isFetchingRef.current = false;
     }
   };
 
@@ -261,9 +318,9 @@ export function DashboardContent() {
                     <Badge
                       variant='outline'
                       className={`${
-                        computer.status === 'danger'
+                        computer.cpuStatus === 'Dang'
                           ? 'border-red-300 text-red-700'
-                          : computer.status === 'warning'
+                          : computer.cpuStatus === 'Warn'
                           ? 'border-yellow-300 text-yellow-700'
                           : 'border-green-300 text-green-700'
                       }`}
@@ -275,9 +332,9 @@ export function DashboardContent() {
                     <Badge
                       variant='outline'
                       className={`${
-                        computer.status === 'danger'
+                        computer.memStatus === 'Dang'
                           ? 'border-red-300 text-red-700'
-                          : computer.status === 'warning'
+                          : computer.memStatus === 'Warn'
                           ? 'border-yellow-300 text-yellow-700'
                           : 'border-green-300 text-green-700'
                       }`}
@@ -289,9 +346,9 @@ export function DashboardContent() {
                     <Badge
                       variant='outline'
                       className={`${
-                        computer.status === 'danger'
+                        computer.diskStatus === 'Dang'
                           ? 'border-red-300 text-red-700'
-                          : computer.status === 'warning'
+                          : computer.diskStatus === 'Warn'
                           ? 'border-yellow-300 text-yellow-700'
                           : 'border-green-300 text-green-700'
                       }`}
@@ -381,9 +438,8 @@ export function DashboardContent() {
                 </TableHeader>
                 <TableBody>
                   {currentComputers.map((computer) => {
-                    const apache =
-                      ApacheStatus.find((a) => a.name === computer.name.replace('PC', 'host'))
-                        ?.Apache ?? 'uninstalled';
+                    const apache = ApacheStatus.find(a => a.name === computer.name)?.Apache ?? 'uninstalled';
+                    // console.log('computers', computers.map(c => ({name: c.name, status: c.status})));
                     return (
                       <TableRow key={computer.name}>
                         <TableCell className='text-xs truncate' title={computer.name}>
@@ -594,9 +650,9 @@ export function DashboardContent() {
                         <Badge
                           variant='outline'
                           className={`text-xs ${
-                            computer.status === 'danger'
+                            computer.cpuStatus === 'Dang'
                               ? 'border-red-300 text-red-700'
-                              : computer.status === 'warning'
+                              : computer.cpuStatus === 'Warn'
                               ? 'border-yellow-300 text-yellow-700'
                               : 'border-green-300 text-green-700'
                           }`}
@@ -609,9 +665,9 @@ export function DashboardContent() {
                         <Badge
                           variant='outline'
                           className={`text-xs ${
-                            computer.status === 'danger'
+                            computer.memStatus === 'Dang'
                               ? 'border-red-300 text-red-700'
-                              : computer.status === 'warning'
+                              : computer.memStatus === 'Warn'
                               ? 'border-yellow-300 text-yellow-700'
                               : 'border-green-300 text-green-700'
                           }`}
@@ -624,9 +680,9 @@ export function DashboardContent() {
                         <Badge
                           variant='outline'
                           className={`text-xs ${
-                            computer.status === 'danger'
+                            computer.diskStatus === 'Dang'
                               ? 'border-red-300 text-red-700'
-                              : computer.status === 'warning'
+                              : computer.diskStatus === 'Warn'
                               ? 'border-yellow-300 text-yellow-700'
                               : 'border-green-300 text-green-700'
                           }`}

@@ -233,8 +233,11 @@ const UserGroup = () => {
                 void handleDeleteUser(uid);
               });
             }}
-            onCreateGroup={() => {
-              toast.error('Create group functionality is not implemented yet.');
+            onCreateGroup={(name) => {
+              void handleAddGroup({
+                Groupname: name,
+                Users: [],
+              });
             }}
           />
           {filteredUsers.length > itemsPerPage && (
