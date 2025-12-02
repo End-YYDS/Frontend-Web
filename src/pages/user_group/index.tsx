@@ -77,11 +77,13 @@ const UserGroup: PageComponent = () => {
       const { data } = await getGroup();
       if (!data || !data.Groups || Object.keys(data.Groups).length === 0) {
         toast.error('No group data received.');
-        return;
+        return undefined;
       }
       setGroupsMap(data.Groups);
+      return data.Groups;
     } catch {
       toast.error('Failed to fetch group data.');
+      return undefined;
     }
   };
 
@@ -159,14 +161,40 @@ const UserGroup: PageComponent = () => {
   };
 
   const handleAddGroup = async (group: CreateGroupRequest) => {
+    const name = group.Groupname?.trim();
+    if (!name) {
+      toast.error('Group name is required.');
+      return;
+    }
+
+    const latestGroups = (await fetchGroups()) ?? groupsMap;
+
+    const exists = Object.values(latestGroups).some(
+      (g) => g.Groupname?.toLowerCase() === name.toLowerCase(),
+    );
+    if (exists) {
+      toast.error(`Group "${name}" already exists.`);
+      return;
+    }
+
     try {
-      const { data } = await postGroup({ body: group });
+      const { data } = await postGroup({ body: { ...group, Groupname: name } });
       handleApiResult(data, 'Group has been added.');
       if (data?.Type === 'Ok') {
         await fetchGroups();
         await fetchUsers();
       }
-    } catch {
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'string'
+          ? err
+          : '';
+      if (/AlreadyExists/i.test(msg) || /already exists/i.test(msg)) {
+        toast.error(`Group "${name}" already exists.`);
+        return;
+      }
       toast.error('Failed to add group.');
     }
   };
@@ -231,12 +259,6 @@ const UserGroup: PageComponent = () => {
             onDeleteSelectedUsers={(uids: string[]) => {
               uids.forEach((uid) => {
                 void handleDeleteUser(uid);
-              });
-            }}
-            onCreateGroup={(name) => {
-              void handleAddGroup({
-                Groupname: name,
-                Users: [],
               });
             }}
           />

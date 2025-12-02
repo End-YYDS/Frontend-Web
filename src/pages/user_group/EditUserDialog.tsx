@@ -19,7 +19,6 @@ interface EditUserDialogProps {
   user: UserRow;
   onUpdateUser: (patch: PatchUserEntry) => void;
   groups: { id: number; name: string; users: string[] }[];
-  onCreateGroup: (name: string) => Promise<void> | void;
   existingUsers: Record<string, Pick<GetUserEntry, 'Username'>>;
 }
 
@@ -43,7 +42,6 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
   user,
   onUpdateUser,
   groups,
-  onCreateGroup,
 }) => {
   const [editUser, setEditUser] = useState<EditableUser>({
     Password: '',
@@ -58,6 +56,14 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
   });
 
   const [isGroupSelectionDialogOpen, setIsGroupSelectionDialogOpen] = useState(false);
+  const handleCreateGroupDraft = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setEditUser((prev) => ({
+      ...prev,
+      Group: Array.from(new Set([...prev.Group, trimmed])),
+    }));
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -257,7 +263,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
         groups={groups}
         selectedGroups={editUser.Group}
         onGroupsChange={(groups) => setEditUser((prev) => ({ ...prev, Group: groups }))}
-        onCreateGroup={onCreateGroup}
+        onCreateGroup={handleCreateGroupDraft}
       />
     </>
   );

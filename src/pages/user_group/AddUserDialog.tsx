@@ -35,7 +35,6 @@ interface AddUserDialogProps {
   onOpenChange: (open: boolean) => void;
   onAddUser: (user: CreateUserRequest) => Promise<void> | void;
   groups: GroupsCollection | GroupArrayItem[];
-  onCreateGroup: (name: string) => Promise<void> | void;
   trigger: React.ReactNode;
   existingUsers: Record<string, Pick<GetUserEntry, 'Username'>>;
 }
@@ -52,7 +51,6 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
   onOpenChange,
   onAddUser,
   groups,
-  onCreateGroup,
   trigger,
   existingUsers,
 }) => {
@@ -88,14 +86,14 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
     }));
   }, [groups]);
 
-  const existingGroupNames = React.useMemo(
-    () => new Set(normalizedGroups.map((g) => g.name)),
-    [normalizedGroups],
-  );
+  const existingGroupNames = React.useMemo(() => {
+    const lower = normalizedGroups.map((g) => g.name.toLowerCase());
+    return new Set(lower);
+  }, [normalizedGroups]);
 
   const combinedGroups: GroupArrayItem[] = React.useMemo(() => {
     const extraGroups = pendingGroups
-      .filter((name) => !existingGroupNames.has(name))
+      .filter((name) => !existingGroupNames.has(name.toLowerCase()))
       .map((name, idx) => ({
         id: normalizedGroups.length + idx,
         name,
@@ -107,7 +105,10 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
   const handleCreateGroupDraft = (name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    if (existingGroupNames.has(trimmed) || pendingGroups.includes(trimmed)) return;
+    const lower = trimmed.toLowerCase();
+    if (existingGroupNames.has(lower) || pendingGroups.some((g) => g.toLowerCase() === lower)) {
+      return;
+    }
     setPendingGroups((prev) => [...prev, trimmed]);
   };
 
@@ -126,12 +127,6 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
     if (isDuplicateName) return;
     try {
       await Promise.resolve(onAddUser(newUser));
-      const groupsToCreate = pendingGroups.filter(
-        (name) => newUser.Group.includes(name) && !existingGroupNames.has(name),
-      );
-      for (const groupName of groupsToCreate) {
-        await Promise.resolve(onCreateGroup(groupName));
-      }
       setNewUser(InitUser);
       setPendingGroups([]);
       onOpenChange(false);

@@ -11,7 +11,7 @@ interface GroupSelectionDialogProps {
   groups: { id: number; name: string; users: string[] }[];
   selectedGroups: string[];
   onGroupsChange: (groups: string[]) => void;
-  onCreateGroup: (name: string) => Promise<void> | void;
+  onCreateGroup: (name: string) => void;
 }
 
 export const GroupSelectionDialog: React.FC<GroupSelectionDialogProps> = ({

@@ -26,6 +26,8 @@ import {
   getApacheAll,
   getInfoAll,
   postInfoGet,
+  type InfoGetRequest,
+  type PcMetrics,
   type Target,
 } from '@/api/openapi-client';
 
@@ -53,14 +55,14 @@ export function DashboardContent() {
   const hostMapRef = useRef<Record<string, string>>({});
 
   const buildComputers = (
-    pcs: Record<string, any>,
+    pcs: Record<string, PcMetrics>,
     hostMap: Record<string, string> = hostMapRef.current,
   ) => {
     const list = Object.entries(pcs).map(([uuid, stats]) => ({
       name: hostMap[uuid] ?? `PC-${uuid}`,
-      cpu: stats?.Cpu + '%',
-      memory: stats?.Memory + '%',
-      disk: stats?.Disk + '%',
+      cpu: (stats?.Cpu ?? 0) + '%',
+      memory: (stats?.Memory ?? 0) + '%',
+      disk: (stats?.Disk ?? 0) + '%',
       status: (() => {
         const cpu = stats?.CpuStatus,
           mem = stats?.MemStatus,
@@ -76,7 +78,7 @@ export function DashboardContent() {
     setComputers(list);
   };
 
-  const fetchApacheStatuses = async (pcs: Record<string, any>) => {
+  const fetchApacheStatuses = async (pcs: Record<string, PcMetrics>) => {
     const apacheStatus = await Promise.all(
       Object.entries(pcs).map(async ([uuid]) => {
         const res = await getApacheAll({ query: { Uuid: uuid } });
@@ -117,14 +119,22 @@ export function DashboardContent() {
 
   //TODO: info要記得加上
   const fetchAllInfo = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     try {
-      const { data } = await getInfoAll();
+      // 併行抓 Cluster/Info 與主機列表
+      const [infoRes, pcsRes] = await Promise.all([
+        getInfoAll(),
+        postInfoGet({ body: { Target: null as Target | null, Uuid: null } satisfies InfoGetRequest }),
+      ]);
+
+      const infoData = infoRes.data;
       if (
-        data &&
-        data.Cluster &&
-        data.Info &&
-        typeof data.Cluster === 'object' &&
-        typeof data.Info === 'object'
+        infoData &&
+        infoData.Cluster &&
+        infoData.Info &&
+        typeof infoData.Cluster === 'object' &&
+        typeof infoData.Info === 'object'
       ) {
         const timestamp = new Date().toLocaleTimeString('zh-TW', {
           hour12: false,
@@ -135,53 +145,35 @@ export function DashboardContent() {
 
         setCpuData((prev) => [
           ...prev.slice(-5),
-          { time: timestamp, value: data?.Cluster?.Cpu ?? 1 },
+          { time: timestamp, value: infoData?.Cluster?.Cpu ?? 1 },
         ]);
         setMemoryData((prev) => [
           ...prev.slice(-5),
-          { time: timestamp, value: data?.Cluster?.Memory ?? 1 },
+          { time: timestamp, value: infoData?.Cluster?.Memory ?? 1 },
         ]);
       }
 
-      const reqBody: InfoGetRequest = { Target: 'Safe', Uuid: null };
-      const resPcs = await postInfoGet({ body: reqBody });
-      const pcsData = resPcs.data;
+      const mergedPcs = (pcsRes.data?.Pcs ?? {}) as Record<string, PcMetrics>;
 
-      if (pcsData && pcsData.Pcs && typeof pcsData.Pcs === 'object') {
-        const apacheStatus = await Promise.all(
-          Object.entries(pcsData.Pcs).map(async ([uuid]) => {
-            const res = await getApacheAll({ query: { Uuid: uuid } });
-            const data = res.data;
-            return {
-              uuid,
-              hostname: data?.Hostname ?? `host-${uuid}`,
-              status: data?.Status ?? 'undefined',
-            };
-          }),
-        );
+      if (mergedPcs && typeof mergedPcs === 'object') {
+        const hasHostMap = Object.keys(hostMapRef.current).length > 0;
 
-        const hostMap = Object.fromEntries(apacheStatus.map((a) => [a.uuid, a.hostname]));
-        const list = Object.entries(pcsData?.Pcs).map(([uuid, stats]) => ({
-          name: hostMap[uuid] ?? `PC-${uuid}`,
-          cpu: stats?.Cpu + '%',
-          memory: stats?.Memory + '%',
-          disk: stats?.Disk + '%',
-          status: (() => {
-            const cpu = stats?.CpuStatus,
-              mem = stats?.MemStatus,
-              disk = stats?.DiskStatus;
-            if (cpu === 'Warn' || mem === 'Warn' || disk === 'Warn') return 'warning';
-            if (cpu === 'Dang' || mem === 'Dang' || disk === 'Dang') return 'danger';
-            return 'safe';
-          })(),
-        }));
-        setComputers(list);
-        setApacheStatus(
-          apacheStatus.map((a) => ({
-            name: a.hostname,
-            Apache: a.status,
-          })),
-        );
+        if (!hasHostMap) {
+          // 首次載入等 Apache 完成，避免閃 PC-uuid
+          try {
+            const hostMap = await fetchApacheStatuses(mergedPcs);
+            buildComputers(mergedPcs, hostMap);
+          } catch (apacheErr) {
+            console.error('fetchApacheStatuses error', apacheErr);
+            buildComputers(mergedPcs);
+          }
+        } else {
+          // 後續輪詢先用快取的 hostname 再背景更新
+          buildComputers(mergedPcs, hostMapRef.current);
+          fetchApacheStatuses(mergedPcs)
+            .then((hostMap) => buildComputers(mergedPcs, hostMap))
+            .catch((apacheErr) => console.error('fetchApacheStatuses error', apacheErr));
+        }
       }
     } catch {
       toast.error('後端連線失敗，使用模擬資料');
@@ -386,8 +378,22 @@ export function DashboardContent() {
       </div>
       <div className='space-y-6 min-w-0 mb-6'>
         <Card>
-          <CardHeader>
+          <CardHeader className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
             <CardTitle className='text-slate-700'>Server Status</CardTitle>
+            <div className='flex flex-wrap items-center gap-3 text-xs text-slate-600'>
+              <div className='flex items-center gap-1'>
+                <Check className='w-4 h-4 text-green-500' />
+                <span>Active</span>
+              </div>
+              <div className='flex items-center gap-1'>
+                <X className='w-4 h-4 text-red-500' />
+                <span>Stopped</span>
+              </div>
+              <div className='flex items-center gap-1'>
+                <Minus className='w-4 h-4 text-gray-400' />
+                <span>Uninstalled</span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className='space-y-4'>
