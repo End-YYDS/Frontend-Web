@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +35,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const [actionLoading, setActionLoading] = useState<'' | 'start' | 'stop' | 'restart'>('');
 
   /** 取得 ProFTPD 狀態 */
-  const fetchFtpStatus = async () => {
+  const fetchFtpStatus = useCallback(async () => {
     setLoading(true);
     try {
       const sendData: GetProftpdRequest = { Uuid: computerId };
@@ -47,11 +47,11 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [computerId]);
 
   useEffect(() => {
-    fetchFtpStatus();
-  }, [computerId]);
+    void fetchFtpStatus();
+  }, [fetchFtpStatus]);
 
   /** 執行 FTP 操作 (Start / Stop / Restart) */
   const performAction = async (action: 'start' | 'stop' | 'restart') => {

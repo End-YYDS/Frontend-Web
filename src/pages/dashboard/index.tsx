@@ -1,9 +1,8 @@
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import { DashboardContent } from './Content';
-const Dashboard = () => <DashboardContent />;
-(Dashboard as any).meta = {
-  requiresAuth: true, //驗證
+const Dashboard: PageComponent = () => <DashboardContent />;
+Dashboard.meta = {
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default Dashboard;

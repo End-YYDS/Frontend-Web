@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
@@ -80,7 +80,7 @@ export const FileBrowser = () => {
   // ---------------------- API Methods ----------------------
 
   /** 抓取所有主機清單 */
-  const fetchHosts = async () => {
+  const fetchHosts = useCallback(async () => {
     try {
       const { data } = await api.get<GetPdirFileResponse>('/pdir/pcs');
 
@@ -101,7 +101,7 @@ export const FileBrowser = () => {
       console.error('Fetch hosts failed', error);
       toast.error('Error', { description: 'Failed to fetch hosts' });
     }
-  };
+  }, [api]);
 
   /** 抓取指定主機、指定路徑的檔案 */
   const fetchFiles = async (_hostUuid: string, path: string) => {
@@ -215,11 +215,9 @@ export const FileBrowser = () => {
         break;
     }
   };
-
-  // ---------------------- Load Hosts on mount ----------------------
   useEffect(() => {
     fetchHosts();
-  }, []);
+  }, [fetchHosts]);
 
   // ---------------------- Render ----------------------
   return (

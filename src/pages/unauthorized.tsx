@@ -1,9 +1,5 @@
-import { type PageMeta } from '../types';
-(Unauthorized as any).meta = {
-  requiresAuth: false,
-  layout: false,
-} satisfies PageMeta;
-export default function Unauthorized() {
+import { type PageComponent } from '../types';
+const Unauthorized: PageComponent = () => {
   return (
     <div className='min-h-screen flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 p-4'>
       <div
@@ -27,4 +23,9 @@ export default function Unauthorized() {
       </div>
     </div>
   );
-}
+};
+Unauthorized.meta = {
+  requiresAuth: false,
+  layout: false,
+};
+export default Unauthorized;

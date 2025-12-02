@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ComputerList } from './ComputerList';
 import { ComputerDetail } from './ComputerDetail';
 import {
@@ -20,7 +20,7 @@ interface Computer {
   id: string;
   name: string;
   uuid: string;
-  status: 'online' | 'offline'
+  status: 'online' | 'offline';
 }
 
 const ServerContent = () => {
@@ -38,7 +38,7 @@ const ServerContent = () => {
   ]);
 
   /** 取得線上電腦資料 */
-  const getOnlineComputers = async () => {
+  const getOnlineComputers = useCallback(async () => {
     try {
       const { data } = await axios.post<GetAllPcResponse>('/api/chm/pc/all');
 
@@ -77,11 +77,11 @@ const ServerContent = () => {
         })),
       );
     }
-  };
+  }, [installComputer]);
 
   useEffect(() => {
     getOnlineComputers();
-  }, []);
+  }, [getOnlineComputers]);
 
   /** 切換主機勾選 */
   const handleComputerToggle = (computerId: string) => {
@@ -112,10 +112,12 @@ const ServerContent = () => {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success('Success', { description: `Successfully installed Bind on ${selectedComputersForInstall.length} computers.` });
+      toast.success('Success', {
+        description: `Successfully installed Bind on ${selectedComputersForInstall.length} computers.`,
+      });
       setInstallDialogOpen(false);
       setSelectedComputersForInstall([]);
-    } catch (err) {
+    } catch {
       toast.error('Error', { description: 'Installation failed, please try again later.' });
     } finally {
       setIsInstalling(false);

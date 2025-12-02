@@ -1,8 +1,8 @@
 import { useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import { type PageMeta } from '../types';
+import { type PageComponent } from '../types';
 
-const NotFound = () => {
+const NotFound: PageComponent = () => {
   const location = useLocation();
 
   useEffect(() => {
@@ -31,8 +31,8 @@ const NotFound = () => {
   );
 };
 
-(NotFound as any).meta = {
+NotFound.meta = {
   requiresAuth: false,
   layout: false,
-} satisfies PageMeta;
+};
 export default NotFound;

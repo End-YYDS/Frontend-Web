@@ -158,74 +158,73 @@ export const SystemLogsManager = () => {
   };
 
   const filteredLogs = Object.entries(syslogs)
-  .map(([id, log]) => ({
-    id,
-    date: `${log.Month} ${log.Day}`,
-    time: `${log.Time.Hour.toString().padStart(2, '0')}:${log.Time.Min.toString().padStart(2, '0')}`,
-    direction: log.Direction === 'A to B' ? 'in' : 'out',
-    type: log.Type as 'SYSTEM' | 'WARNING' | 'ERROR' | 'INFO',
-    message: log.Messages.slice(0, 50) + '...',
-    fullMessage: log.Messages,
-  }))
-  .filter((log) => {
-    const searchMatch =
-      !searchTerm ||
-      log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.fullMessage.toLowerCase().includes(searchTerm.toLowerCase());
+    .map(([id, log]) => ({
+      id,
+      date: `${log.Month} ${log.Day}`,
+      time: `${log.Time.Hour.toString().padStart(2, '0')}:${log.Time.Min.toString().padStart(
+        2,
+        '0',
+      )}`,
+      direction: log.Direction === 'A to B' ? 'in' : 'out',
+      type: log.Type as 'SYSTEM' | 'WARNING' | 'ERROR' | 'INFO',
+      message: log.Messages.slice(0, 50) + '...',
+      fullMessage: log.Messages,
+    }))
+    .filter((log) => {
+      const searchMatch =
+        !searchTerm ||
+        log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.fullMessage.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const monthMatch =
-      !filterValues.month || log.date.includes(getMonthName(filterValues.month));
+      const monthMatch = !filterValues.month || log.date.includes(getMonthName(filterValues.month));
 
-    const dateMatch =
-      !selectedDate ||
-      log.date.includes(
-        selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
-      );
+      const dateMatch =
+        !selectedDate ||
+        log.date.includes(
+          selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
+        );
 
-    const timeMatch =
-      !filterValues.timeRange || checkTimeRange(log.time, filterValues.timeRange);
+      const timeMatch = !filterValues.timeRange || checkTimeRange(log.time, filterValues.timeRange);
 
-    const typeMatch = !filterValues.type || log.type === filterValues.type;
+      const typeMatch = !filterValues.type || log.type === filterValues.type;
 
-    const directionMatch =
-      !filterValues.direction || log.direction === filterValues.direction;
+      const directionMatch = !filterValues.direction || log.direction === filterValues.direction;
 
-    return searchMatch && monthMatch && dateMatch && timeMatch && typeMatch && directionMatch;
-  });
-
+      return searchMatch && monthMatch && dateMatch && timeMatch && typeMatch && directionMatch;
+    });
 
   const fetchFilteredLogs = async (searchField: string, parameter: string) => {
-  let sendData: GetSysLogsQueryRequest = {
-    Search: searchField,
-    Parameter: parameter,
-  };
+    const sendData: GetSysLogsQueryRequest = {
+      Search: searchField,
+      Parameter: parameter,
+    };
 
-  try { 
-    const { data } = await axios.post<GetSysLogsResponse>('/api/logs/sys/query', sendData);
+    try {
+      const { data } = await axios.post<GetSysLogsResponse>('/api/logs/sys/query', sendData);
 
-    if (data && data.Logs && typeof data.Logs === 'object') {
-      const fetchedLogs: SysLogs = Object.keys(data.Logs).reduce((acc, id) => {
-        const log = data.Logs[id];
-        acc[id] = {
-          Month: log.Month,
-          Day: log.Day,
-          Time: log.Time,
-          Direction: log.Direction,
-          Type: log.Type,
-          Messages: log.Messages,
-        };
-        return acc;
-      }, {} as SysLogs);
+      if (data && data.Logs && typeof data.Logs === 'object') {
+        const fetchedLogs: SysLogs = Object.keys(data.Logs).reduce((acc, id) => {
+          const log = data.Logs[id];
+          acc[id] = {
+            Month: log.Month,
+            Day: log.Day,
+            Time: log.Time,
+            Direction: log.Direction,
+            Type: log.Type,
+            Messages: log.Messages,
+          };
+          return acc;
+        }, {} as SysLogs);
 
-      setSysLogs(fetchedLogs);
-    } else {
+        setSysLogs(fetchedLogs);
+      } else {
+        setSysLogs({});
+      }
+    } catch (err) {
+      console.error('篩選 API 失敗:', err);
       setSysLogs({});
     }
-  } catch (err) {
-    console.error('篩選 API 失敗:', err);
-    setSysLogs({});
-  }
-};
+  };
 
   const toggleLogExpansion = (logId: string) => {
     setExpandedLogs((prev) =>

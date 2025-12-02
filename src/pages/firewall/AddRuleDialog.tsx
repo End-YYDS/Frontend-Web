@@ -4,8 +4,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { PostFirewallRuleRequest, FirewallResponse, Target } from './types'; // ✅ 正確 import 型別
 import { toast } from 'sonner';
@@ -18,7 +31,13 @@ interface AddRuleDialogProps {
   onAddRule: (rule: PostFirewallRuleRequest) => void;
 }
 
-export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, onAddRule }: AddRuleDialogProps) => {
+export const AddRuleDialog = ({
+  isOpen,
+  onClose,
+  selectedHost,
+  selectedChain,
+  onAddRule,
+}: AddRuleDialogProps) => {
   const [formData, setFormData] = useState({
     target: 'ACCEPT' as Target,
     protocol: 'tcp',
@@ -26,7 +45,7 @@ export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, on
     outInterface: '*',
     source: '0.0.0.0/0',
     destination: '0.0.0.0/0',
-    options: ''
+    options: '',
   });
 
   const [port, setPort] = useState('');
@@ -37,7 +56,7 @@ export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, on
   const portOptions = ['22', '80', '443', '53', 'Other'];
 
   const handleInputChange = (field: string, value: string) =>
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,12 +72,12 @@ export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, on
       Out: formData.outInterface || '*',
       Source: formData.source || '0.0.0.0/0',
       Destination: formData.destination || '0.0.0.0/0',
-      Options: port || ''
+      Options: port || '',
     };
 
     try {
       const res = await axios.post<FirewallResponse>('/api/firewall/rule', newRule);
-      if (res.data.Type === 'Ok') {
+      if (res.data?.Type === 'Ok') {
         toast.success('Success', { description: 'Firewall rule added' });
         onAddRule(newRule);
         onClose();
@@ -69,7 +88,7 @@ export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, on
           outInterface: '*',
           source: '0.0.0.0/0',
           destination: '0.0.0.0/0',
-          options: ''
+          options: '',
         });
         setPort('');
         setCustomPort('');
@@ -77,8 +96,8 @@ export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, on
       } else {
         throw new Error(res.data.Message || 'Add rule failed');
       }
-    } catch (err: any) {
-      toast.error('Error', { description: err.message || 'Unable to add rule' });
+    } catch {
+      toast.error('Unable to add rule');
     } finally {
       setIsLoading(false);
     }
@@ -95,72 +114,95 @@ export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, on
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className='max-w-2xl'>
         <DialogHeader>
           <DialogTitle>Add {selectedChain} Chain Rule</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className='space-y-4'>
           {/* Target & Protocol */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className='grid grid-cols-2 gap-4'>
+            <div className='space-y-2'>
               <Label>Action</Label>
-              <Select value={formData.target} onValueChange={v => handleInputChange('target', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select value={formData.target} onValueChange={(v) => handleInputChange('target', v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACCEPT">ACCEPT</SelectItem>
-                  <SelectItem value="DROP">DROP</SelectItem>
-                  <SelectItem value="REJECT">REJECT</SelectItem>
+                  <SelectItem value='ACCEPT'>ACCEPT</SelectItem>
+                  <SelectItem value='DROP'>DROP</SelectItem>
+                  <SelectItem value='REJECT'>REJECT</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className='space-y-2'>
               <Label>Protocol</Label>
-              <Select value={formData.protocol} onValueChange={v => handleInputChange('protocol', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={formData.protocol}
+                onValueChange={(v) => handleInputChange('protocol', v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="tcp">TCP</SelectItem>
-                  <SelectItem value="udp">UDP</SelectItem>
-                  <SelectItem value="icmp">ICMP</SelectItem>
-                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value='tcp'>TCP</SelectItem>
+                  <SelectItem value='udp'>UDP</SelectItem>
+                  <SelectItem value='icmp'>ICMP</SelectItem>
+                  <SelectItem value='all'>All</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           {/* Interfaces, Source, Destination */}
-          <div className="grid grid-cols-2 gap-4">
-            <Input placeholder="In Interface" value={formData.inInterface} onChange={e => handleInputChange('inInterface', e.target.value)} />
-            <Input placeholder="Out Interface" value={formData.outInterface} onChange={e => handleInputChange('outInterface', e.target.value)} />
-            <Input placeholder="Source" value={formData.source} onChange={e => handleInputChange('source', e.target.value)} />
-            <Input placeholder="Destination" value={formData.destination} onChange={e => handleInputChange('destination', e.target.value)} />
+          <div className='grid grid-cols-2 gap-4'>
+            <Input
+              placeholder='In Interface'
+              value={formData.inInterface}
+              onChange={(e) => handleInputChange('inInterface', e.target.value)}
+            />
+            <Input
+              placeholder='Out Interface'
+              value={formData.outInterface}
+              onChange={(e) => handleInputChange('outInterface', e.target.value)}
+            />
+            <Input
+              placeholder='Source'
+              value={formData.source}
+              onChange={(e) => handleInputChange('source', e.target.value)}
+            />
+            <Input
+              placeholder='Destination'
+              value={formData.destination}
+              onChange={(e) => handleInputChange('destination', e.target.value)}
+            />
           </div>
 
           {/* Port */}
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Target Port</Label>
             <Popover open={openPortPopover} onOpenChange={setOpenPortPopover}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[200px] justify-start">
+                <Button variant='outline' className='w-[200px] justify-start'>
                   {port || 'Select Target Port'}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="p-0">
+              <PopoverContent className='p-0'>
                 <Command>
-                  <CommandInput placeholder="Search or input custom..." />
+                  <CommandInput placeholder='Search or input custom...' />
                   <CommandList>
                     <CommandEmpty>No results</CommandEmpty>
                     <CommandGroup>
-                      {portOptions.map(p => (
+                      {portOptions.map((p) => (
                         <CommandItem key={p} onSelect={() => handleSelectPort(p)}>
-                          {p === 'Other'
-                            ? (
-                              <input
-                                value={customPort}
-                                onChange={e => setCustomPort(e.target.value)}
-                                className="w-full border-none outline-none"
-                              />
-                            )
-                            : p}
+                          {p === 'Other' ? (
+                            <input
+                              value={customPort}
+                              onChange={(e) => setCustomPort(e.target.value)}
+                              className='w-full border-none outline-none'
+                            />
+                          ) : (
+                            p
+                          )}
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -170,9 +212,16 @@ export const AddRuleDialog = ({ isOpen, onClose, selectedHost, selectedChain, on
             </Popover>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" style={{ backgroundColor: '#7B86AA' }} className="hover:opacity-90 text-white" disabled={isLoading}>
+          <div className='flex justify-end gap-2 pt-4'>
+            <Button type='button' variant='outline' onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type='submit'
+              style={{ backgroundColor: '#7B86AA' }}
+              className='hover:opacity-90 text-white'
+              disabled={isLoading}
+            >
               {isLoading ? 'Adding...' : 'Add Rule'}
             </Button>
           </div>

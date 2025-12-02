@@ -2,9 +2,9 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
 import Topbar from './Topbar';
 import { SidebarProvider } from './ui/sidebar';
-import { useAuth } from '@/auth';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 export default function Layout() {
   const { signOut } = useAuth();
   const location = useLocation();

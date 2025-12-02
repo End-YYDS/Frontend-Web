@@ -2,3 +2,8 @@
 .husky
 dist
 node_modules
+.vscode
+.DS_Store
+src/api/openapi-client/**
+src/components/ui/**
+src/lib/utils.ts

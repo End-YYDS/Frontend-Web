@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,7 +37,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const [actionLoading, setActionLoading] = useState<'' | 'start' | 'stop' | 'restart'>('');
 
   /** 取得 SSH 狀態 */
-  const fetchSshStatus = async () => {
+  const fetchSshStatus = useCallback(async () => {
     setLoading(true);
     try {
       const sendData: GetSshRequest = { Uuid: computerId };
@@ -49,11 +49,11 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [computerId]);
 
   useEffect(() => {
     fetchSshStatus();
-  }, [computerId]);
+  }, [fetchSshStatus]);
 
   /** 執行 SSH 操作 */
   const performAction = async (action: 'start' | 'stop' | 'restart') => {

@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type PageMeta, ResponseType } from '../types';
+import { type PageComponent, type PageMeta } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/auth';
 import { login } from '@/api/openapi-client';
+import { useAuth } from '@/hooks/useAuth';
 
-(Login as any).meta = {
-  requiresAuth: false,
-} satisfies PageMeta;
-
-function Login() {
+const Login: PageComponent = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -21,15 +17,15 @@ function Login() {
     e.preventDefault();
     try {
       setError(null);
-      let { data } = await login({ body: { Username: username, Password: password } });
-      if (data?.Type === ResponseType.Err) {
+      const { data } = await login({ body: { Username: username, Password: password } });
+      if (data?.Type === 'Err') {
         setUsername('');
         setPassword('');
         throw new Error('帳號或密碼錯誤');
       }
       await refresh();
       navigate('/dashboard', { replace: true });
-    } catch (err: any) {
+    } catch {
       setUsername('');
       setPassword('');
       setError('帳號或密碼錯誤');
@@ -84,5 +80,8 @@ function Login() {
       </div>
     </div>
   );
-}
+};
+Login.meta = {
+  requiresAuth: false,
+} satisfies PageMeta;
 export default Login;

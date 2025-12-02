@@ -236,7 +236,7 @@ export const HostLogsManager = () => {
               </TableHeader>
               <TableBody>
                 {Object.entries(logs)
-                  .filter(([_, log]) =>
+                  .filter(([, log]) =>
                     log.Messages.toLowerCase().includes(searchTerm.toLowerCase()),
                   )
                   .map(([id, log]) => (

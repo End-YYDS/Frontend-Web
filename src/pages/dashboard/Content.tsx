@@ -11,7 +11,7 @@ import { TbNetwork, TbBrandMysql, TbFolders } from 'react-icons/tb';
 import { GiSquid } from 'react-icons/gi';
 import { IoTerminal } from 'react-icons/io5';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -49,64 +49,6 @@ export function DashboardContent() {
     danger: { icon: X, color: 'text-red-500' },
   };
 
-  const fakeData = () => {
-    const timestamp = new Date().toLocaleTimeString('zh-TW', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-
-    const fakeCluster = {
-      Cpu: Math.floor(Math.random() * 50) + 30,
-      Memory: Math.floor(Math.random() * 50) + 30,
-      Disk: Math.floor(Math.random() * 50) + 30,
-    };
-
-    const fakeInfo = { Safe: 5, Warn: 3, Dang: 2 };
-
-    const list = [
-      ...Array(fakeInfo.Safe)
-        .fill(0)
-        .map((_, i) => ({
-          name: `PC-Safe-${i + 1}`,
-          cpu: (Math.random() * 50 + 10).toFixed(0) + '%',
-          memory: (Math.random() * 50 + 10).toFixed(0) + '%',
-          disk: (Math.random() * 50 + 10).toFixed(0) + '%',
-          status: 'safe',
-        })),
-      ...Array(fakeInfo.Warn)
-        .fill(0)
-        .map((_, i) => ({
-          name: `PC-Warn-${i + 1}`,
-          cpu: (Math.random() * 30 + 50).toFixed(0) + '%',
-          memory: (Math.random() * 30 + 50).toFixed(0) + '%',
-          disk: (Math.random() * 30 + 50).toFixed(0) + '%',
-          status: 'warning',
-        })),
-      ...Array(fakeInfo.Dang)
-        .fill(0)
-        .map((_, i) => ({
-          name: `PC-Danger-${i + 1}`,
-          cpu: (Math.random() * 20 + 80).toFixed(0) + '%',
-          memory: (Math.random() * 20 + 80).toFixed(0) + '%',
-          disk: (Math.random() * 20 + 80).toFixed(0) + '%',
-          status: 'danger',
-        })),
-    ];
-
-    const serviceKeys = ['A', 'N', 'B', 'D', 'L', 'M', 'ProFTPD', 'Samba', 'Proxy', 'SSH'];
-    const statusPool = ['active', 'stopped', 'uninstalled'];
-
-    const fakeServers = list.map((pc) => ({
-      name: pc.name.replace('PC', 'host'),
-      services: Object.fromEntries(
-        serviceKeys.map((key) => [key, statusPool[Math.floor(Math.random() * statusPool.length)]]),
-      ),
-    }));
-    return { fakeCluster, list, timestamp, fakeServers };
-  };
-
   const ServiceStatusIcon = ({ status }: { status: string }) => {
     if (status === 'active') {
       return <Check className='w-4 h-4 text-green-500' />;
@@ -118,7 +60,7 @@ export function DashboardContent() {
   };
 
   //TODO: info要記得加上
-  const fetchAllInfo = async () => {
+  const fetchAllInfo = useCallback(async () => {
     try {
       const { data } = await getInfoAll();
       if (
@@ -134,6 +76,7 @@ export function DashboardContent() {
           minute: '2-digit',
           second: '2-digit',
         });
+
         setCpuData((prev) => [
           ...prev.slice(-5),
           { time: timestamp, value: data?.Cluster?.Cpu ?? 1 },
@@ -143,7 +86,7 @@ export function DashboardContent() {
           { time: timestamp, value: data?.Cluster?.Memory ?? 1 },
         ]);
       }
-      // 取得各主機資料
+
       const reqBody: InfoGetRequest = { Target: 'Safe', Uuid: null };
       const resPcs = await postInfoGet({ body: reqBody });
       const pcsData = resPcs.data;
@@ -160,6 +103,7 @@ export function DashboardContent() {
             };
           }),
         );
+
         const hostMap = Object.fromEntries(apacheStatus.map((a) => [a.uuid, a.hostname]));
         const list = Object.entries(pcsData?.Pcs).map(([uuid, stats]) => ({
           name: hostMap[uuid] ?? `PC-${uuid}`,
@@ -183,22 +127,79 @@ export function DashboardContent() {
           })),
         );
       }
-    } catch (err: any) {
+    } catch {
       toast.error('後端連線失敗，使用模擬資料');
-      const { fakeCluster, list, timestamp, fakeServers } = fakeData();
+
+      const timestamp = new Date().toLocaleTimeString('zh-TW', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+
+      const fakeCluster = {
+        Cpu: Math.floor(Math.random() * 50) + 30,
+        Memory: Math.floor(Math.random() * 50) + 30,
+        Disk: Math.floor(Math.random() * 50) + 30,
+      };
+
+      const fakeInfo = { Safe: 5, Warn: 3, Dang: 2 };
+
+      const list = [
+        ...Array(fakeInfo.Safe)
+          .fill(0)
+          .map((_, i) => ({
+            name: `PC-Safe-${i + 1}`,
+            cpu: (Math.random() * 50 + 10).toFixed(0) + '%',
+            memory: (Math.random() * 50 + 10).toFixed(0) + '%',
+            disk: (Math.random() * 50 + 10).toFixed(0) + '%',
+            status: 'safe',
+          })),
+        ...Array(fakeInfo.Warn)
+          .fill(0)
+          .map((_, i) => ({
+            name: `PC-Warn-${i + 1}`,
+            cpu: (Math.random() * 30 + 50).toFixed(0) + '%',
+            memory: (Math.random() * 30 + 50).toFixed(0) + '%',
+            disk: (Math.random() * 30 + 50).toFixed(0) + '%',
+            status: 'warning',
+          })),
+        ...Array(fakeInfo.Dang)
+          .fill(0)
+          .map((_, i) => ({
+            name: `PC-Danger-${i + 1}`,
+            cpu: (Math.random() * 20 + 80).toFixed(0) + '%',
+            memory: (Math.random() * 20 + 80).toFixed(0) + '%',
+            disk: (Math.random() * 20 + 80).toFixed(0) + '%',
+            status: 'danger',
+          })),
+      ];
+
+      const serviceKeys = ['A', 'N', 'B', 'D', 'L', 'M', 'ProFTPD', 'Samba', 'Proxy', 'SSH'];
+      const statusPool = ['active', 'stopped', 'uninstalled'];
+
+      const fakeServers = list.map((pc) => ({
+        name: pc.name.replace('PC', 'host'),
+        services: Object.fromEntries(
+          serviceKeys.map((key) => [
+            key,
+            statusPool[Math.floor(Math.random() * statusPool.length)],
+          ]),
+        ),
+      }));
+
       setCpuData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Cpu }]);
       setMemoryData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Memory }]);
-      // setDiskData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Disk }]);
+
       setComputers(list);
       setApacheStatus(fakeServers.map((s) => ({ name: s.name, Apache: s.services['A'] })));
     }
-  };
-
+  }, []);
   useEffect(() => {
     fetchAllInfo();
     const interval = setInterval(fetchAllInfo, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchAllInfo]);
 
   const filteredComputers = selectedStatus
     ? computers.filter((c) => c.status === selectedStatus)
