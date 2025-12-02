@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { eventBus } from './EventBus';
+import { eventBus } from '../events/EventBus';
 import { client } from '@/api/openapi-client/client.gen';
 
 const api = axios.create({

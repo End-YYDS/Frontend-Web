@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Notification {
   id: number;
