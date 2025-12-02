@@ -52,3 +52,5 @@ export const backupConfigSchema = z.object({
   enableAutoBackup: z.boolean(),
   retentionCount: z.number().min(1).max(100),
 });
+
+export type BackupConfigFormValues = z.infer<typeof backupConfigSchema>;
