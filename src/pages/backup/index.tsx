@@ -1,21 +1,10 @@
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import { BackupContent } from './Content';
 
-const Backup = () => <BackupContent />;
+const Backup: PageComponent = () => <BackupContent />;
 
-// const Backup = () => {
-//   return (
-//     <div className='bg-gray-50 flex'>
-//       <div className='flex-1'>
-//         <BackupContent />
-//       </div>
-//     </div>
-//   );
-// };
-
-(Backup as any).meta = {
-  requiresAuth: true, //驗證
+Backup.meta = {
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default Backup;

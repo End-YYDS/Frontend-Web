@@ -1,8 +1,8 @@
-import React, { Suspense, type JSX } from 'react';
+import { Suspense, type JSX } from 'react';
 import { useRoutes, Navigate, type RouteObject } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { RequireAuth } from './auth';
-import { type PageMeta } from './types';
+import { type PageComponent, type PageMeta } from './types';
+import { RequireAuth } from './auth/RequireAuth';
 
 const rawModules = import.meta.glob(
   [
@@ -17,7 +17,7 @@ const rawModules = import.meta.glob(
     eager: true,
     import: 'default',
   },
-) as Record<string, (React.ComponentType & { meta?: PageMeta }) | undefined>;
+) as Record<string, PageComponent | undefined>;
 const entries = Object.entries(rawModules).filter(([file, Comp]) => {
   const ok = !!Comp && !/\/App\.tsx$/i.test(file);
   if (!ok) console.warn(`[router] skip ${file}: no default export or excluded`);
@@ -34,7 +34,7 @@ type SimpleRoute = {
 
 export default function Router() {
   const simple: SimpleRoute[] = entries.map(([filePath, mod]) => {
-    const Component = mod as React.ComponentType & { meta?: PageMeta };
+    const Component = mod as PageComponent;
     let path = filePath
       .replace(/^\.\/pages/, '')
       .replace(/\/index\.tsx$/, '')
@@ -43,7 +43,7 @@ export default function Router() {
     if (path === '') path = '/';
     const isIndex = path === '/';
     const relPath = isIndex ? null : path.replace(/^\//, '');
-    const meta: PageMeta | undefined = (Component as any).meta;
+    const meta: PageMeta | undefined = Component.meta;
     return { path, index: isIndex, relPath, element: <Component />, meta };
   });
 

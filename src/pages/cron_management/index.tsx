@@ -44,7 +44,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Plus, Trash2, Edit, FileDown, FileUp, Power, PowerOff } from 'lucide-react';
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import axios from 'axios';
 import type {
   CronJobEntry,
@@ -64,7 +64,7 @@ interface CronJob {
   status: 'active' | 'inactive';
 }
 
-const CronManagement = () => {
+const CronManagement: PageComponent = () => {
   const [jobs, setJobs] = useState<CronJob[]>([]);
   const [selectedJobs, setSelectedJobs] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -921,9 +921,8 @@ const CronManagement = () => {
 };
 
 (CronManagement as any).meta = {
-  requiresAuth: true, //驗證
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 
 export default CronManagement;

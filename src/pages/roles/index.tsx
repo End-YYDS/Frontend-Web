@@ -1,7 +1,7 @@
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import { RolesContent } from './Content';
 
-const Roles = () => {
+const Roles: PageComponent = () => {
   return (
     <div className='container mx-auto py-6 px-4'>
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
@@ -12,9 +12,8 @@ const Roles = () => {
   );
 };
 
-(Roles as any).meta = {
-  requiresAuth: true, //驗證
+Roles.meta = {
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default Roles;

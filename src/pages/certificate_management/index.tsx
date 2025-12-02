@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, ShieldX } from 'lucide-react';
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import { toast } from 'sonner';
 import { revoke, revoked, valid, type RevokeRequest } from '@/api/openapi-client';
 interface Certificate {
@@ -43,7 +43,7 @@ interface RevokedCertificateInfo {
   reason: string;
 }
 
-const CertificateManagementPage = () => {
+const CertificateManagementPage: PageComponent = () => {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [revokedCertificates, setRevokedCertificates] = useState<RevokedCertificateInfo[]>([]);
   const [revokeReason, setRevokeReason] = useState('');
@@ -291,10 +291,9 @@ const CertificateManagementPage = () => {
   );
 };
 
-(CertificateManagementPage as any).meta = {
+CertificateManagementPage.meta = {
   requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 
 export default CertificateManagementPage;

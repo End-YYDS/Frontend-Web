@@ -11,7 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserManagement } from './UserManagement';
 import { GroupManagement } from './GroupManagement';
-import { type PageMeta, ResponseType } from '@/types';
+import { type PageComponent } from '@/types';
 import {
   deleteGroup,
   deleteUser,
@@ -39,7 +39,7 @@ type GroupsMap = GroupsCollection['Groups'];
 export type UserRow = GetUserEntry & { uid: string };
 export type GroupRow = GroupEntry & { gid: string };
 
-const UserGroup = () => {
+const UserGroup: PageComponent = () => {
   const [usersMap, setUsersMap] = useState<UsersMap>({});
   const [groupsMap, setGroupsMap] = useState<GroupsMap>({});
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,7 +52,7 @@ const UserGroup = () => {
       toast.error('No response from server.');
       return;
     }
-    if (res.Type === ResponseType.Ok) {
+    if (res.Type === 'Ok') {
       toast.success(res.Message || defaultSuccess);
     } else {
       toast.error(res.Message || 'Operation failed.');
@@ -116,7 +116,7 @@ const UserGroup = () => {
     try {
       const { data } = await postUser({ body: user });
       handleApiResult(data, 'User has been added.');
-      if (data?.Type === ResponseType.Ok) {
+      if (data?.Type === 'Ok') {
         await fetchUsers();
         await fetchGroups();
       }
@@ -136,7 +136,7 @@ const UserGroup = () => {
       };
       const { data } = await patchUser({ body });
       handleApiResult(data, 'User has been updated.');
-      if (data?.Type === ResponseType.Ok) {
+      if (data?.Type === 'Ok') {
         await fetchUsers();
         await fetchGroups();
       }
@@ -149,7 +149,7 @@ const UserGroup = () => {
     try {
       const { data } = await deleteUser({ body: { Uid: uid } });
       handleApiResult(data, 'User has been deleted.');
-      if (data?.Type === ResponseType.Ok) {
+      if (data?.Type === 'Ok') {
         await fetchUsers();
         await fetchGroups();
       }
@@ -162,7 +162,7 @@ const UserGroup = () => {
     try {
       const { data } = await postGroup({ body: group });
       handleApiResult(data, 'Group has been added.');
-      if (data?.Type === ResponseType.Ok) {
+      if (data?.Type === 'Ok') {
         await fetchGroups();
         await fetchUsers();
       }
@@ -176,7 +176,7 @@ const UserGroup = () => {
       // const { data } = await user_groupApi.patchGroups({ [gid]: patch });
       const { data } = await patchGroup({ body: { [gid]: patch } });
       handleApiResult(data, 'Group has been updated.');
-      if (data?.Type === ResponseType.Ok) {
+      if (data?.Type === 'Ok') {
         await fetchGroups();
         await fetchUsers();
       }
@@ -189,7 +189,7 @@ const UserGroup = () => {
     try {
       const { data } = await deleteGroup({ body: { Gid: gid } });
       handleApiResult(data, 'Group has been deleted.');
-      if (data?.Type === ResponseType.Ok) {
+      if (data?.Type === 'Ok') {
         await fetchGroups();
         await fetchUsers();
       }
@@ -313,9 +313,9 @@ const PaginationBar = ({
   </div>
 );
 
-(UserGroup as any).meta = {
+UserGroup.meta = {
   requiresAuth: true,
   layout: true,
-} satisfies PageMeta;
+};
 
 export default UserGroup;

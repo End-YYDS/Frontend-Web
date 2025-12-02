@@ -1,7 +1,7 @@
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import ServerContent from './Content';
 
-const Ldap = () => {
+const Ldap: PageComponent = () => {
   return (
     <div className='container mx-auto py-8 px-6'>
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
@@ -12,8 +12,7 @@ const Ldap = () => {
   );
 };
 (Ldap as any).meta = {
-  requiresAuth: true, //驗證
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default Ldap;

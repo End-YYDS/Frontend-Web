@@ -1,6 +1,6 @@
-import type { PageMeta } from '@/types';
+import type { PageComponent } from '@/types';
 import { FirewallManager } from './Content';
-const Firewall = () => {
+const Firewall: PageComponent = () => {
   return (
     <div className='container mx-auto py-6 px-4'>
       <div className='bg-[#A8AEBD] py-1.5 mb-6'>
@@ -11,8 +11,7 @@ const Firewall = () => {
   );
 };
 (Firewall as any).meta = {
-  requiresAuth: true, //驗證
+  requiresAuth: true,
   layout: true,
-  // allowedRoles: ['admin']
-} satisfies PageMeta;
+};
 export default Firewall;
