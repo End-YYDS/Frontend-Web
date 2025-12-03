@@ -33,7 +33,6 @@ const AlertsTab = () => {
       cpuUsage: 80,
       diskUsage: 90,
       memory: 80,
-      network: 85,
     },
   });
 
@@ -48,7 +47,6 @@ const AlertsTab = () => {
         cpuUsage: res.data.Cpu_usage ?? 80,
         diskUsage: res.data.Disk_usage ?? 90,
         memory: res.data.Memory ?? 80,
-        network: res.data.Network ?? 85,
       });
     } catch {
       toast.error('Failed to fetch alert settings, using defaults');
@@ -64,7 +62,6 @@ const AlertsTab = () => {
       cpuUsage: 80,
       diskUsage: 90,
       memory: 80,
-      network: 85,
     });
     toast.success('Reset to defaults', {
       description: 'All alert settings have been reset to system default values',
@@ -81,7 +78,6 @@ const AlertsTab = () => {
       Cpu_usage: values.cpuUsage,
       Disk_usage: values.diskUsage,
       Memory: values.memory,
-      Network: values.network,
     };
 
     try {
@@ -138,100 +134,143 @@ const AlertsTab = () => {
               <Collapsible open={isNotificationsEnabled}>
                 <CollapsibleContent className='space-y-4'>
                   {/* CPU */}
-                  <FormField
-                    control={form.control}
-                    name='cpuUsage'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CPU Usage Alert Threshold (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='number'
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            min={0}
-                            max={100}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when CPU usage exceeds this percentage (0-100%).
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Disk */}
-                  <FormField
-                    control={form.control}
-                    name='diskUsage'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Disk Usage Alert Threshold (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='number'
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            min={0}
-                            max={100}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when disk usage exceeds this percentage (0-100%).
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
+                  <div className='space-y-2'>
+                    <FormLabel>CPU Usage Alert Threshold (%)</FormLabel>
+                    <div className='grid gap-3 sm:grid-cols-2'>
+                      <FormField
+                        control={form.control}
+                        name='cpuWarning'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
+                            <FormControl>
+                              <Input
+                                type='number'
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                min={0}
+                                max={100}
+                              />
+                            </FormControl>
+                            <FormDescription>Send a warning above this value.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name='cpuUsage'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
+                            <FormControl>
+                              <Input
+                                type='number'
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                min={0}
+                                max={100}
+                              />
+                            </FormControl>
+                            <FormDescription>Trigger a critical alert above this value.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                   {/* Memory */}
-                  <FormField
-                    control={form.control}
-                    name='memory'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Memory Usage Alert Threshold (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='number'
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            min={0}
-                            max={100}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when memory usage exceeds this percentage (0-100%).
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Network */}
-                  <FormField
-                    control={form.control}
-                    name='network'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Network Usage Alert Threshold (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='number'
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            min={0}
-                            max={100}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when network usage exceeds this percentage (0-100%).
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className='space-y-2'>
+                    <FormLabel>Memory Usage Alert Threshold (%)</FormLabel>
+                    <div className='grid gap-3 sm:grid-cols-2'>
+                      <FormField
+                        control={form.control}
+                        name='memoryWarning'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
+                            <FormControl>
+                              <Input
+                                type='number'
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                min={0}
+                                max={100}
+                              />
+                            </FormControl>
+                            <FormDescription>Send a warning above this value.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name='memory'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
+                            <FormControl>
+                              <Input
+                                type='number'
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                min={0}
+                                max={100}
+                              />
+                            </FormControl>
+                            <FormDescription>Trigger a critical alert above this value.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  {/* Disk */}
+                  <div className='space-y-2'>
+                    <FormLabel>Disk Usage Alert Threshold (%)</FormLabel>
+                    <div className='grid gap-3 sm:grid-cols-2'>
+                      <FormField
+                        control={form.control}
+                        name='diskWarning'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
+                            <FormControl>
+                              <Input
+                                type='number'
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                min={0}
+                                max={100}
+                              />
+                            </FormControl>
+                            <FormDescription>Send a warning above this value.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name='diskUsage'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
+                            <FormControl>
+                              <Input
+                                type='number'
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                min={0}
+                                max={100}
+                              />
+                            </FormControl>
+                            <FormDescription>Trigger a critical alert above this value.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
             )}
