@@ -187,7 +187,9 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
               <p className='text-sm font-medium text-slate-600'>Status</p>
               <Badge
                 variant={serverStatus.Status === 'Active' ? 'default' : 'secondary'}
-                className={serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500'}
+                className={
+                  serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500 text-white'
+                }
               >
                 {serverStatus.Status === 'Active' ? 'Running' : 'Stopped'}
               </Badge>

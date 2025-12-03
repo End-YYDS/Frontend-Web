@@ -2,16 +2,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Monitor, Cpu, MemoryStick } from 'lucide-react';
-// import type { GetApacheResponse } from './types';
 import { toast } from 'sonner';
 import { getInstalled, type CommonInfo, type Status } from '@/api/openapi-client';
-
-// interface ComputerListProps {
-//   serverId: string;
-//   searchTerm: string;
-//   onComputerSelect: (computerId: string) => void;
-// }
-
 interface ComputerListProps {
   searchTerm: string;
   onComputerSelect: (computerId: string) => void;
@@ -25,27 +17,21 @@ interface Computer {
   Memory: number;
 }
 
-// export function ComputerList({ serverId, searchTerm, onComputerSelect }: ComputerListProps) {
+const FALLBACK_COMPUTERS: Computer[] = [
+  { uuid: '11111', Hostname: 'name', Status: 'Active', Cpu: 12, Memory: 13 },
+  { uuid: '11112', Hostname: 'name2', Status: 'Active', Cpu: 12, Memory: 13 },
+  { uuid: '11113', Hostname: 'name3', Status: 'Active', Cpu: 12, Memory: 13 },
+  { uuid: '11114', Hostname: 'name4', Status: 'Active', Cpu: 12, Memory: 13 },
+];
+
 export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps) {
-  //TODO: Content.tsx SeachTerm 拿 searchTerm
-  // const searchTerm = '';
-
-  const [computers, setComputers] = useState<Computer[]>([
-    { uuid: '11111', Hostname: 'name', Status: 'Active', Cpu: 12, Memory: 13 },
-    { uuid: '11112', Hostname: 'name2', Status: 'Active', Cpu: 12, Memory: 13 },
-    { uuid: '11113', Hostname: 'name3', Status: 'Active', Cpu: 12, Memory: 13 },
-    { uuid: '11114', Hostname: 'name4', Status: 'Active', Cpu: 12, Memory: 13 },
-  ]);
+  const [computers, setComputers] = useState<Computer[]>(FALLBACK_COMPUTERS);
   const [loading, setLoading] = useState(true);
-
-  // 載入伺服器清單
   useEffect(() => {
     fetchComputers();
   }, []);
-
-  //TODO: 修改串接API
   const fetchComputers = async () => {
-    setLoading(false);
+    setLoading(true);
     try {
       const { data } = await getInstalled({ query: { Server: 'apache' } });
       if (!data || typeof data !== 'object') {
@@ -72,24 +58,12 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
         description: 'Please check the server or your network connection.',
         duration: 4000,
       });
-      setComputers([
-        { uuid: '11111', Hostname: 'name', Status: 'Active', Cpu: 12, Memory: 13 },
-        { uuid: '11112', Hostname: 'name2', Status: 'Active', Cpu: 12, Memory: 13 },
-        { uuid: '11113', Hostname: 'name3', Status: 'Active', Cpu: 12, Memory: 13 },
-        { uuid: '11114', Hostname: 'name4', Status: 'Active', Cpu: 12, Memory: 13 },
-      ]);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setComputers(FALLBACK_COMPUTERS);
     } finally {
       setLoading(false);
     }
   };
-
-  // 避免 undefined 錯誤的安全搜尋
-  // const filteredComputers = computers.filter((computer) => {
-  //   const hostname = computer.Hostname?.toLowerCase() || '';
-  //   const uuid = computer.uuid?.toLowerCase() || '';
-  //   const search = searchTerm?.toLowerCase() || '';
-  //   return hostname.includes(search) || uuid.includes(search);
-  // });
 
   const filteredComputers = computers.filter((computer) => {
     const search = searchTerm.toLowerCase();
@@ -120,7 +94,6 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
         <Card
           key={computer.uuid}
           className='cursor-pointer hover:shadow-md transition-shadow'
-          // onClick={(e) => console.log(e)}
           onClick={() => onComputerSelect(computer.uuid)}
         >
           <CardContent className='p-6'>
@@ -131,10 +104,8 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
                 </div>
                 <div>
                   <h3 className='font-semibold text-lg text-slate-800'>{computer.Hostname}</h3>
-                  {/* <p className='text-sm text-slate-500'>{computer.uuid}</p> */}
                 </div>
               </div>
-
               <div className='flex items-center gap-6'>
                 <div className='flex items-center gap-4'>
                   <div className='text-center'>
@@ -144,7 +115,6 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
                     </div>
                     <p className='text-xs text-slate-500'>CPU</p>
                   </div>
-
                   <div className='text-center'>
                     <div className='flex items-center gap-1 text-sm text-slate-600'>
                       <MemoryStick className='w-4 h-4' />
@@ -153,10 +123,11 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
                     <p className='text-xs text-slate-500'>Memory</p>
                   </div>
                 </div>
-
                 <Badge
                   variant={computer.Status === 'Active' ? 'default' : 'secondary'}
-                  className={computer.Status === 'Active' ? 'bg-green-500' : 'bg-slate-500'}
+                  className={
+                    computer.Status === 'Active' ? 'bg-green-500' : 'bg-slate-500 text-white'
+                  }
                 >
                   {computer.Status === 'Active' ? 'Running' : 'Stopped'}
                 </Badge>
@@ -165,7 +136,6 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
           </CardContent>
         </Card>
       ))}
-
       {filteredComputers.length === 0 && (
         <Card>
           <CardContent className='p-12 text-center'>
