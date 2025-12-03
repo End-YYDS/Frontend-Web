@@ -58,11 +58,7 @@ import {
   type DeleteRequest,
   type InstallRequest,
 } from '@/api/openapi-client';
-// import axios from 'axios';
-// import type { InstallRequest, DeleteRequest, ActionResponse } from './types';
-
 const ITEMS_PER_PAGE = 20;
-
 const SoftwarePackagesPage: PageComponent = () => {
   const isMobile = useIsMobile();
   const [pcs, setPcs] = useState<PC[]>([]);
@@ -78,8 +74,6 @@ const SoftwarePackagesPage: PageComponent = () => {
     key: string;
     name: string;
   } | null>(null);
-
-  // -------------------- API --------------------
   const fetchPCs = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -154,7 +148,7 @@ const SoftwarePackagesPage: PageComponent = () => {
       );
       await fetchPCs();
       toast.success('移除完成', {
-        description: installed.length ? `成功移除 ${installed.join(', ')}` : '套件移除失敗',
+        description: `成功移除 ${installed.join(', ')}`,
       });
     } catch (error) {
       console.error(error);
@@ -165,50 +159,6 @@ const SoftwarePackagesPage: PageComponent = () => {
       setPackageToUninstall(null);
     }
   };
-
-  // const handleUpdatePackage = async (packageKey: string) => {
-  //   if (!selectedPc) return;
-  //   setIsLoading(true);
-  //   try {
-  //     const payload: InstallRequest = { uuid: [selectedPc], Packages: [packageKey] };
-  //     const res = await postSoftware({ body: payload });
-  //     if (!res.data || typeof res.data !== 'object') {
-  //       throw new Error('Invalid response data');
-  //     }
-  //     const installed = res.data.Packages[packageKey]?.Installed || [];
-
-  //     setPcs((prev) =>
-  //       prev.map((pc) =>
-  //         pc.uuid === selectedPc
-  //           ? {
-  //               ...pc,
-  //               packages: {
-  //                 ...pc.packages,
-  //                 ...installed.reduce((acc, name) => {
-  //                   const key =
-  //                     Object.keys(pc.packages).find((k) => pc.packages[k].name === name) || name;
-  //                   const oldVersion = pc.packages[key].version.split('.');
-  //                   oldVersion[2] = String((parseInt(oldVersion[2]) || 0) + 1);
-  //                   acc[key] = { ...pc.packages[key], version: oldVersion.join('.') };
-  //                   return acc;
-  //                 }, {} as Record<string, Package>),
-  //               },
-  //             }
-  //           : pc,
-  //       ),
-  //     );
-  //     await fetchPCs();
-  //     toast.success('更新完成', {
-  //       description: installed.length ? `成功更新 ${installed.join(', ')}` : '更新失敗',
-  //     });
-  //   } catch (error) {
-  //     console.error(error);
-  //     toast.error('更新失敗');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   const handleInstallCustomPackage = async () => {
     if (!packageToInstall.trim()) return;
     try {

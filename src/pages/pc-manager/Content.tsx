@@ -31,7 +31,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Computer, Users, Edit2, UserPlus, Trash2 } from 'lucide-react';
 import { DataTable } from './data-table';
 import type { ColumnDef, CellContext, Row } from '@tanstack/react-table';
-// import axios from 'axios';
 import { toast } from 'sonner';
 import {
   addPc,
@@ -84,6 +83,7 @@ export function PCManagerContent() {
     const port = parseInt(match[1], 10);
     return port >= 0 && port <= 65535;
   }
+
   function parseIPv4(ip: string): number[] | null {
     const parts = ip.trim().split('.');
     if (parts.length !== 4) return null;
@@ -95,6 +95,7 @@ export function PCManagerContent() {
     if (nums.some((n) => Number.isNaN(n))) return null;
     return nums as number[];
   }
+
   function ipv4ToInt(octets: number[]): number {
     return ((octets[0] << 24) >>> 0) | (octets[1] << 16) | (octets[2] << 8) | octets[3];
   }
@@ -102,6 +103,7 @@ export function PCManagerContent() {
   function intToIPv4(n: number): string {
     return [(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff].join('.');
   }
+
   function prefixMask(prefix: number): number {
     return prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
   }
@@ -113,7 +115,6 @@ export function PCManagerContent() {
     const requireAligned = opts?.requireAligned ?? true;
     const allow31 = opts?.allow31 ?? false;
     const allow32 = opts?.allow32 ?? false;
-
     const m = cidr.trim().match(/^([^/]+)\/(\d{1,2})$/);
     if (!m) return { Ok: false, reason: '格式需為 IPv4/Prefix,例如 192.168.1.0/24' };
     const ipStr = m[1];
@@ -136,12 +137,9 @@ export function PCManagerContent() {
     if (requireAligned && network !== ipInt) {
       return { Ok: false, reason: 'IP 必須為網路位址(host bits 需為 0)' };
     }
-
     return { Ok: true, normalized };
   }
 
-  // -------------------- API --------------------
-  // 取得所有主機
   const fetchAllComputers = async () => {
     try {
       const res = await getAllPc();
@@ -183,8 +181,6 @@ export function PCManagerContent() {
     }
   };
 
-  // -------------------- PC Group --------------------
-
   const applyServerGrouping = (
     groupsRaw: GetPcgroupResponseResult,
     currentComputers: Computer[],
@@ -206,7 +202,6 @@ export function PCManagerContent() {
     try {
       const { data } = await getPcgroup();
       if (data && data.Groups && typeof data.Groups === 'object') {
-        // data.Groups 是 Record<string, Vxlanid>
         const groupList: ComputerGroup[] = Object.entries(data.Groups).map(([vxlanid, g]) => ({
           id: vxlanid,
           name: g.Groupname,
@@ -254,19 +249,16 @@ export function PCManagerContent() {
 
   useEffect(() => {
     let cancelled = false;
-
     (async () => {
       try {
         const [pcResp, groupResp] = await Promise.all([getAllPc(), getPcgroup()]);
         if (cancelled) return;
-
         const pcs: Computer[] = Object.entries(pcResp.data?.Pcs ?? {}).map(([uuid, pc]) => ({
           id: uuid,
           name: pc.Hostname,
           ip: pc.Ip,
           status: pc.Status ? 'Online' : 'Offline',
         }));
-
         const groupsList: ComputerGroup[] = Object.entries(groupResp.data?.Groups ?? {}).map(
           ([vxlanid, g]) => ({
             id: vxlanid,
@@ -294,7 +286,6 @@ export function PCManagerContent() {
     };
   }, []);
 
-  // -------------------- Add / Remove PC --------------------
   const handleAddComputer = async () => {
     if (!newComputer.ip || !newComputer.password) return;
     const result = await addComputerAPI(newComputer.ip, newComputer.password);
@@ -352,7 +343,7 @@ export function PCManagerContent() {
       const { data } = await postPcgroup({ body: body });
       if (data?.Type === 'Ok') {
         const group: ComputerGroup = {
-          id: (groups.length + 1).toString(), // 後端沒有回傳 vxlanid，暫時用長度+1 作為 id
+          id: (groups.length + 1).toString(),
           name: newGroup.name,
           computerCount: 0,
         };
@@ -442,7 +433,6 @@ export function PCManagerContent() {
 
   const AddToGroupCell: React.FC<AddToGroupCellProps> = ({ row, groups, onAddToGroup }) => {
     const [selectedGroup, setSelectedGroup] = useState<string>('');
-
     const handleConfirm = () => {
       if (!selectedGroup) return;
       void onAddToGroup(row.original.id, selectedGroup);
@@ -835,8 +825,7 @@ export function PCManagerContent() {
                     (computer) => computer.group === group.name,
                   );
                   const isEditing = editingGroup === group.name;
-                  const selectedInGroup = groupSelectedComputers[group.name] || []; //FIX: 修正選擇後透過右邊刪除後還存在
-
+                  const selectedInGroup = groupSelectedComputers[group.name] || [];
                   return (
                     <div key={group.id} className='border rounded-lg p-4'>
                       <div className='flex items-center justify-between mb-4'>
@@ -947,7 +936,6 @@ export function PCManagerContent() {
                               )}
                             </div>
                           ) : (
-                            // 未編輯模式才顯示 Edit 按鈕
                             <Button
                               variant='outline'
                               size='sm'
