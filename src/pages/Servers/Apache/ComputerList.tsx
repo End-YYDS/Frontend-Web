@@ -13,15 +13,16 @@ interface Computer {
   uuid: string;
   Hostname: string;
   Status: Status;
+  Ip: string;
   Cpu: number;
   Memory: number;
 }
 
 const FALLBACK_COMPUTERS: Computer[] = [
-  { uuid: '11111', Hostname: 'name', Status: 'Active', Cpu: 12, Memory: 13 },
-  { uuid: '11112', Hostname: 'name2', Status: 'Active', Cpu: 12, Memory: 13 },
-  { uuid: '11113', Hostname: 'name3', Status: 'Active', Cpu: 12, Memory: 13 },
-  { uuid: '11114', Hostname: 'name4', Status: 'Active', Cpu: 12, Memory: 13 },
+  { uuid: '11111', Hostname: 'name', Status: 'Active', Cpu: 12, Memory: 13, Ip: '127.0.0.1' },
+  { uuid: '11112', Hostname: 'name2', Status: 'Active', Cpu: 12, Memory: 13, Ip: '127.0.0.1' },
+  { uuid: '11113', Hostname: 'name3', Status: 'Active', Cpu: 12, Memory: 13, Ip: '127.0.0.1' },
+  { uuid: '11114', Hostname: 'name4', Status: 'Active', Cpu: 12, Memory: 13, Ip: '127.0.0.1' },
 ];
 
 export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps) {
@@ -49,6 +50,7 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
         Status: info.Status,
         Cpu: info.Cpu,
         Memory: info.Memory,
+        Ip: info.Ip ?? '',
       }));
 
       setComputers(formattedData);
@@ -104,6 +106,7 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
                 </div>
                 <div>
                   <h3 className='font-semibold text-lg text-slate-800'>{computer.Hostname}</h3>
+                  <p className='text-sm text-slate-500'>{computer.Ip}</p>
                 </div>
               </div>
               <div className='flex items-center gap-6'>
