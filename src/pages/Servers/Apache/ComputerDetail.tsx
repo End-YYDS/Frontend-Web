@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,13 +15,15 @@ import {
   AlertTriangle,
   Loader2,
 } from 'lucide-react';
-import type {
-  GetApacheRequest,
-  GetApacheResponse,
-  PostApacheActionRequest,
-  PostApacheActionResponse,
-} from './types';
 import { toast } from 'sonner';
+import {
+  actionRestart,
+  actionStart,
+  actionStop,
+  getApacheAll,
+  type ApacheResponse,
+  type UuidRequest,
+} from '@/api/openapi-client';
 
 interface ComputerDetailProps {
   computerId: string;
@@ -30,7 +31,7 @@ interface ComputerDetailProps {
 }
 
 export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
-  const [serverStatus, setServerStatus] = useState<GetApacheResponse | null>(null);
+  const [serverStatus, setServerStatus] = useState<ApacheResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<'' | 'start' | 'stop' | 'restart'>('');
 
@@ -38,8 +39,11 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const fetchServerStatus = useCallback(async () => {
     setLoading(true);
     try {
-      const sendData: GetApacheRequest = { Uuid: computerId };
-      const res = await axios.post<GetApacheResponse>('/api/server/apache', sendData);
+      const sendData: UuidRequest = { Uuid: computerId };
+      const res = await getApacheAll({ query: sendData });
+      if (!res.data || typeof res.data !== 'object') {
+        throw new Error('Invalid response data');
+      }
       setServerStatus(res.data);
     } catch (error) {
       console.error('Fetch server status failed:', error);
@@ -56,14 +60,17 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   /** 執行 Apache 操作 (Start / Stop / Restart) */
   const performAction = async (action: 'start' | 'stop' | 'restart') => {
     setActionLoading(action);
+    const actionMap = {
+      start: actionStart,
+      stop: actionStop,
+      restart: actionRestart,
+    };
     try {
-      const sendData: PostApacheActionRequest = { Uuid: computerId };
-      const res = await axios.post<PostApacheActionResponse>(
-        `/api/server/apache/action/${action}`,
-        sendData,
-      );
-      const data = res.data;
-
+      const sendData: UuidRequest = { Uuid: computerId };
+      const { data } = await actionMap[action]({ body: sendData });
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response data');
+      }
       if (data.Type === 'Ok') {
         toast.success('Success', { description: `Server ${action} succeeded` });
         fetchServerStatus();
@@ -135,7 +142,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
         <div className='flex items-center gap-2'>
           <Button
             onClick={() => performAction('start')}
-            disabled={serverStatus.Status === 'active' || actionLoading !== ''}
+            disabled={serverStatus.Status === 'Active' || actionLoading !== ''}
             className='bg-green-600 hover:bg-green-700'
           >
             {actionLoading === 'start' ? (
@@ -147,7 +154,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
           </Button>
           <Button
             onClick={() => performAction('stop')}
-            disabled={serverStatus.Status === 'stopped' || actionLoading !== ''}
+            disabled={serverStatus.Status === 'Stopped' || actionLoading !== ''}
             variant='destructive'
           >
             {actionLoading === 'stop' ? (
@@ -179,10 +186,10 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
             <div>
               <p className='text-sm font-medium text-slate-600'>Status</p>
               <Badge
-                variant={serverStatus.Status === 'active' ? 'default' : 'secondary'}
-                className={serverStatus.Status === 'active' ? 'bg-green-500' : 'bg-red-500'}
+                variant={serverStatus.Status === 'Active' ? 'default' : 'secondary'}
+                className={serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500'}
               >
-                {serverStatus.Status === 'active' ? 'Running' : 'Stopped'}
+                {serverStatus.Status === 'Active' ? 'Running' : 'Stopped'}
               </Badge>
             </div>
           </CardContent>
@@ -223,8 +230,8 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
         <CardContent>
           <Tabs defaultValue='errors' className='w-full'>
             <TabsList className='grid w-full grid-cols-2'>
-              <TabsTrigger value='errors'>Error Logs ({serverStatus.Logs.ErrLength})</TabsTrigger>
-              <TabsTrigger value='access'>Access Logs ({serverStatus.Logs.AccLength})</TabsTrigger>
+              <TabsTrigger value='errors'>Error Logs ({serverStatus.Logs.Errlength})</TabsTrigger>
+              <TabsTrigger value='access'>Access Logs ({serverStatus.Logs.Acclength})</TabsTrigger>
             </TabsList>
 
             {/* Error Logs */}

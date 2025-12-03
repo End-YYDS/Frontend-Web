@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ActionRestartData, ActionRestartResponses, ActionStartData, ActionStartResponses, ActionStopData, ActionStopResponses, AddPcData, AddPcErrors, AddPcResponses, DeleteGroupData, DeleteGroupResponses, DeletePcData, DeletePcErrors, DeletePcgroupData, DeletePcgroupErrors, DeletePcgroupResponses, DeletePcResponses, DeleteUserData, DeleteUserResponses, GetAllPcData, GetAllPcErrors, GetAllPcResponses, GetApacheAllData, GetApacheAllResponses, GetBackupRootData, GetBackupRootResponses, GetGroupData, GetGroupResponses, GetInfoAllData, GetInfoAllErrors, GetInfoAllResponses, GetInstalledData, GetInstalledResponses, GetNoinstallData, GetNoinstallResponses, GetPcgroupData, GetPcgroupErrors, GetPcgroupResponses, GetSpecificPcData, GetSpecificPcErrors, GetSpecificPcResponses, GetUserData, GetUserResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MeData, MeErrors, MeResponses, PatchGroupData, PatchGroupResponses, PatchPcgroupData, PatchPcgroupErrors, PatchPcgroupResponses, PatchUserData, PatchUserResponses, PostBackupRootData, PostBackupRootResponses, PostGroupData, PostGroupResponses, PostInfoGetData, PostInfoGetErrors, PostInfoGetResponses, PostInstallData, PostInstallResponses, PostPcgroupData, PostPcgroupErrors, PostPcgroupResponses, PostReductionData, PostReductionResponses, PostUserData, PostUserResponses, PutGroupData, PutGroupResponses, PutPcgroupData, PutPcgroupErrors, PutPcgroupResponses, PutUserData, PutUserResponses, RebootPcData, RebootPcErrors, RebootPcResponses, RevokeData, RevokedData, RevokedErrors, RevokedResponses, RevokeErrors, RevokeResponses, ShutdownPcData, ShutdownPcErrors, ShutdownPcResponses, ValidData, ValidErrors, ValidResponses } from './types.gen';
+import type { ActionRestartData, ActionRestartResponses, ActionStartData, ActionStartResponses, ActionStopData, ActionStopResponses, AddPcData, AddPcErrors, AddPcResponses, DeleteGroupData, DeleteGroupResponses, DeletePcData, DeletePcErrors, DeletePcgroupData, DeletePcgroupErrors, DeletePcgroupResponses, DeletePcResponses, DeleteSoftwareData, DeleteSoftwareErrors, DeleteSoftwareResponses, DeleteUserData, DeleteUserResponses, GetAllPcData, GetAllPcErrors, GetAllPcResponses, GetApacheAllData, GetApacheAllResponses, GetBackupRootData, GetBackupRootResponses, GetGroupData, GetGroupResponses, GetInfoAllData, GetInfoAllErrors, GetInfoAllResponses, GetInstalledData, GetInstalledResponses, GetNoinstallData, GetNoinstallResponses, GetPcgroupData, GetPcgroupErrors, GetPcgroupResponses, GetSoftwareData, GetSoftwareErrors, GetSoftwareResponses, GetSpecificPcData, GetSpecificPcErrors, GetSpecificPcResponses, GetUserData, GetUserResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MeData, MeErrors, MeResponses, PatchGroupData, PatchGroupResponses, PatchPcgroupData, PatchPcgroupErrors, PatchPcgroupResponses, PatchUserData, PatchUserResponses, PostBackupRootData, PostBackupRootResponses, PostGroupData, PostGroupResponses, PostInfoGetData, PostInfoGetErrors, PostInfoGetResponses, PostInstallData, PostInstallResponses, PostPcgroupData, PostPcgroupErrors, PostPcgroupResponses, PostReductionData, PostReductionResponses, PostSoftwareData, PostSoftwareErrors, PostSoftwareResponses, PostUserData, PostUserResponses, PutGroupData, PutGroupResponses, PutPcgroupData, PutPcgroupErrors, PutPcgroupResponses, PutUserData, PutUserResponses, RebootPcData, RebootPcErrors, RebootPcResponses, RevokeData, RevokedData, RevokedErrors, RevokedResponses, RevokeErrors, RevokeResponses, ShutdownPcData, ShutdownPcErrors, ShutdownPcResponses, ValidData, ValidErrors, ValidResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -389,6 +389,37 @@ export const getInstalled = <ThrowOnError extends boolean = false>(options: Opti
 export const getNoinstall = <ThrowOnError extends boolean = false>(options: Options<GetNoinstallData, ThrowOnError>) => (options.client ?? client).get<GetNoinstallResponses, unknown, ThrowOnError>({
     responseType: 'json',
     url: '/server/noinstall',
+    ...options
+});
+
+/**
+ * DELETE /api/software
+ */
+export const deleteSoftware = <ThrowOnError extends boolean = false>(options: Options<DeleteSoftwareData, ThrowOnError>) => (options.client ?? client).delete<DeleteSoftwareResponses, DeleteSoftwareErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/software',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * GET /api/software
+ */
+export const getSoftware = <ThrowOnError extends boolean = false>(options?: Options<GetSoftwareData, ThrowOnError>) => (options?.client ?? client).get<GetSoftwareResponses, GetSoftwareErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/software',
+    ...options
+});
+
+/**
+ * POST /api/software
+ */
+export const postSoftware = <ThrowOnError extends boolean = false>(options: Options<PostSoftwareData, ThrowOnError>) => (options.client ?? client).post<PostSoftwareResponses, PostSoftwareErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/software',
     ...options,
     headers: {
         'Content-Type': 'application/json',

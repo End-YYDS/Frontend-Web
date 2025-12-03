@@ -50,8 +50,16 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import type { PageComponent } from '@/types';
-import axios from 'axios';
-import type { InstallRequest, DeleteRequest, ActionResponse } from './types';
+import {
+  deleteSoftware,
+  getAllPc,
+  getSoftware,
+  postSoftware,
+  type DeleteRequest,
+  type InstallRequest,
+} from '@/api/openapi-client';
+// import axios from 'axios';
+// import type { InstallRequest, DeleteRequest, ActionResponse } from './types';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -75,24 +83,35 @@ const SoftwarePackagesPage: PageComponent = () => {
   const fetchPCs = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get<{
-        Pcs: Record<
-          string,
-          { Packages: Record<string, { Version: string; Status: 'Installed' | 'Notinstall' }> }
-        >;
-      }>('/api/software', { withCredentials: true });
+      const [{ data: softwareData }, { data: pcInfoData }] = await Promise.all([
+        getSoftware(),
+        getAllPc(),
+      ]);
+      if (!softwareData || typeof softwareData !== 'object') {
+        throw new Error('Invalid software response data');
+      }
+      const hostnameMap = pcInfoData && typeof pcInfoData === 'object' ? pcInfoData.Pcs ?? {} : {};
+      const pcList: PC[] = Object.entries(softwareData.Pcs).map(([uuid, pc]) => {
+        const hostInfo = hostnameMap[uuid];
 
-      const pcList: PC[] = Object.entries(res.data.Pcs).map(([uuid, pc]) => ({
-        uuid,
-        name: `PC-${uuid}`,
-        packages: Object.entries(pc.Packages).reduce((acc, [key, pkg]) => {
-          acc[key] = { name: key, version: pkg.Version, status: pkg.Status };
-          return acc;
-        }, {} as Record<string, Package>),
-      }));
+        return {
+          uuid,
+          name: hostInfo?.Hostname ?? `PC-${uuid}`,
+          packages: Object.entries(pc.Packages).reduce((acc, [key, pkg]) => {
+            acc[key] = {
+              name: key,
+              version: pkg.Version,
+              status: pkg.Status,
+            };
+            return acc;
+          }, {} as Record<string, Package>),
+        };
+      });
 
       setPcs(pcList);
-      if (pcList.length > 0) setSelectedPc((prev) => prev || pcList[0].uuid);
+      if (pcList.length > 0) {
+        setSelectedPc((prev) => prev || pcList[0].uuid);
+      }
     } catch (error) {
       console.error('Error fetching PCs:', error);
       toast.error('Failed to fetch PCs');
@@ -110,10 +129,10 @@ const SoftwarePackagesPage: PageComponent = () => {
     setIsLoading(true);
     try {
       const payload: DeleteRequest = { uuid: [selectedPc], Package: [packageKey] };
-      const res = await axios.delete<ActionResponse>('/api/software', {
-        data: payload,
-        withCredentials: true,
-      });
+      const res = await deleteSoftware({ body: payload });
+      if (!res.data || typeof res.data !== 'object') {
+        throw new Error('Invalid response data');
+      }
       const installed = res.data.Packages[packageKey]?.Installed || [];
       setPcs((prev) =>
         prev.map((pc) =>
@@ -133,6 +152,7 @@ const SoftwarePackagesPage: PageComponent = () => {
             : pc,
         ),
       );
+      await fetchPCs();
       toast.success('移除完成', {
         description: installed.length ? `成功移除 ${installed.join(', ')}` : '套件移除失敗',
       });
@@ -146,46 +166,48 @@ const SoftwarePackagesPage: PageComponent = () => {
     }
   };
 
-  const handleUpdatePackage = async (packageKey: string) => {
-    if (!selectedPc) return;
-    setIsLoading(true);
-    try {
-      const payload: InstallRequest = { uuid: [selectedPc], Packages: [packageKey] };
-      const res = await axios.post<ActionResponse>('/api/software', payload, {
-        withCredentials: true,
-      });
-      const installed = res.data.Packages[packageKey]?.Installed || [];
+  // const handleUpdatePackage = async (packageKey: string) => {
+  //   if (!selectedPc) return;
+  //   setIsLoading(true);
+  //   try {
+  //     const payload: InstallRequest = { uuid: [selectedPc], Packages: [packageKey] };
+  //     const res = await postSoftware({ body: payload });
+  //     if (!res.data || typeof res.data !== 'object') {
+  //       throw new Error('Invalid response data');
+  //     }
+  //     const installed = res.data.Packages[packageKey]?.Installed || [];
 
-      setPcs((prev) =>
-        prev.map((pc) =>
-          pc.uuid === selectedPc
-            ? {
-                ...pc,
-                packages: {
-                  ...pc.packages,
-                  ...installed.reduce((acc, name) => {
-                    const key =
-                      Object.keys(pc.packages).find((k) => pc.packages[k].name === name) || name;
-                    const oldVersion = pc.packages[key].version.split('.');
-                    oldVersion[2] = String((parseInt(oldVersion[2]) || 0) + 1);
-                    acc[key] = { ...pc.packages[key], version: oldVersion.join('.') };
-                    return acc;
-                  }, {} as Record<string, Package>),
-                },
-              }
-            : pc,
-        ),
-      );
-      toast.success('更新完成', {
-        description: installed.length ? `成功更新 ${installed.join(', ')}` : '更新失敗',
-      });
-    } catch (error) {
-      console.error(error);
-      toast.error('更新失敗');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     setPcs((prev) =>
+  //       prev.map((pc) =>
+  //         pc.uuid === selectedPc
+  //           ? {
+  //               ...pc,
+  //               packages: {
+  //                 ...pc.packages,
+  //                 ...installed.reduce((acc, name) => {
+  //                   const key =
+  //                     Object.keys(pc.packages).find((k) => pc.packages[k].name === name) || name;
+  //                   const oldVersion = pc.packages[key].version.split('.');
+  //                   oldVersion[2] = String((parseInt(oldVersion[2]) || 0) + 1);
+  //                   acc[key] = { ...pc.packages[key], version: oldVersion.join('.') };
+  //                   return acc;
+  //                 }, {} as Record<string, Package>),
+  //               },
+  //             }
+  //           : pc,
+  //       ),
+  //     );
+  //     await fetchPCs();
+  //     toast.success('更新完成', {
+  //       description: installed.length ? `成功更新 ${installed.join(', ')}` : '更新失敗',
+  //     });
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error('更新失敗');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleInstallCustomPackage = async () => {
     if (!packageToInstall.trim()) return;
@@ -193,7 +215,13 @@ const SoftwarePackagesPage: PageComponent = () => {
       setIsLoading(true);
       const newKey = packageToInstall.toLowerCase().replace(/\s+/g, '-');
       const payload: InstallRequest = { uuid: [selectedPc], Packages: [packageToInstall] };
-      await axios.post<ActionResponse>('/api/software', payload, { withCredentials: true });
+      const { data } = await postSoftware({ body: payload });
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response data');
+      }
+      if (data.Packages[packageToInstall]?.Installed.length === 0) {
+        throw new Error('Installation failed');
+      }
       setPcs((prev) =>
         prev.map((pc) =>
           pc.uuid === selectedPc
@@ -207,6 +235,7 @@ const SoftwarePackagesPage: PageComponent = () => {
             : pc,
         ),
       );
+      await fetchPCs();
       toast.success('安裝完成', { description: `成功安裝 ${packageToInstall}` });
       setPackageToInstall('');
       setShowInstallDialog(false);
@@ -491,7 +520,7 @@ const SoftwarePackagesPage: PageComponent = () => {
                             </div>
                           </div>
                           <div className='flex gap-2'>
-                            <Button
+                            {/* <Button
                               variant='outline'
                               size='sm'
                               onClick={() => handleUpdatePackage(key)}
@@ -500,7 +529,7 @@ const SoftwarePackagesPage: PageComponent = () => {
                             >
                               <RefreshCw className='h-4 w-4 mr-1' />
                               Version
-                            </Button>
+                            </Button> */}
                             <Button
                               variant='outline'
                               size='sm'
@@ -550,14 +579,14 @@ const SoftwarePackagesPage: PageComponent = () => {
                           <TableCell>{pkg.version}</TableCell>
                           <TableCell className='text-right'>
                             <div className='flex justify-end gap-2'>
-                              <Button
+                              {/* <Button
                                 variant='ghost'
                                 size='sm'
                                 onClick={() => handleUpdatePackage(key)}
                                 disabled={isLoading}
                               >
                                 <RefreshCw className='h-4 w-4 mr-1' />
-                              </Button>
+                              </Button> */}
                               <Button
                                 variant='ghost'
                                 size='sm'
