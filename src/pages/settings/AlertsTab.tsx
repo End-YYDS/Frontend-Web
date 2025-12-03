@@ -134,143 +134,128 @@ const AlertsTab = () => {
               <Collapsible open={isNotificationsEnabled}>
                 <CollapsibleContent className='space-y-4'>
                   {/* CPU */}
-                  <div className='space-y-2'>
-                    <FormLabel>CPU Usage Alert Threshold (%)</FormLabel>
-                    <div className='grid gap-3 sm:grid-cols-2'>
-                      <FormField
-                        control={form.control}
-                        name='cpuWarning'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
-                            <FormControl>
+                  <FormField
+                    control={form.control}
+                    name='cpuUsage'
+                    render={({ field }) => {
+                      const { ref, value, onChange, ...rest } = field;
+                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+                        onChange(Number(e.target.value));
+                      return (
+                        <FormItem>
+                          <FormLabel>CPU Usage Alert Threshold (%)</FormLabel>
+                          <div className='grid gap-3 sm:grid-cols-2'>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
                               <Input
                                 type='number'
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                value={value}
+                                onChange={handleChange}
+                                min={0}
+                                max={100}
+                                ref={ref}
+                                {...rest}
+                              />
+                            </div>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
+                              <Input
+                                type='number'
+                                value={value}
+                                onChange={handleChange}
                                 min={0}
                                 max={100}
                               />
-                            </FormControl>
-                            <FormDescription>Send a warning above this value.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name='cpuUsage'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
-                            <FormControl>
-                              <Input
-                                type='number'
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
-                                min={0}
-                                max={100}
-                              />
-                            </FormControl>
-                            <FormDescription>Trigger a critical alert above this value.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
+                            </div>
+                          </div>
+                          <FormDescription>Alert when CPU usage exceeds these thresholds (0-100%).</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
                   {/* Memory */}
-                  <div className='space-y-2'>
-                    <FormLabel>Memory Usage Alert Threshold (%)</FormLabel>
-                    <div className='grid gap-3 sm:grid-cols-2'>
-                      <FormField
-                        control={form.control}
-                        name='memoryWarning'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
-                            <FormControl>
+                  <FormField
+                    control={form.control}
+                    name='memory'
+                    render={({ field }) => {
+                      const { ref, value, onChange, ...rest } = field;
+                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+                        onChange(Number(e.target.value));
+                      return (
+                        <FormItem>
+                          <FormLabel>Memory Usage Alert Threshold (%)</FormLabel>
+                          <div className='grid gap-3 sm:grid-cols-2'>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
                               <Input
                                 type='number'
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                value={value}
+                                onChange={handleChange}
+                                min={0}
+                                max={100}
+                                ref={ref}
+                                {...rest}
+                              />
+                            </div>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
+                              <Input
+                                type='number'
+                                value={value}
+                                onChange={handleChange}
                                 min={0}
                                 max={100}
                               />
-                            </FormControl>
-                            <FormDescription>Send a warning above this value.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name='memory'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
-                            <FormControl>
-                              <Input
-                                type='number'
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
-                                min={0}
-                                max={100}
-                              />
-                            </FormControl>
-                            <FormDescription>Trigger a critical alert above this value.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
+                            </div>
+                          </div>
+                          <FormDescription>Alert when memory usage exceeds these thresholds (0-100%).</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
                   {/* Disk */}
-                  <div className='space-y-2'>
-                    <FormLabel>Disk Usage Alert Threshold (%)</FormLabel>
-                    <div className='grid gap-3 sm:grid-cols-2'>
-                      <FormField
-                        control={form.control}
-                        name='diskWarning'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
-                            <FormControl>
+                  <FormField
+                    control={form.control}
+                    name='diskUsage'
+                    render={({ field }) => {
+                      const { ref, value, onChange, ...rest } = field;
+                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+                        onChange(Number(e.target.value));
+                      return (
+                        <FormItem>
+                          <FormLabel>Disk Usage Alert Threshold (%)</FormLabel>
+                          <div className='grid gap-3 sm:grid-cols-2'>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
                               <Input
                                 type='number'
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                value={value}
+                                onChange={handleChange}
+                                min={0}
+                                max={100}
+                                ref={ref}
+                                {...rest}
+                              />
+                            </div>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
+                              <Input
+                                type='number'
+                                value={value}
+                                onChange={handleChange}
                                 min={0}
                                 max={100}
                               />
-                            </FormControl>
-                            <FormDescription>Send a warning above this value.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name='diskUsage'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
-                            <FormControl>
-                              <Input
-                                type='number'
-                                {...field}
-                                onChange={(e) => field.onChange(Number(e.target.value))}
-                                min={0}
-                                max={100}
-                              />
-                            </FormControl>
-                            <FormDescription>Trigger a critical alert above this value.</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
+                            </div>
+                          </div>
+                          <FormDescription>Alert when disk usage exceeds these thresholds (0-100%).</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
                 </CollapsibleContent>
               </Collapsible>
             )}
