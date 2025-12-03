@@ -23,7 +23,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  getApacheAll,
+  getInstalled,
+  getNoinstall,
   getInfoAll,
   postInfoGet,
   type InfoGetRequest,
@@ -32,18 +33,32 @@ import {
 } from '@/api/openapi-client';
 
 const ITEMS_PER_PAGE = 3;
+type ServiceName = 'Apache';
+type ServiceStatusValue = 'active' | 'stopped' | 'uninstalled';
+type ServiceStatusEntry = { Hostname: string; Status: ServiceStatusValue };
+type ServicesStatusState = Record<ServiceName, ServiceStatusEntry[]>;
+const SERVICE_QUERY_MAP: Record<ServiceName, string> = { Apache: 'apache' };
+const SERVICE_NAMES: ServiceName[] = ['Apache'];
+const normalizeServiceStatus = (status?: string | null): ServiceStatusValue => {
+  const normalized = typeof status === 'string' ? status.toLowerCase() : '';
+  if (normalized === 'active') return 'active';
+  if (normalized === 'stopped') return 'stopped';
+  return 'uninstalled';
+};
 
 export function DashboardContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<'safe' | 'warning' | 'danger' | null>(null);
 
   // server狀態
-  const [ApacheStatus, setApacheStatus] = useState<{ name: string; Apache: string }[]>([]);
+  const [servicesStatus, setServicesStatus] = useState<ServicesStatusState>({
+    Apache: [],
+  });
 
   // 圖表資料
   const [cpuData, setCpuData] = useState<{ time: string; value: number }[]>([]);
   const [memoryData, setMemoryData] = useState<{ time: string; value: number }[]>([]);
-  // const [diskData, setDiskData] = useState<{ time: string; value: number }[]>([]);
+  const [diskData, setDiskData] = useState(0);
 
   // 電腦列表
   const [computers, setComputers] = useState<
@@ -54,52 +69,89 @@ export function DashboardContent() {
   const isFetchingRef = useRef(false);
   const hostMapRef = useRef<Record<string, string>>({});
 
-  const buildComputers = (
-    pcs: Record<string, PcMetrics>,
-    hostMap: Record<string, string> = hostMapRef.current,
-  ) => {
-    const list = Object.entries(pcs).map(([uuid, stats]) => ({
-      name: hostMap[uuid] ?? `PC-${uuid}`,
-      cpu: (stats?.Cpu ?? 0) + '%',
-      memory: (stats?.Memory ?? 0) + '%',
-      disk: (stats?.Disk ?? 0) + '%',
-      status: (() => {
-        const cpu = stats?.CpuStatus,
-          mem = stats?.MemStatus,
-          disk = stats?.DiskStatus;
-        if (cpu === 'Warn' || mem === 'Warn' || disk === 'Warn') return 'warning';
-        if (cpu === 'Dang' || mem === 'Dang' || disk === 'Dang') return 'danger';
-        return 'safe';
-      })(),
-      cpuStatus: stats?.CpuStatus,
-      memStatus: stats?.MemStatus,
-      diskStatus: stats?.DiskStatus,
-    }));
-    setComputers(list);
-  };
+  const buildComputers = useCallback(
+    (pcs: Record<string, PcMetrics>, hostMap: Record<string, string> = hostMapRef.current) => {
+      const list = Object.entries(pcs).map(([uuid, stats]) => ({
+        name: hostMap[uuid] ?? hostMapRef.current[uuid] ?? `host-${uuid}`,
+        cpu: (stats?.Cpu ?? 0) + '%',
+        memory: (stats?.Memory ?? 0) + '%',
+        disk: (stats?.Disk ?? 0) + '%',
+        status: (() => {
+          const cpu = stats?.CpuStatus,
+            mem = stats?.MemStatus,
+            disk = stats?.DiskStatus;
+          if (cpu === 'Warn' || mem === 'Warn' || disk === 'Warn') return 'warning';
+          if (cpu === 'Dang' || mem === 'Dang' || disk === 'Dang') return 'danger';
+          return 'safe';
+        })(),
+        cpuStatus: stats?.CpuStatus,
+        memStatus: stats?.MemStatus,
+        diskStatus: stats?.DiskStatus,
+      }));
+      setComputers(list);
+    },
+    [],
+  );
 
-  const fetchApacheStatuses = async (pcs: Record<string, PcMetrics>) => {
-    const apacheStatus = await Promise.all(
-      Object.entries(pcs).map(async ([uuid]) => {
-        const res = await getApacheAll({ query: { Uuid: uuid } });
-        const data = res.data;
-        return {
-          uuid,
-          hostname: data?.Hostname ?? `host-${uuid}`,
-          status: data?.Status ?? 'undefined',
-        };
+  const fetchServiceStatus = useCallback(async (service: ServiceName) => {
+    const [{ data: installedData }, { data: noInstalledData }] = await Promise.all([
+      getInstalled({ query: { Server: SERVICE_QUERY_MAP[service] } }),
+      getNoinstall({ query: { Server: SERVICE_QUERY_MAP[service] } }),
+    ]);
+    const pcsSources = [installedData?.Pcs, noInstalledData?.Pcs];
+    const entries: ServiceStatusEntry[] = [];
+    const hostMap: Record<string, string> = {};
+    
+    pcsSources.forEach((pcsData) => {
+      if (pcsData && typeof pcsData === 'object') {
+        if ('Installed' in pcsData) {
+          Object.entries(pcsData.Installed ?? {}).forEach(([uuid, info]) => {
+            const Hostname = hostMapRef.current[uuid] ?? info?.Hostname ?? `host-${uuid}`;
+            hostMap[uuid] = Hostname;
+            entries.push({ Hostname, Status: normalizeServiceStatus(info?.Status) });
+          });
+        }
+        if ('NotInstalled' in pcsData) {
+          Object.entries(pcsData.NotInstalled ?? {}).forEach(([uuid, infoOrName]) => {
+            const parsedHostname =
+              typeof infoOrName === 'string'
+                ? infoOrName
+                : infoOrName && typeof infoOrName === 'object' && 'Hostname' in infoOrName
+                ? (infoOrName as { Hostname?: string }).Hostname
+                : undefined;
+            const Hostname = parsedHostname ?? hostMapRef.current[uuid] ?? `host-${uuid}`;
+            hostMap[uuid] = Hostname;
+            entries.push({ Hostname, Status: 'uninstalled' });
+          });
+        }
+      }
+    });
+
+    return { entries, hostMap };
+  }, []);
+
+  const fetchServicesStatuses = useCallback(async () => {
+    const results = await Promise.all(
+      SERVICE_NAMES.map(async (service) => {
+        try {
+          const { entries, hostMap } = await fetchServiceStatus(service);
+          return { service, entries, hostMap };
+        } catch (err) {
+          console.error(`fetch${service}Statuses error`, err);
+          return { service, entries: [], hostMap: {} };
+        }
       }),
     );
-    const hostMap = Object.fromEntries(apacheStatus.map((a) => [a.uuid, a.hostname]));
-    setApacheStatus(
-      apacheStatus.map((a) => ({
-        name: a.hostname,
-        Apache: a.status,
-      })),
-    );
-    hostMapRef.current = hostMap;
-    return hostMap;
-  };
+    const nextStatus: ServicesStatusState = { Apache: [] };
+    const mergedHostMap: Record<string, string> = { ...hostMapRef.current };
+    results.forEach(({ service, entries, hostMap }) => {
+      nextStatus[service] = entries;
+      Object.assign(mergedHostMap, hostMap);
+    });
+    hostMapRef.current = mergedHostMap;
+    setServicesStatus(nextStatus);
+    return mergedHostMap;
+  }, [fetchServiceStatus]);
 
   const statusIconMap: Record<string, { icon: React.ElementType; color: string }> = {
     safe: { icon: Check, color: 'text-green-600' },
@@ -107,7 +159,7 @@ export function DashboardContent() {
     danger: { icon: X, color: 'text-red-500' },
   };
 
-  const ServiceStatusIcon = ({ status }: { status: string }) => {
+  const ServiceStatusIcon = ({ status }: { status: ServiceStatusValue }) => {
     if (status === 'active') {
       return <Check className='w-4 h-4 text-green-500' />;
     }
@@ -143,6 +195,10 @@ export function DashboardContent() {
           second: '2-digit',
         });
 
+        const diskValue =
+          typeof infoData?.Cluster?.Disk === 'number' ? infoData.Cluster.Disk : 0;
+        const clampedDiskValue = Math.min(100, Math.max(0, diskValue));
+
         setCpuData((prev) => [
           ...prev.slice(-5),
           { time: timestamp, value: infoData?.Cluster?.Cpu ?? 1 },
@@ -151,6 +207,7 @@ export function DashboardContent() {
           ...prev.slice(-5),
           { time: timestamp, value: infoData?.Cluster?.Memory ?? 1 },
         ]);
+        setDiskData(clampedDiskValue);
       }
 
       const mergedPcs = (pcsRes.data?.Pcs ?? {}) as Record<string, PcMetrics>;
@@ -159,20 +216,20 @@ export function DashboardContent() {
         const hasHostMap = Object.keys(hostMapRef.current).length > 0;
 
         if (!hasHostMap) {
-          // 首次載入等 Apache 完成，避免閃 PC-uuid
+          // 首次載入等服務狀態完成，避免閃 PC-uuid
           try {
-            const hostMap = await fetchApacheStatuses(mergedPcs);
+            const hostMap = await fetchServicesStatuses();
             buildComputers(mergedPcs, hostMap);
-          } catch (apacheErr) {
-            console.error('fetchApacheStatuses error', apacheErr);
+          } catch (serviceErr) {
+            console.error('fetchServicesStatuses error', serviceErr);
             buildComputers(mergedPcs);
           }
         } else {
           // 後續輪詢先用快取的 hostname 再背景更新
           buildComputers(mergedPcs, hostMapRef.current);
-          fetchApacheStatuses(mergedPcs)
+          fetchServicesStatuses()
             .then((hostMap) => buildComputers(mergedPcs, hostMap))
-            .catch((apacheErr) => console.error('fetchApacheStatuses error', apacheErr));
+            .catch((serviceErr) => console.error('fetchServicesStatuses error', serviceErr));
         }
       }
     } catch {
@@ -233,7 +290,7 @@ export function DashboardContent() {
     ];
 
       const serviceKeys = ['A', 'N', 'B', 'D', 'L', 'M', 'ProFTPD', 'Samba', 'Proxy', 'SSH'];
-      const statusPool = ['active', 'stopped', 'uninstalled'];
+      const statusPool = ['active', 'stopped', 'uninstalled'] as const;
 
       const fakeServers = list.map((pc) => ({
         name: pc.name.replace('PC', 'host'),
@@ -247,18 +304,29 @@ export function DashboardContent() {
 
       setCpuData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Cpu }]);
       setMemoryData((prev) => [...prev.slice(-5), { time: timestamp, value: fakeCluster.Memory }]);
+      setDiskData(fakeCluster.Disk);
 
       setComputers(list);
-      setApacheStatus(fakeServers.map((s) => ({ name: s.name, Apache: s.services['A'] })));
+      setServicesStatus({
+        Apache: fakeServers.map((s) => ({
+          Hostname: s.name,
+          Status: s.services['A'] as ServiceStatusValue,
+        })),
+      });
+      hostMapRef.current = {};
     } finally {
       isFetchingRef.current = false;
     }
-  }, []);
+  }, [buildComputers, fetchServicesStatuses]);
   useEffect(() => {
     fetchAllInfo();
     const interval = setInterval(fetchAllInfo, 5000);
     return () => clearInterval(interval);
   }, [fetchAllInfo]);
+
+  const diskUsedPercent = Math.min(100, Math.max(0, diskData));
+  const diskFreePercent = Math.max(0, 100 - diskUsedPercent);
+  const diskUsedDisplay = Math.round(diskUsedPercent * 10) / 10;
 
   const filteredComputers = selectedStatus
     ? computers.filter((c) => c.status === selectedStatus)
@@ -455,7 +523,9 @@ export function DashboardContent() {
                 </TableHeader>
                 <TableBody>
                   {currentComputers.map((computer) => {
-                    const apache = ApacheStatus.find(a => a.name === computer.name)?.Apache ?? 'uninstalled';
+                    const apache =
+                      servicesStatus.Apache.find((a) => a.Hostname === computer.name)?.Status ??
+                      'uninstalled';
                     // console.log('computers', computers.map(c => ({name: c.name, status: c.status})));
                     return (
                       <TableRow key={computer.name}>
@@ -601,40 +671,33 @@ export function DashboardContent() {
         <Card>
           <CardHeader>
             <CardTitle className='text-slate-700'>Disk</CardTitle>
-            <p className='text-sm text-gray-500'>Used 2.1 TB (Total 3.2 TB)</p>
+            <p className='text-sm text-gray-500'>
+              Used {diskUsedDisplay}%
+            </p>
           </CardHeader>
           <CardContent className='p-6 w-full min-w-0'>
             <div className='space-y-4'>
               {/* Storage Bar */}
-              <div className='w-full h-6 bg-gray-200 rounded-lg overflow-hidden flex'>
-                <div className='bg-red-500 h-full' style={{ width: '30%' }}></div>
-                <div className='bg-orange-400 h-full' style={{ width: '25%' }}></div>
-                <div className='bg-yellow-400 h-full' style={{ width: '20%' }}></div>
-                <div className='bg-gray-500 h-full' style={{ width: '15%' }}></div>
-                <div className='bg-gray-600 h-full' style={{ width: '10%' }}></div>
+              <div className='w-full h-6 bg-gray-100 rounded-lg overflow-hidden flex'>
+                <div
+                  className='bg-yellow-400 h-full transition-[width] duration-500 ease-in-out'
+                  style={{ width: `${diskUsedPercent}%` }}
+                ></div>
+                <div
+                  className='bg-gray-300 h-full transition-[width] duration-500 ease-in-out'
+                  style={{ width: `${diskFreePercent}%` }}
+                ></div>
               </div>
 
               {/* Legend */}
               <div className='flex flex-wrap gap-3 text-sm'>
                 <div className='flex items-center gap-1'>
-                  <div className='w-3 h-3 bg-red-500 rounded-full'></div>
-                  <span>System Files</span>
-                </div>
-                <div className='flex items-center gap-1'>
-                  <div className='w-3 h-3 bg-orange-400 rounded-full'></div>
-                  <span>Applications</span>
-                </div>
-                <div className='flex items-center gap-1'>
                   <div className='w-3 h-3 bg-yellow-400 rounded-full'></div>
-                  <span>User Data</span>
+                  <span>Used</span>
                 </div>
                 <div className='flex items-center gap-1'>
-                  <div className='w-3 h-3 bg-gray-500 rounded-full'></div>
-                  <span>Cache</span>
-                </div>
-                <div className='flex items-center gap-1'>
-                  <div className='w-3 h-3 bg-gray-600 rounded-full'></div>
-                  <span>Others</span>
+                  <div className='w-3 h-3 bg-gray-300 rounded-full'></div>
+                  <span>Available</span>
                 </div>
               </div>
             </div>
