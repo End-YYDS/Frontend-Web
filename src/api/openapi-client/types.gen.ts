@@ -16,6 +16,16 @@ export type AccessLog = {
     UserAgent: string;
 };
 
+/**
+ * POST/DELETE 回應
+ */
+export type ActionResponse = {
+    Length: number;
+    Packages: {
+        [key: string]: PackageActionResult;
+    };
+};
+
 export type ApacheResponse = CommonInfo & {
     Connections: number;
     Logs: Logs;
@@ -123,6 +133,14 @@ export type DeletePcResponse = {
     };
 };
 
+/**
+ * DELETE /api/software 請求
+ */
+export type DeleteRequest = {
+    Package?: Array<string> | null;
+    uuid?: Array<string>;
+};
+
 export type DeleteUserRequest = {
     Uid: string;
 };
@@ -158,6 +176,15 @@ export type GetPcgroupResponseResult = {
         [key: string]: Vxlanid;
     };
     Length: number;
+};
+
+/**
+ * GET /api/software 回應
+ */
+export type GetSoftwareResponse = {
+    Pcs: {
+        [key: string]: PcPackages;
+    };
 };
 
 export type GetUserEntry = {
@@ -213,6 +240,14 @@ export type InnerGetBackupResponse = _Date & {
 };
 
 /**
+ * POST /api/software 請求
+ */
+export type InstallRequest = {
+    Packages?: Array<string> | null;
+    uuid?: Array<string>;
+};
+
+/**
  * 日志等级
  */
 export type Level = 'debug' | 'info' | 'notice' | 'warn' | 'error' | 'crit' | 'alert' | 'emerg';
@@ -241,6 +276,27 @@ export type PcManagerRequest = {
     Ip: string;
     Password: string;
 };
+
+/**
+ * 安裝/刪除的結果
+ */
+export type PackageActionResult = {
+    Installed: Array<string>;
+    Notinstalled: Array<string>;
+};
+
+/**
+ * 單一套件的資訊
+ */
+export type PackageInfo = {
+    Status: PackageStatus;
+    Version: string;
+};
+
+/**
+ * 軟體安裝狀態
+ */
+export type PackageStatus = 'Installed' | 'Notinstall';
 
 export type PatchGroupEntry = {
     Groupname?: string | null;
@@ -285,6 +341,15 @@ export type PcMetrics = {
     DiskStatus: StatusLabel;
     MemStatus: StatusLabel;
     Memory: number;
+};
+
+/**
+ * 單一 PC 的 Packages
+ */
+export type PcPackages = {
+    Packages: {
+        [key: string]: PackageInfo;
+    };
 };
 
 export type Pcs = {
@@ -462,10 +527,6 @@ export type StallRequest = {
 export type StalledResponse = {
     Length: number;
     Pcs: Pcs;
-};
-
-export type StalledRequest = {
-    Server: string;
 };
 
 export type GetBackupRootData = {
@@ -1213,11 +1274,11 @@ export type GetInstalledResponses = {
 export type GetInstalledResponse = GetInstalledResponses[keyof GetInstalledResponses];
 
 export type GetNoinstallData = {
-    body: StalledRequest;
-    path: {
+    body?: never;
+    path?: never;
+    query: {
         Server: string;
     };
-    query?: never;
     url: '/server/noinstall';
 };
 
@@ -1226,3 +1287,78 @@ export type GetNoinstallResponses = {
 };
 
 export type GetNoinstallResponse = GetNoinstallResponses[keyof GetNoinstallResponses];
+
+export type DeleteSoftwareData = {
+    body: DeleteRequest;
+    path?: never;
+    query?: never;
+    url: '/software';
+};
+
+export type DeleteSoftwareErrors = {
+    /**
+     * 伺服器錯誤
+     */
+    500: ResponseResult;
+};
+
+export type DeleteSoftwareError = DeleteSoftwareErrors[keyof DeleteSoftwareErrors];
+
+export type DeleteSoftwareResponses = {
+    /**
+     * 刪除成功
+     */
+    200: ActionResponse;
+};
+
+export type DeleteSoftwareResponse = DeleteSoftwareResponses[keyof DeleteSoftwareResponses];
+
+export type GetSoftwareData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/software';
+};
+
+export type GetSoftwareErrors = {
+    /**
+     * 伺服器錯誤
+     */
+    500: ResponseResult;
+};
+
+export type GetSoftwareError = GetSoftwareErrors[keyof GetSoftwareErrors];
+
+export type GetSoftwareResponses = {
+    /**
+     * 取得所有套件
+     */
+    200: GetSoftwareResponse;
+};
+
+export type GetSoftwareResponse2 = GetSoftwareResponses[keyof GetSoftwareResponses];
+
+export type PostSoftwareData = {
+    body: InstallRequest;
+    path?: never;
+    query?: never;
+    url: '/software';
+};
+
+export type PostSoftwareErrors = {
+    /**
+     * 伺服器錯誤
+     */
+    500: ResponseResult;
+};
+
+export type PostSoftwareError = PostSoftwareErrors[keyof PostSoftwareErrors];
+
+export type PostSoftwareResponses = {
+    /**
+     * 添加成功
+     */
+    200: ActionResponse;
+};
+
+export type PostSoftwareResponse = PostSoftwareResponses[keyof PostSoftwareResponses];

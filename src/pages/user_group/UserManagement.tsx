@@ -32,13 +32,12 @@ import type { GroupRow, UserRow } from '.';
 
 interface UserManagementProps {
   users: UserRow[];
-  onAddUser: (user: CreateUserRequest) => void;
+  onAddUser: (user: CreateUserRequest) => Promise<void> | void;
   onUpdateUser: (uid: string, patch: PatchUserEntry) => void;
   onDeleteUser: (uid: string) => void;
   onDeleteSelectedUsers: (uids: string[]) => void;
   // groups: { gid: string; Groupname: string; Users: string[] }[];
   groups: GroupRow[];
-  onCreateGroup: (name: string) => void;
   searchTerm: string;
   onSearchChange: (term: string) => void;
   currentPage: number;
@@ -52,7 +51,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   onDeleteUser,
   onDeleteSelectedUsers,
   groups,
-  onCreateGroup,
   searchTerm,
   onSearchChange,
   currentPage,
@@ -119,7 +117,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 users: group.Users ?? [],
                 gid: group.gid,
               }))}
-              onCreateGroup={onCreateGroup}
               existingUsers={Object.fromEntries(
                 users.map((user) => [user.uid, { Username: user.Username }]),
               )}
@@ -281,7 +278,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             name: group.Groupname,
             users: group.Users ?? [],
           }))}
-          onCreateGroup={onCreateGroup}
           existingUsers={Object.fromEntries(
             users.map((user) => [user.uid, { Username: user.Username }]),
           )}

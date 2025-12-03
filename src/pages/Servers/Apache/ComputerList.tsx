@@ -1,17 +1,9 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Monitor, Cpu, MemoryStick } from 'lucide-react';
-import type { GetApacheResponse } from './types';
 import { toast } from 'sonner';
-
-// interface ComputerListProps {
-//   serverId: string;
-//   searchTerm: string;
-//   onComputerSelect: (computerId: string) => void;
-// }
-
+import { getInstalled, type CommonInfo, type Status } from '@/api/openapi-client';
 interface ComputerListProps {
   searchTerm: string;
   onComputerSelect: (computerId: string) => void;
@@ -20,72 +12,60 @@ interface ComputerListProps {
 interface Computer {
   uuid: string;
   Hostname: string;
-  Status: 'active' | 'stopped' | 'uninstalled';
+  Status: Status;
+  Ip: string;
   Cpu: number;
   Memory: number;
 }
 
-// export function ComputerList({ serverId, searchTerm, onComputerSelect }: ComputerListProps) {
+const FALLBACK_COMPUTERS: Computer[] = [
+  { uuid: '11111', Hostname: 'name', Status: 'Active', Cpu: 12, Memory: 13, Ip: '127.0.0.1' },
+  { uuid: '11112', Hostname: 'name2', Status: 'Active', Cpu: 12, Memory: 13, Ip: '127.0.0.1' },
+  { uuid: '11113', Hostname: 'name3', Status: 'Active', Cpu: 12, Memory: 13, Ip: '127.0.0.1' },
+  { uuid: '11114', Hostname: 'name4', Status: 'Active', Cpu: 12, Memory: 13, Ip: '127.0.0.1' },
+];
+
 export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps) {
-  //TODO: Content.tsx SeachTerm 拿 searchTerm
-  // const searchTerm = '';
-
-  const [computers, setComputers] = useState<Computer[]>([
-    { uuid: '11111', Hostname: 'name', Status: 'active', Cpu: 12, Memory: 13 },
-    { uuid: '11112', Hostname: 'name2', Status: 'active', Cpu: 12, Memory: 13 },
-    { uuid: '11113', Hostname: 'name3', Status: 'active', Cpu: 12, Memory: 13 },
-    { uuid: '11114', Hostname: 'name4', Status: 'active', Cpu: 12, Memory: 13 },
-  ]);
+  const [computers, setComputers] = useState<Computer[]>(FALLBACK_COMPUTERS);
   const [loading, setLoading] = useState(true);
-
-  // 載入伺服器清單
   useEffect(() => {
     fetchComputers();
   }, []);
-
-  //TODO: 修改串接API
   const fetchComputers = async () => {
-    setLoading(false);
+    setLoading(true);
     try {
-      // 呼叫實際 API
-      const { data } = await axios.get<GetApacheResponse>('/api/server/apache');
-
-      // 將回傳的物件轉換成陣列格式
+      const { data } = await getInstalled({ query: { Server: 'apache' } });
       if (!data || typeof data !== 'object') {
         throw Error('fail');
       }
-      const formattedData: Computer[] = Object.keys(data).map((uuid) => ({
+      let installed: Record<string, CommonInfo> = {};
+      if ('Installed' in data.Pcs) {
+        installed = data.Pcs.Installed;
+      } else if ('NotInstalled' in data.Pcs) {
+        installed = {};
+      }
+      const formattedData: Computer[] = Object.entries(installed).map(([uuid, info]) => ({
         uuid,
-        Hostname: data.Hostname ?? 'Unknown',
-        Status: data.Status ?? 'stopped',
-        Cpu: data.Cpu ?? 0,
-        Memory: data.Memory ?? 0,
+        Hostname: info.Hostname,
+        Status: info.Status,
+        Cpu: info.Cpu,
+        Memory: info.Memory,
+        Ip: info.Ip ?? '',
       }));
 
       setComputers(formattedData);
-      // setLoading(false);
     } catch (error) {
       console.error('Failed to fetch computers:', error);
       toast.error('Failed to fetch computers', {
         description: 'Please check the server or your network connection.',
         duration: 4000,
       });
-      setComputers([
-        { uuid: '11111', Hostname: 'name', Status: 'active', Cpu: 12, Memory: 13 },
-        { uuid: '11112', Hostname: 'name2', Status: 'active', Cpu: 12, Memory: 13 },
-        { uuid: '11113', Hostname: 'name3', Status: 'active', Cpu: 12, Memory: 13 },
-        { uuid: '11114', Hostname: 'name4', Status: 'active', Cpu: 12, Memory: 13 },
-      ]);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setComputers(FALLBACK_COMPUTERS);
+    } finally {
+      setLoading(false);
     }
   };
-
-  // 避免 undefined 錯誤的安全搜尋
-  // const filteredComputers = computers.filter((computer) => {
-  //   const hostname = computer.Hostname?.toLowerCase() || '';
-  //   const uuid = computer.uuid?.toLowerCase() || '';
-  //   const search = searchTerm?.toLowerCase() || '';
-  //   return hostname.includes(search) || uuid.includes(search);
-  // });
 
   const filteredComputers = computers.filter((computer) => {
     const search = searchTerm.toLowerCase();
@@ -116,7 +96,6 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
         <Card
           key={computer.uuid}
           className='cursor-pointer hover:shadow-md transition-shadow'
-          // onClick={(e) => console.log(e)}
           onClick={() => onComputerSelect(computer.uuid)}
         >
           <CardContent className='p-6'>
@@ -127,10 +106,9 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
                 </div>
                 <div>
                   <h3 className='font-semibold text-lg text-slate-800'>{computer.Hostname}</h3>
-                  {/* <p className='text-sm text-slate-500'>{computer.uuid}</p> */}
+                  <p className='text-sm text-slate-500'>{computer.Ip}</p>
                 </div>
               </div>
-
               <div className='flex items-center gap-6'>
                 <div className='flex items-center gap-4'>
                   <div className='text-center'>
@@ -140,7 +118,6 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
                     </div>
                     <p className='text-xs text-slate-500'>CPU</p>
                   </div>
-
                   <div className='text-center'>
                     <div className='flex items-center gap-1 text-sm text-slate-600'>
                       <MemoryStick className='w-4 h-4' />
@@ -149,19 +126,19 @@ export function ComputerList({ searchTerm, onComputerSelect }: ComputerListProps
                     <p className='text-xs text-slate-500'>Memory</p>
                   </div>
                 </div>
-
                 <Badge
-                  variant={computer.Status === 'active' ? 'default' : 'secondary'}
-                  className={computer.Status === 'active' ? 'bg-green-500' : 'bg-slate-500'}
+                  variant={computer.Status === 'Active' ? 'default' : 'secondary'}
+                  className={
+                    computer.Status === 'Active' ? 'bg-green-500' : 'bg-slate-500 text-white'
+                  }
                 >
-                  {computer.Status === 'active' ? 'Running' : 'Stopped'}
+                  {computer.Status === 'Active' ? 'Running' : 'Stopped'}
                 </Badge>
               </div>
             </div>
           </CardContent>
         </Card>
       ))}
-
       {filteredComputers.length === 0 && (
         <Card>
           <CardContent className='p-12 text-center'>
