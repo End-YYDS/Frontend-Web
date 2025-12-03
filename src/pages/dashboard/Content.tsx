@@ -622,7 +622,7 @@ export function DashboardContent() {
           <CardHeader>
             <CardTitle className='text-slate-700'>CPU</CardTitle>
           </CardHeader>
-          <CardContent className='p-6 w-full min-w-0'>
+          <CardContent className='w-full min-w-0'>
             <div className='w-full min-w-0 h-48'>
               <ResponsiveContainer width='100%' height='100%'>
                 <LineChart data={cpuData}>
@@ -647,7 +647,7 @@ export function DashboardContent() {
           <CardHeader>
             <CardTitle className='text-slate-700'>Memory</CardTitle>
           </CardHeader>
-          <CardContent className='p-6 w-full min-w-0'>
+          <CardContent className='w-full min-w-0'>
             <div className='w-full min-w-0 h-48'>
               <ResponsiveContainer width='100%' height='100%'>
                 <LineChart data={memoryData}>
@@ -675,7 +675,7 @@ export function DashboardContent() {
               Used {diskUsedDisplay}%
             </p>
           </CardHeader>
-          <CardContent className='p-6 w-full min-w-0'>
+          <CardContent className='w-full min-w-0'>
             <div className='space-y-4'>
               {/* Storage Bar */}
               <div className='w-full h-6 bg-gray-100 rounded-lg overflow-hidden flex'>
