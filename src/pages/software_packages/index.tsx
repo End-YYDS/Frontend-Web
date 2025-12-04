@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type MouseEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,6 +65,8 @@ const SoftwarePackagesPage: PageComponent = () => {
   const [selectedPc, setSelectedPc] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isUninstalling, setIsUninstalling] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
   const [showInstallDialog, setShowInstallDialog] = useState(false);
   const [packageToInstall, setPackageToInstall] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -74,45 +76,50 @@ const SoftwarePackagesPage: PageComponent = () => {
     key: string;
     name: string;
   } | null>(null);
-  const fetchPCs = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [{ data: softwareData }, { data: pcInfoData }] = await Promise.all([
-        getSoftware(),
-        getAllPc(),
-      ]);
-      if (!softwareData || typeof softwareData !== 'object') {
-        throw new Error('Invalid software response data');
-      }
-      const hostnameMap = pcInfoData && typeof pcInfoData === 'object' ? pcInfoData.Pcs ?? {} : {};
-      const pcList: PC[] = Object.entries(softwareData.Pcs).map(([uuid, pc]) => {
-        const hostInfo = hostnameMap[uuid];
+  const fetchPCs = useCallback(
+    async (withLoading: boolean | MouseEvent<HTMLButtonElement> = true) => {
+      const shouldShowLoading = typeof withLoading === 'boolean' ? withLoading : true;
+      if (shouldShowLoading) setIsLoading(true);
+      try {
+        const [{ data: softwareData }, { data: pcInfoData }] = await Promise.all([
+          getSoftware(),
+          getAllPc(),
+        ]);
+        if (!softwareData || typeof softwareData !== 'object') {
+          throw new Error('Invalid software response data');
+        }
+        const hostnameMap =
+          pcInfoData && typeof pcInfoData === 'object' ? pcInfoData.Pcs ?? {} : {};
+        const pcList: PC[] = Object.entries(softwareData.Pcs).map(([uuid, pc]) => {
+          const hostInfo = hostnameMap[uuid];
 
-        return {
-          uuid,
-          name: hostInfo?.Hostname ?? `PC-${uuid}`,
-          packages: Object.entries(pc.Packages).reduce((acc, [key, pkg]) => {
-            acc[key] = {
-              name: key,
-              version: pkg.Version,
-              status: pkg.Status,
-            };
-            return acc;
-          }, {} as Record<string, Package>),
-        };
-      });
+          return {
+            uuid,
+            name: hostInfo?.Hostname ?? `PC-${uuid}`,
+            packages: Object.entries(pc.Packages).reduce((acc, [key, pkg]) => {
+              acc[key] = {
+                name: key,
+                version: pkg.Version,
+                status: pkg.Status,
+              };
+              return acc;
+            }, {} as Record<string, Package>),
+          };
+        });
 
-      setPcs(pcList);
-      if (pcList.length > 0) {
-        setSelectedPc((prev) => prev || pcList[0].uuid);
+        setPcs(pcList);
+        if (pcList.length > 0) {
+          setSelectedPc((prev) => prev || pcList[0].uuid);
+        }
+      } catch (error) {
+        console.error('Error fetching PCs:', error);
+        toast.error('Failed to fetch PCs');
+      } finally {
+        if (shouldShowLoading) setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching PCs:', error);
-      toast.error('Failed to fetch PCs');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     fetchPCs();
@@ -120,7 +127,7 @@ const SoftwarePackagesPage: PageComponent = () => {
 
   const handleUninstallPackage = async (packageKey: string) => {
     if (!selectedPc || !packageToUninstall) return;
-    setIsLoading(true);
+    setIsUninstalling(true);
     try {
       const payload: DeleteRequest = { uuid: [selectedPc], Package: [packageKey] };
       const res = await deleteSoftware({ body: payload });
@@ -146,7 +153,7 @@ const SoftwarePackagesPage: PageComponent = () => {
             : pc,
         ),
       );
-      await fetchPCs();
+      await fetchPCs(false);
       toast.success('移除完成', {
         description: `成功移除 ${installed.join(', ')}`,
       });
@@ -154,7 +161,7 @@ const SoftwarePackagesPage: PageComponent = () => {
       console.error(error);
       toast.error('移除失敗');
     } finally {
-      setIsLoading(false);
+      setIsUninstalling(false);
       setShowUninstallDialog(false);
       setPackageToUninstall(null);
     }
@@ -162,7 +169,7 @@ const SoftwarePackagesPage: PageComponent = () => {
   const handleInstallCustomPackage = async () => {
     if (!packageToInstall.trim()) return;
     try {
-      setIsLoading(true);
+      setIsInstalling(true);
       const newKey = packageToInstall.toLowerCase().replace(/\s+/g, '-');
       const payload: InstallRequest = { uuid: [selectedPc], Packages: [packageToInstall] };
       const { data } = await postSoftware({ body: payload });
@@ -185,7 +192,7 @@ const SoftwarePackagesPage: PageComponent = () => {
             : pc,
         ),
       );
-      await fetchPCs();
+      await fetchPCs(false);
       toast.success('安裝完成', { description: `成功安裝 ${packageToInstall}` });
       setPackageToInstall('');
       setShowInstallDialog(false);
@@ -193,7 +200,7 @@ const SoftwarePackagesPage: PageComponent = () => {
       console.error(error);
       toast.error('安裝失敗');
     } finally {
-      setIsLoading(false);
+      setIsInstalling(false);
     }
   };
 
@@ -349,12 +356,12 @@ const SoftwarePackagesPage: PageComponent = () => {
           </CardHeader>
           <CardContent className='space-y-4'>
             <div className='flex flex-col md:flex-row gap-4'>
-              <div className='flex-1'>
+              <div className='flex-1 max-w-1/3'>
                 <Label htmlFor='pc-select' className='mb-2'>
                   PC
                 </Label>
                 <Select value={selectedPc} onValueChange={setSelectedPc}>
-                  <SelectTrigger>
+                  <SelectTrigger className='w-full truncate'>
                     <SelectValue placeholder='Select PC' />
                   </SelectTrigger>
                   <SelectContent>
@@ -393,7 +400,14 @@ const SoftwarePackagesPage: PageComponent = () => {
                   Refresh
                 </Button>
 
-                <Dialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
+                <Dialog
+                  open={showInstallDialog}
+                  onOpenChange={(open) => {
+                    if (isInstalling) return;
+                    setShowInstallDialog(open);
+                    if (!open) setPackageToInstall('');
+                  }}
+                >
                   <DialogTrigger asChild>
                     <Button className='bg-[#7B86AA] hover:bg-[#7B86AA]'>
                       <Download className='h-4 w-4 mr-2' />
@@ -416,14 +430,25 @@ const SoftwarePackagesPage: PageComponent = () => {
                         />
                       </div>
                       <div className='flex justify-end gap-2'>
-                        <Button variant='outline' onClick={() => setShowInstallDialog(false)}>
+                        <Button
+                          variant='outline'
+                          onClick={() => setShowInstallDialog(false)}
+                          disabled={isInstalling}
+                        >
                           Cancel
                         </Button>
                         <Button
                           onClick={handleInstallCustomPackage}
-                          disabled={!packageToInstall.trim() || isLoading}
+                          disabled={!packageToInstall.trim() || isInstalling}
                         >
-                          Install
+                          {isInstalling ? (
+                            <>
+                              <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2' />
+                              Installing...
+                            </>
+                          ) : (
+                            'Install'
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -484,7 +509,7 @@ const SoftwarePackagesPage: PageComponent = () => {
                               variant='outline'
                               size='sm'
                               onClick={() => confirmUninstallPackage(key, pkg.name)}
-                              disabled={isLoading}
+                              disabled={isLoading || isUninstalling}
                               className='flex-1'
                             >
                               <Trash2 className='h-4 w-4 mr-1' />
@@ -563,7 +588,14 @@ const SoftwarePackagesPage: PageComponent = () => {
       </div>
 
       {/* 移除套件確認對話框 */}
-      <AlertDialog open={showUninstallDialog} onOpenChange={setShowUninstallDialog}>
+      <AlertDialog
+        open={showUninstallDialog}
+        onOpenChange={(open) => {
+          if (isUninstalling) return;
+          setShowUninstallDialog(open);
+          if (!open) setPackageToUninstall(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to remove this package?</AlertDialogTitle>
@@ -573,17 +605,25 @@ const SoftwarePackagesPage: PageComponent = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isUninstalling}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 if (packageToUninstall) {
                   handleUninstallPackage(packageToUninstall.key);
                 }
               }}
-              disabled={isLoading}
+              disabled={isUninstalling}
               className='bg-red-500 hover:bg-red-600'
             >
-              Remove
+              {isUninstalling ? (
+                <>
+                  <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2' />
+                  Removing...
+                </>
+              ) : (
+                'Remove'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

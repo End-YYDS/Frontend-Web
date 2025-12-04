@@ -33,7 +33,6 @@ const AlertsTab = () => {
       cpuUsage: 80,
       diskUsage: 90,
       memory: 80,
-      network: 85,
     },
   });
 
@@ -48,7 +47,6 @@ const AlertsTab = () => {
         cpuUsage: res.data.Cpu_usage ?? 80,
         diskUsage: res.data.Disk_usage ?? 90,
         memory: res.data.Memory ?? 80,
-        network: res.data.Network ?? 85,
       });
     } catch {
       toast.error('Failed to fetch alert settings, using defaults');
@@ -64,7 +62,6 @@ const AlertsTab = () => {
       cpuUsage: 80,
       diskUsage: 90,
       memory: 80,
-      network: 85,
     });
     toast.success('Reset to defaults', {
       description: 'All alert settings have been reset to system default values',
@@ -81,7 +78,6 @@ const AlertsTab = () => {
       Cpu_usage: values.cpuUsage,
       Disk_usage: values.diskUsage,
       Memory: values.memory,
-      Network: values.network,
     };
 
     try {
@@ -141,96 +137,124 @@ const AlertsTab = () => {
                   <FormField
                     control={form.control}
                     name='cpuUsage'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CPU Usage Alert Threshold (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='number'
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            min={0}
-                            max={100}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when CPU usage exceeds this percentage (0-100%).
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const { ref, value, onChange, ...rest } = field;
+                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+                        onChange(Number(e.target.value));
+                      return (
+                        <FormItem>
+                          <FormLabel>CPU Usage Alert Threshold (%)</FormLabel>
+                          <div className='grid gap-3 sm:grid-cols-2'>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
+                              <Input
+                                type='number'
+                                value={value}
+                                onChange={handleChange}
+                                min={0}
+                                max={100}
+                                ref={ref}
+                                {...rest}
+                              />
+                            </div>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
+                              <Input
+                                type='number'
+                                value={value}
+                                onChange={handleChange}
+                                min={0}
+                                max={100}
+                              />
+                            </div>
+                          </div>
+                          <FormDescription>Alert when CPU usage exceeds these thresholds (0-100%).</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
-
-                  {/* Disk */}
-                  <FormField
-                    control={form.control}
-                    name='diskUsage'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Disk Usage Alert Threshold (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='number'
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            min={0}
-                            max={100}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when disk usage exceeds this percentage (0-100%).
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
                   {/* Memory */}
                   <FormField
                     control={form.control}
                     name='memory'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Memory Usage Alert Threshold (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='number'
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            min={0}
-                            max={100}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when memory usage exceeds this percentage (0-100%).
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const { ref, value, onChange, ...rest } = field;
+                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+                        onChange(Number(e.target.value));
+                      return (
+                        <FormItem>
+                          <FormLabel>Memory Usage Alert Threshold (%)</FormLabel>
+                          <div className='grid gap-3 sm:grid-cols-2'>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
+                              <Input
+                                type='number'
+                                value={value}
+                                onChange={handleChange}
+                                min={0}
+                                max={100}
+                                ref={ref}
+                                {...rest}
+                              />
+                            </div>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
+                              <Input
+                                type='number'
+                                value={value}
+                                onChange={handleChange}
+                                min={0}
+                                max={100}
+                              />
+                            </div>
+                          </div>
+                          <FormDescription>Alert when memory usage exceeds these thresholds (0-100%).</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
-
-                  {/* Network */}
+                  {/* Disk */}
                   <FormField
                     control={form.control}
-                    name='network'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Network Usage Alert Threshold (%)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type='number'
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            min={0}
-                            max={100}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when network usage exceeds this percentage (0-100%).
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    name='diskUsage'
+                    render={({ field }) => {
+                      const { ref, value, onChange, ...rest } = field;
+                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+                        onChange(Number(e.target.value));
+                      return (
+                        <FormItem>
+                          <FormLabel>Disk Usage Alert Threshold (%)</FormLabel>
+                          <div className='grid gap-3 sm:grid-cols-2'>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
+                              <Input
+                                type='number'
+                                value={value}
+                                onChange={handleChange}
+                                min={0}
+                                max={100}
+                                ref={ref}
+                                {...rest}
+                              />
+                            </div>
+                            <div className='space-y-1'>
+                              <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
+                              <Input
+                                type='number'
+                                value={value}
+                                onChange={handleChange}
+                                min={0}
+                                max={100}
+                              />
+                            </div>
+                          </div>
+                          <FormDescription>Alert when disk usage exceeds these thresholds (0-100%).</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </CollapsibleContent>
               </Collapsible>

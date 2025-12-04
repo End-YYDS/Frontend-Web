@@ -133,7 +133,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
           </Button>
           <div>
             <h1 className='text-2xl font-bold text-slate-800'>
-              Apache Webserver - {serverStatus.Hostname}
+              {serverStatus.Hostname}
             </h1>
             <p className='text-slate-600'>{computerId}</p>
           </div>
