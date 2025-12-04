@@ -290,6 +290,7 @@ export function PCManagerContent() {
     if (!newComputer.ip || !newComputer.password) return;
     const result = await addComputerAPI(newComputer.ip, newComputer.password);
     if (result.Type === 'Ok') {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       await fetchAllComputers();
       setIsAddComputerOpen(false);
       setNewComputer({ ip: '', password: '', group: '' });
