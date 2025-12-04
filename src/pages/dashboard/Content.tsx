@@ -50,6 +50,21 @@ export function DashboardContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<'safe' | 'warning' | 'danger' | null>(null);
 
+  // const [servicestatus, setServiceStatus] = useState<string[][]>([]);
+  // {
+  //   Apache: [
+  //     {
+  //       Hostname: 'host-11111';
+  //       Status: 'active' | 'stopped' | 'uninstalled';
+  //     },...
+  //   ],
+  //   Nginx: [
+  //     {
+  //       Hostname: 'host-11111';
+  //       Status: 'active' | 'stopped' | 'uninstalled';
+  //     },...
+  //   ]
+  // };
   // server狀態
   const [servicesStatus, setServicesStatus] = useState<ServicesStatusState>({
     Apache: [],
@@ -62,8 +77,16 @@ export function DashboardContent() {
 
   // 電腦列表
   const [computers, setComputers] = useState<
-    { name: string; cpu: string; memory: string; disk: string; status: string; 
-      cpuStatus: string; memStatus: string; diskStatus: string }[]
+    {
+      name: string;
+      cpu: string;
+      memory: string;
+      disk: string;
+      status: string;
+      cpuStatus: string;
+      memStatus: string;
+      diskStatus: string;
+    }[]
   >([]);
 
   const isFetchingRef = useRef(false);
@@ -177,7 +200,9 @@ export function DashboardContent() {
       // 併行抓 Cluster/Info 與主機列表
       const [infoRes, pcsRes] = await Promise.all([
         getInfoAll(),
-        postInfoGet({ body: { Target: null as Target | null, Uuid: null } satisfies InfoGetRequest }),
+        postInfoGet({
+          body: { Target: null as Target | null, Uuid: null } satisfies InfoGetRequest,
+        }),
       ]);
 
       const infoData = infoRes.data;
@@ -250,44 +275,44 @@ export function DashboardContent() {
 
       const fakeInfo = { Safe: 5, Warn: 3, Dang: 2 };
 
-    const list = [
-      ...Array(fakeInfo.Safe)
-        .fill(0)
-        .map((_, i) => ({
-          name: `PC-Safe-${i + 1}`,
-          cpu: (Math.random() * 50 + 10).toFixed(0) + '%',
-          memory: (Math.random() * 50 + 10).toFixed(0) + '%',
-          disk: (Math.random() * 50 + 10).toFixed(0) + '%',
-          status: 'safe',
-          cpuStatus: 'safe',
-          memStatus: 'safe',
-          diskStatus: 'safe',
-        })),
-      ...Array(fakeInfo.Warn)
-        .fill(0)
-        .map((_, i) => ({
-          name: `PC-Warn-${i + 1}`,
-          cpu: (Math.random() * 30 + 50).toFixed(0) + '%',
-          memory: (Math.random() * 30 + 50).toFixed(0) + '%',
-          disk: (Math.random() * 30 + 50).toFixed(0) + '%',
-          status: 'warning',
-          cpuStatus: 'Warn',
-          memStatus: 'Warn',
-          diskStatus: 'Warn',
-        })),
-      ...Array(fakeInfo.Dang)
-        .fill(0)
-        .map((_, i) => ({
-          name: `PC-Danger-${i + 1}`,
-          cpu: (Math.random() * 20 + 80).toFixed(0) + '%',
-          memory: (Math.random() * 20 + 80).toFixed(0) + '%',
-          disk: (Math.random() * 20 + 80).toFixed(0) + '%',
-          status: 'danger',
-          cpuStatus: 'Dang',
-          memStatus: 'Dang',
-          diskStatus: 'Dang',
-        })),
-    ];
+      const list = [
+        ...Array(fakeInfo.Safe)
+          .fill(0)
+          .map((_, i) => ({
+            name: `PC-Safe-${i + 1}`,
+            cpu: (Math.random() * 50 + 10).toFixed(0) + '%',
+            memory: (Math.random() * 50 + 10).toFixed(0) + '%',
+            disk: (Math.random() * 50 + 10).toFixed(0) + '%',
+            status: 'safe',
+            cpuStatus: 'safe',
+            memStatus: 'safe',
+            diskStatus: 'safe',
+          })),
+        ...Array(fakeInfo.Warn)
+          .fill(0)
+          .map((_, i) => ({
+            name: `PC-Warn-${i + 1}`,
+            cpu: (Math.random() * 30 + 50).toFixed(0) + '%',
+            memory: (Math.random() * 30 + 50).toFixed(0) + '%',
+            disk: (Math.random() * 30 + 50).toFixed(0) + '%',
+            status: 'warning',
+            cpuStatus: 'Warn',
+            memStatus: 'Warn',
+            diskStatus: 'Warn',
+          })),
+        ...Array(fakeInfo.Dang)
+          .fill(0)
+          .map((_, i) => ({
+            name: `PC-Danger-${i + 1}`,
+            cpu: (Math.random() * 20 + 80).toFixed(0) + '%',
+            memory: (Math.random() * 20 + 80).toFixed(0) + '%',
+            disk: (Math.random() * 20 + 80).toFixed(0) + '%',
+            status: 'danger',
+            cpuStatus: 'Dang',
+            memStatus: 'Dang',
+            diskStatus: 'Dang',
+          })),
+      ];
 
       const serviceKeys = ['A', 'N', 'B', 'D', 'L', 'M', 'ProFTPD', 'Samba', 'Proxy', 'SSH'];
       const statusPool = ['active', 'stopped', 'uninstalled'] as const;
