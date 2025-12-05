@@ -8,7 +8,7 @@ import { StrictMode } from 'react';
 import { Toaster } from 'sonner';
 import { EventBusProvider } from './events/EventBusProvider.tsx';
 import { AuthProvider } from './auth/AuthProvider.tsx';
-
+console.log('[BUILD] frontend loaded at', new Date().toISOString());
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider defaultTheme='light' storageKey='vite-ui-theme'>

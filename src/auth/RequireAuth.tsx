@@ -8,7 +8,12 @@ interface RequireAuthProps {
 export function RequireAuth({ allowedRoles }: RequireAuthProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
-
+  console.log('[RequireAuth] render', {
+    loading,
+    user,
+    path: location.pathname,
+    allowedRoles,
+  });
   if (loading) return <div>驗證中…</div>;
   if (!user) return <Navigate to='/login' state={{ from: location }} replace />;
 
