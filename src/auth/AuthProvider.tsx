@@ -10,10 +10,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
+    console.log('[AuthProvider] refresh() called');
     try {
       const res = await me();
+      console.log('[AuthProvider] me() ok', res.data);
       setUser(res.data);
-    } catch {
+    } catch (err) {
+      console.log('[AuthProvider] me() failed', err);
       setUser(undefined);
     }
   };
