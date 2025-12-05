@@ -13,6 +13,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     console.log('[AuthProvider] refresh() called');
     try {
       const res = await me();
+      if (!res.data || typeof res.data !== 'object' || Array.isArray(res.data)) {
+        throw new Error('Invalid /login/me response');
+      }
       console.log('[AuthProvider] me() ok', res.data);
       setUser(res.data);
     } catch (err) {
