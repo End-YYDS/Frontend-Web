@@ -18,7 +18,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       }
       // console.log('[AuthProvider] me() ok', res.data);
       setUser(res.data);
-    } catch (err) {
+    } catch {
       // console.log('[AuthProvider] me() failed', err);
       setUser(undefined);
     }
