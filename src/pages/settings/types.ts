@@ -1,5 +1,14 @@
+import type { AxiosResponse } from 'axios';
+import { client } from '@/lib/apiClient';
+
+// -------------------- Shared API status --------------------
+export type ApiStatusResponse = {
+  Type: 'Ok' | 'Err';
+  Message: string;
+};
+
 // -------------------- Module --------------------
-export type Mode = "None" | "White" | "Black";
+export type Mode = 'None' | 'White' | 'Black';
 
 // -------------------- IP --------------------
 export interface IpEntry {
@@ -95,16 +104,43 @@ export interface DeleteModuleResponse {
 }
 
 // -------------------- Values --------------------
+export interface Threshold {
+  Warn: number;
+  Dang: number;
+}
+
 export interface Values {
-  Cpu_usage: number;
-  Disk_usage: number;
-  Memory: number;
-  Network: number;
+  Cpu_usage: Threshold;
+  Disk_usage: Threshold;
+  Memory: Threshold;
 }
 
 export interface ValuesUpdate {
-  Cpu_usage?: number;
-  Disk_usage?: number;
-  Memory?: number;
-  Network?: number;
+  Cpu_usage?: Threshold;
+  Disk_usage?: Threshold;
+  Memory?: Threshold;
 }
+
+export interface AlertThresholdResponse {
+  Cpu_usage?: Threshold;
+  Disk_usage?: Threshold;
+  Memory?: Threshold;
+}
+
+export type AlertThresholdUpdate = AlertThresholdResponse;
+
+export const getAlertThresholds = () =>
+  client.get<AlertThresholdResponse, unknown, true>({
+    url: '/chm/setting/values',
+    responseType: 'json',
+    throwOnError: true,
+  }) as unknown as Promise<AxiosResponse<AlertThresholdResponse>>;
+
+export const updateAlertThresholds = (body: AlertThresholdUpdate) =>
+  client.put<ApiStatusResponse, unknown, true>({
+    url: '/chm/setting/values',
+    responseType: 'json',
+    body,
+    headers: { 'Content-Type': 'application/json' },
+    throwOnError: true,
+  }) as unknown as Promise<AxiosResponse<ApiStatusResponse>>;

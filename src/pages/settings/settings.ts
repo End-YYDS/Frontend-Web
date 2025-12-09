@@ -37,12 +37,21 @@ export type IpEntry = {
 export type IpAccessSettings = z.infer<typeof ipAccessSchema>;
 
 /* ---------------- Alert Settings ---------------- */
+const thresholdSchema = z
+  .object({
+    warn: z.number().min(0).max(100),
+    dang: z.number().min(0).max(100),
+  })
+  .refine((val) => val.dang >= val.warn, {
+    message: 'Danger threshold must be greater than or equal to warning',
+    path: ['dang'],
+  });
+
 export const alertSettingsSchema = z.object({
   enableNotifications: z.boolean(),
-  cpuUsage: z.number().min(1).max(100),
-  diskUsage: z.number().min(1).max(100),
-  memory: z.number().min(1).max(100),
-  network: z.number().min(1).max(100),
+  cpu: thresholdSchema,
+  disk: thresholdSchema,
+  memory: thresholdSchema,
 });
 
 /* ---------------- Backup Config ---------------- */

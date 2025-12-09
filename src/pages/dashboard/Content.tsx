@@ -103,8 +103,8 @@ export function DashboardContent() {
           const cpu = stats?.CpuStatus,
             mem = stats?.MemStatus,
             disk = stats?.DiskStatus;
-          if (cpu === 'Warn' || mem === 'Warn' || disk === 'Warn') return 'warning';
           if (cpu === 'Dang' || mem === 'Dang' || disk === 'Dang') return 'danger';
+          if (cpu === 'Warn' || mem === 'Warn' || disk === 'Warn') return 'warning';
           return 'safe';
         })(),
         cpuStatus: stats?.CpuStatus,

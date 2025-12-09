@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,86 +17,190 @@ import {
 } from '@/components/ui/form';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
-import axios from 'axios';
+import { getAlertThresholds, updateAlertThresholds } from './types';
 import { alertSettingsSchema } from './settings';
 import type { z } from 'zod';
-import type { Values, ValuesUpdate } from './types';
 
 type AlertSettings = z.infer<typeof alertSettingsSchema>;
 
+const defaultThreshold = { warn: 0, dang: 0 };
+const thresholdDefaults = () => ({ ...defaultThreshold });
+type ThresholdGroup = {
+  cpu: { warn: number; dang: number };
+  disk: { warn: number; dang: number };
+  memory: { warn: number; dang: number };
+};
+
 const AlertsTab = () => {
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const lastFetchedRef = useRef<ThresholdGroup>({
+    cpu: thresholdDefaults(),
+    disk: thresholdDefaults(),
+    memory: thresholdDefaults(),
+  });
+  const initialFetchedRef = useRef<ThresholdGroup | null>(null);
 
   const form = useForm<AlertSettings>({
     resolver: zodResolver(alertSettingsSchema),
     defaultValues: {
       enableNotifications: true,
-      cpuUsage: 80,
-      diskUsage: 90,
-      memory: 80,
+      cpu: thresholdDefaults(),
+      disk: thresholdDefaults(),
+      memory: thresholdDefaults(),
     },
   });
 
   const isNotificationsEnabled = form.watch('enableNotifications');
 
-  // -------------------- Fetch API --------------------
-  const fetchValues = useCallback(async () => {
+  const fetchValues = useCallback(async (opts?: { withLoading?: boolean }) => {
+    if (opts?.withLoading ?? true) setLoading(true);
     try {
-      const res = await axios.get<Values>('/api/chm/setting/values', { withCredentials: true });
+      const res = await getAlertThresholds();
+      const cpu = res.data?.Cpu_usage ?? { Warn: 0, Dang: 0 };
+      const disk = res.data?.Disk_usage ?? { Warn: 0, Dang: 0 };
+      const memory = res.data?.Memory ?? { Warn: 0, Dang: 0 };
+
+      const nextThresholds = {
+        cpu: { warn: cpu.Warn ?? 0, dang: cpu.Dang ?? 0 },
+        disk: { warn: disk.Warn ?? 0, dang: disk.Dang ?? 0 },
+        memory: { warn: memory.Warn ?? 0, dang: memory.Dang ?? 0 },
+      };
+
+      lastFetchedRef.current = nextThresholds;
+      if (!initialFetchedRef.current) {
+        initialFetchedRef.current = nextThresholds;
+      }
       form.reset({
         enableNotifications: true,
-        cpuUsage: res.data.Cpu_usage ?? 80,
-        diskUsage: res.data.Disk_usage ?? 90,
-        memory: res.data.Memory ?? 80,
+        ...nextThresholds,
       });
+      return true;
     } catch {
       toast.error('Failed to fetch alert settings, using defaults');
+      const fallback = lastFetchedRef.current ?? {
+        cpu: thresholdDefaults(),
+        disk: thresholdDefaults(),
+        memory: thresholdDefaults(),
+      };
+      lastFetchedRef.current = fallback;
+      form.reset({
+        enableNotifications: true,
+        ...fallback,
+      });
+      return false;
     } finally {
-      setLoading(false);
+      if (opts?.withLoading ?? true) setLoading(false);
     }
   }, [form]);
 
-  // Reset Defaults 保留原本預設值
-  const handleResetDefaults = () => {
-    form.reset({
-      enableNotifications: true,
-      cpuUsage: 80,
-      diskUsage: 90,
-      memory: 80,
-    });
-    toast.success('Reset to defaults', {
-      description: 'All alert settings have been reset to system default values',
-    });
+  const handleResetDefaults = async () => {
+    if (initialFetchedRef.current) {
+      form.reset({
+        enableNotifications: true,
+        ...initialFetchedRef.current,
+      });
+      toast.success('Reset to defaults', {
+        description: 'Restored to initial values from server',
+      });
+      return;
+    }
+
+    const ok = await fetchValues({ withLoading: false });
+    if (ok) {
+      toast.success('Reset to defaults', {
+        description: 'All alert settings have been restored from server values',
+      });
+    } else {
+      toast.error('Unable to reset; could not reach server');
+    }
   };
 
   useEffect(() => {
     fetchValues();
   }, [fetchValues]);
 
-  // -------------------- Save API --------------------
   const handleSubmit = async (values: AlertSettings) => {
-    const payload: ValuesUpdate = {
-      Cpu_usage: values.cpuUsage,
-      Disk_usage: values.diskUsage,
-      Memory: values.memory,
+    const payload = {
+      Cpu_usage: { Warn: values.cpu.warn, Dang: values.cpu.dang },
+      Disk_usage: { Warn: values.disk.warn, Dang: values.disk.dang },
+      Memory: { Warn: values.memory.warn, Dang: values.memory.dang },
     };
 
     try {
-      const res = await axios.put<{ Type: 'OK' | 'ERR'; Message: string }>(
-        '/api/chm/setting/values',
-        payload,
-        { withCredentials: true },
-      );
-      if (res.data.Type === 'OK') {
+      setSaving(true);
+      const res = await updateAlertThresholds(payload);
+      if (res.data.Type === 'Ok') {
         toast.success('Alert settings saved', { description: res.data.Message });
-        fetchValues(); // refresh
+        fetchValues();
       } else {
+        // console.log(res.data.Type);
         toast.error(res.data.Message);
       }
     } catch {
       toast.error('Failed to save alert settings');
+    } finally {
+      setSaving(false);
     }
   };
+
+  const handleNumericChange = (onChange: (value: number) => void) => (e: ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    onChange(Number.isNaN(value) ? 0 : value);
+  };
+
+  const renderThresholdGroup = (
+    name: 'cpu' | 'memory' | 'disk',
+    label: string,
+    description: string,
+  ) => (
+    <div className='space-y-2'>
+      <FormLabel>{label}</FormLabel>
+      <div className='grid gap-3 sm:grid-cols-2'>
+        <FormField
+          control={form.control}
+          name={`${name}.warn`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
+              <FormControl>
+                <Input
+                  type='number'
+                  step='0.1'
+                  min={0}
+                  max={100}
+                  value={field.value}
+                  onChange={handleNumericChange(field.onChange)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name={`${name}.dang`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
+              <FormControl>
+                <Input
+                  type='number'
+                  step='0.1'
+                  min={0}
+                  max={100}
+                  value={field.value}
+                  onChange={handleNumericChange(field.onChange)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <FormDescription>{description}</FormDescription>
+    </div>
+  );
 
   if (loading) return <div>Loading...</div>;
 
@@ -111,7 +216,6 @@ const AlertsTab = () => {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-            {/* Enable Notifications */}
             <FormField
               control={form.control}
               name='enableNotifications'
@@ -132,130 +236,22 @@ const AlertsTab = () => {
 
             {isNotificationsEnabled && (
               <Collapsible open={isNotificationsEnabled}>
-                <CollapsibleContent className='space-y-4'>
-                  {/* CPU */}
-                  <FormField
-                    control={form.control}
-                    name='cpuUsage'
-                    render={({ field }) => {
-                      const { ref, value, onChange, ...rest } = field;
-                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-                        onChange(Number(e.target.value));
-                      return (
-                        <FormItem>
-                          <FormLabel>CPU Usage Alert Threshold (%)</FormLabel>
-                          <div className='grid gap-3 sm:grid-cols-2'>
-                            <div className='space-y-1'>
-                              <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
-                              <Input
-                                type='number'
-                                value={value}
-                                onChange={handleChange}
-                                min={0}
-                                max={100}
-                                ref={ref}
-                                {...rest}
-                              />
-                            </div>
-                            <div className='space-y-1'>
-                              <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
-                              <Input
-                                type='number'
-                                value={value}
-                                onChange={handleChange}
-                                min={0}
-                                max={100}
-                              />
-                            </div>
-                          </div>
-                          <FormDescription>Alert when CPU usage exceeds these thresholds (0-100%).</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      );
-                    }}
-                  />
-                  {/* Memory */}
-                  <FormField
-                    control={form.control}
-                    name='memory'
-                    render={({ field }) => {
-                      const { ref, value, onChange, ...rest } = field;
-                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-                        onChange(Number(e.target.value));
-                      return (
-                        <FormItem>
-                          <FormLabel>Memory Usage Alert Threshold (%)</FormLabel>
-                          <div className='grid gap-3 sm:grid-cols-2'>
-                            <div className='space-y-1'>
-                              <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
-                              <Input
-                                type='number'
-                                value={value}
-                                onChange={handleChange}
-                                min={0}
-                                max={100}
-                                ref={ref}
-                                {...rest}
-                              />
-                            </div>
-                            <div className='space-y-1'>
-                              <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
-                              <Input
-                                type='number'
-                                value={value}
-                                onChange={handleChange}
-                                min={0}
-                                max={100}
-                              />
-                            </div>
-                          </div>
-                          <FormDescription>Alert when memory usage exceeds these thresholds (0-100%).</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      );
-                    }}
-                  />
-                  {/* Disk */}
-                  <FormField
-                    control={form.control}
-                    name='diskUsage'
-                    render={({ field }) => {
-                      const { ref, value, onChange, ...rest } = field;
-                      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-                        onChange(Number(e.target.value));
-                      return (
-                        <FormItem>
-                          <FormLabel>Disk Usage Alert Threshold (%)</FormLabel>
-                          <div className='grid gap-3 sm:grid-cols-2'>
-                            <div className='space-y-1'>
-                              <FormLabel className='text-xs text-muted-foreground'>Warning</FormLabel>
-                              <Input
-                                type='number'
-                                value={value}
-                                onChange={handleChange}
-                                min={0}
-                                max={100}
-                                ref={ref}
-                                {...rest}
-                              />
-                            </div>
-                            <div className='space-y-1'>
-                              <FormLabel className='text-xs text-muted-foreground'>Danger</FormLabel>
-                              <Input
-                                type='number'
-                                value={value}
-                                onChange={handleChange}
-                                min={0}
-                                max={100}
-                              />
-                            </div>
-                          </div>
-                          <FormDescription>Alert when disk usage exceeds these thresholds (0-100%).</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      );
-                    }}
-                  />
+                <CollapsibleContent className='space-y-6'>
+                  {renderThresholdGroup(
+                    'cpu',
+                    'CPU Usage Alert Threshold (%)',
+                    'Alert when CPU usage exceeds the warning or danger thresholds (0-100%).',
+                  )}
+                  {renderThresholdGroup(
+                    'memory',
+                    'Memory Usage Alert Threshold (%)',
+                    'Alert when memory usage exceeds the warning or danger thresholds (0-100%).',
+                  )}
+                  {renderThresholdGroup(
+                    'disk',
+                    'Disk Usage Alert Threshold (%)',
+                    'Alert when disk usage exceeds the warning or danger thresholds (0-100%).',
+                  )}
                 </CollapsibleContent>
               </Collapsible>
             )}
@@ -271,8 +267,9 @@ const AlertsTab = () => {
                 type='submit'
                 style={{ backgroundColor: '#7B86AA' }}
                 className='hover:opacity-90'
+                disabled={saving}
               >
-                Save Settings
+                {saving ? 'Saving...' : 'Save Settings'}
               </Button>
             </div>
           </form>
