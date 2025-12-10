@@ -148,7 +148,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
             {actionLoading === 'start'
               ? <Loader2 className='w-4 h-4 animate-spin' />
               : <Play className='w-4 h-4' />}
-            <span className="ml-2 hidden sm:inline">Start</span>
+            <span className="ml-2 hidden lg:inline">Start</span>
           </Button>
 
           <Button
@@ -159,7 +159,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
             {actionLoading === 'stop'
               ? <Loader2 className='w-4 h-4 animate-spin' />
               : <Square className='w-4 h-4' />}
-            <span className="ml-2 hidden sm:inline">Stop</span>
+            <span className="ml-2 hidden lg:inline">Stop</span>
           </Button>
 
           <Button
@@ -170,10 +170,9 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
             {actionLoading === 'restart'
               ? <Loader2 className='w-4 h-4 animate-spin' />
               : <RotateCcw className='w-4 h-4' />}
-            <span className="ml-2 hidden sm:inline">Restart</span>
+            <span className="ml-2 hidden lg:inline">Restart</span>
           </Button>
         </div>
-
       </div>
 
       <div className='grid grid-cols-4 gap-4 mb-6'>
