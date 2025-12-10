@@ -47,9 +47,14 @@ jobs:
 
       - name: Archive dist
         run: |
-          ARCHIVE_NAME="frontend-${{ github.ref_name }}.zip"
+          REF_NAME="${GITHUB_REF_NAME}"
+          SAFE_REF_NAME="${REF_NAME//\//-}"
+          ARCHIVE_NAME="frontend-${SAFE_REF_NAME}.zip"
+          echo "Archive name: ${ARCHIVE_NAME}"
           cd dist
           zip -r "../${ARCHIVE_NAME}" .
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
         shell: bash
 
       - name: Create GitHub Release
