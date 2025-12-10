@@ -139,18 +139,16 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
           </div>
         </div>
 
-        <div className='flex flex-wrap items-center gap-2'>
+        <div className="flex items-center gap-2">
           <Button
             onClick={() => performAction('start')}
             disabled={serverStatus.Status === 'Active' || actionLoading !== ''}
             className='bg-green-600 hover:bg-green-700'
           >
-            {actionLoading === 'start' ? (
-              <Loader2 className='w-4 h-4 animate-spin' />
-            ) : (
-              <Play className='w-4 h-4' />
-            )}
-            <span className="hidden md:inline ml-2">Start</span>
+            {actionLoading === 'start'
+              ? <Loader2 className='w-4 h-4 animate-spin' />
+              : <Play className='w-4 h-4' />}
+            <span className="ml-2 hidden sm:inline">Start</span>
           </Button>
 
           <Button
@@ -158,12 +156,10 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
             disabled={serverStatus.Status === 'Stopped' || actionLoading !== ''}
             variant='destructive'
           >
-            {actionLoading === 'stop' ? (
-              <Loader2 className='w-4 h-4 animate-spin' />
-            ) : (
-              <Square className='w-4 h-4' />
-            )}
-            <span className="hidden md:inline ml-2">Stop</span>
+            {actionLoading === 'stop'
+              ? <Loader2 className='w-4 h-4 animate-spin' />
+              : <Square className='w-4 h-4' />}
+            <span className="ml-2 hidden sm:inline">Stop</span>
           </Button>
 
           <Button
@@ -171,14 +167,13 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
             disabled={actionLoading !== ''}
             variant='outline'
           >
-            {actionLoading === 'restart' ? (
-              <Loader2 className='w-4 h-4 animate-spin' />
-            ) : (
-              <RotateCcw className='w-4 h-4' />
-            )}
-            <span className="hidden md:inline ml-2">Restart</span>
+            {actionLoading === 'restart'
+              ? <Loader2 className='w-4 h-4 animate-spin' />
+              : <RotateCcw className='w-4 h-4' />}
+            <span className="ml-2 hidden sm:inline">Restart</span>
           </Button>
         </div>
+
       </div>
 
       <div className='grid grid-cols-4 gap-4 mb-6'>
