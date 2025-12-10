@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Search, Bell, ChevronDown, X } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, Bell, ChevronDown, Sparkles, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
+import SetupWizard from './SetupWizard';
+
+const WIZARD_SEEN_KEY = 'setupWizardSeen';
+const WIZARD_VERSION = 'v3'; // bump to force re-open if needed
 
 interface Notification {
   id: number;
@@ -73,6 +77,7 @@ export default function Topbar({ onLogout }: TopbarProps) {
   const [, setShowUserMenu] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [showWizard, setShowWizard] = useState(false);
   const navigate = useNavigate();
 
   const notifRef = useRef<HTMLDivElement | null>(null);
@@ -117,6 +122,51 @@ export default function Topbar({ onLogout }: TopbarProps) {
     );
   };
 
+  const getWizardKey = useCallback(() => {
+    if (!user) return null;
+    const uid = user.Uid ?? 'no-uid';
+    const username = user.Username ?? 'no-username';
+    return `${WIZARD_SEEN_KEY}:${uid}:${username}`;
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (typeof window === 'undefined') return;
+    const key = getWizardKey();
+    if (!key) {
+      console.log('[SetupWizard] missing user identity, open wizard without persisting');
+      setShowWizard(true);
+      return;
+    }
+    try {
+      const stored = window.localStorage.getItem(key);
+      console.log('[SetupWizard] first-login check', { key, stored, expected: WIZARD_VERSION, user });
+      if (stored !== WIZARD_VERSION) {
+        console.log('[SetupWizard] auto-open wizard for first login or version bump', { key });
+        setShowWizard(true);
+        window.localStorage.setItem(key, WIZARD_VERSION);
+      } else {
+        console.log('[SetupWizard] skip auto-open (already seen for this user/version)', { key });
+      }
+    } catch (err) {
+      console.warn('[SetupWizard] localStorage unavailable, opening wizard as fallback', err);
+      setShowWizard(true);
+    }
+  }, [getWizardKey, user]);
+
+  const closeWizard = () => {
+    if (typeof window !== 'undefined') {
+      const key = getWizardKey();
+      if (key) {
+        window.localStorage.setItem(key, WIZARD_VERSION);
+        console.log('[SetupWizard] close wizard', { key });
+      } else {
+        console.log('[SetupWizard] close wizard (no key)');
+      }
+    }
+    setShowWizard(false);
+  };
+
   return (
     <header className='h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm relative'>
       {/* Search */}
@@ -130,7 +180,22 @@ export default function Topbar({ onLogout }: TopbarProps) {
       </div>
 
       {/* Icons + User */}
-      <div className='flex items-center space-x-6 relative'>
+      <div className='flex items-center space-x-4 relative'>
+        <Button
+          className='gap-2 bg-[#A8AEBD] text-white hover:bg-[#8F95A9] shadow-sm'
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              const key = getWizardKey();
+              if (key) window.localStorage.setItem(key, WIZARD_VERSION);
+            }
+            setShowWizard(true);
+            console.log('[SetupWizard] manual open from topbar button');
+          }}
+        >
+          <Sparkles className='w-4 h-4' />
+          設定精靈
+        </Button>
+
         {/* Notification */}
         <div className='relative' ref={notifRef}>
           <Button
@@ -244,6 +309,7 @@ export default function Topbar({ onLogout }: TopbarProps) {
           </div>
         </div>
       )}
+      <SetupWizard isOpen={showWizard} onClose={closeWizard} />
     </header>
   );
 }
