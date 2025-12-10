@@ -124,7 +124,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
 
   // 顯示 Apache 狀態與 Logs
   return (
-    <div className='p-6'>
+    <div className="p-6 w-full max-w-[1400px] mx-auto overflow-x-hidden">
       {/* Header */}
       <div className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-4'>
@@ -139,42 +139,44 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
           </div>
         </div>
 
-        <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
           <Button
             onClick={() => performAction('start')}
             disabled={serverStatus.Status === 'Active' || actionLoading !== ''}
             className='bg-green-600 hover:bg-green-700'
           >
             {actionLoading === 'start' ? (
-              <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+              <Loader2 className='w-4 h-4 animate-spin' />
             ) : (
-              <Play className='w-4 h-4 mr-2' />
+              <Play className='w-4 h-4' />
             )}
-            Start
+            <span className="hidden md:inline ml-2">Start</span>
           </Button>
+
           <Button
             onClick={() => performAction('stop')}
             disabled={serverStatus.Status === 'Stopped' || actionLoading !== ''}
             variant='destructive'
           >
             {actionLoading === 'stop' ? (
-              <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+              <Loader2 className='w-4 h-4 animate-spin' />
             ) : (
-              <Square className='w-4 h-4 mr-2' />
+              <Square className='w-4 h-4' />
             )}
-            Stop
+            <span className="hidden md:inline ml-2">Stop</span>
           </Button>
+
           <Button
             onClick={() => performAction('restart')}
             disabled={actionLoading !== ''}
             variant='outline'
           >
             {actionLoading === 'restart' ? (
-              <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+              <Loader2 className='w-4 h-4 animate-spin' />
             ) : (
-              <RotateCcw className='w-4 h-4 mr-2' />
+              <RotateCcw className='w-4 h-4' />
             )}
-            Restart
+            <span className="hidden md:inline ml-2">Restart</span>
           </Button>
         </div>
       </div>
@@ -249,8 +251,8 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
                             log.Level === 'error'
                               ? 'border-red-500 text-red-700'
                               : log.Level === 'warn'
-                              ? 'border-yellow-500 text-yellow-700'
-                              : ''
+                                ? 'border-yellow-500 text-yellow-700'
+                                : ''
                           }
                         >
                           {log.Level.toUpperCase()}
@@ -288,8 +290,8 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
                             log.Status >= 200 && log.Status < 300
                               ? 'border-green-500 text-green-700'
                               : log.Status >= 400
-                              ? 'border-red-500 text-red-700'
-                              : ''
+                                ? 'border-red-500 text-red-700'
+                                : ''
                           }
                         >
                           {log.Status}
