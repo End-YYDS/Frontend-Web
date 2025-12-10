@@ -46,16 +46,29 @@ jobs:
         run: pnpm build
 
       - name: Archive dist
+        id: archive
         run: |
           REF_NAME="${GITHUB_REF_NAME}"
+          # 把 ref 裡面的 / 全部換成 -
           SAFE_REF_NAME="${REF_NAME//\//-}"
           ARCHIVE_NAME="frontend-${SAFE_REF_NAME}.zip"
+
           echo "Archive name: ${ARCHIVE_NAME}"
+
+          # 輸出給後面 steps 用
+          echo "archive_name=${ARCHIVE_NAME}" >> "$GITHUB_OUTPUT"
+
           cd dist
           zip -r "../${ARCHIVE_NAME}" .
         env:
           GITHUB_REF_NAME: ${{ github.ref_name }}
         shell: bash
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.archive.outputs.archive_name }}
+          path: ${{ steps.archive.outputs.archive_name }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -64,6 +77,6 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: "Frontend ${{ github.ref_name }}"
           files: |
-            frontend-${{ github.ref_name }}.zip
+            ${{ steps.archive.outputs.archive_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
