@@ -78,13 +78,14 @@ export default function SetupWizard({ isOpen, onClose }: SetupWizardProps) {
       // 先記錄現有 UUID，方便找出新增的主機
       const beforeRes = await getAllPc();
       const existingUuids = new Set(Object.keys(beforeRes.data?.Pcs ?? {}));
+      const delayMs = 1500;
 
       // 新增 Agent (使用 OTP 當作密碼)
       const { data: addResult } = await addPc({ body: { Ip: ip, Password: otp } });
       if (!addResult || addResult.Type !== 'Ok') {
         throw new Error(addResult?.Message ?? '新增 Agent 失敗');
       }
-
+      await wait(delayMs);
       // 重新取得主機列表以找到新加入的 UUID
       const afterRes = await getAllPc();
       const pcsMap = afterRes.data?.Pcs ?? {};
