@@ -177,11 +177,11 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
 
       <div className='grid grid-cols-4 gap-4 mb-6'>
         <Card>
-          <CardContent className='p-4 flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3'>
-            <Monitor className='w-6 h-6 text-blue-500 shrink-0 self-start sm:self-center' />
+          <CardContent className='p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center sm:items-center justify-center sm:justify-start gap-4 sm:gap-5 text-center sm:text-left'>
+            <Monitor className='w-6 h-6 text-blue-500 shrink-0 self-center sm:self-center' />
             <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden lg:block'>Status</p>
-              <div className='flex items-center gap-2'>
+              <div className='flex items-center gap-2 justify-center lg:justify-start'>
                 <Badge
                   variant={serverStatus.Status === 'Active' ? 'default' : 'secondary'}
                   className={`${serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500 text-white'} hidden lg:inline-flex`}
@@ -199,29 +199,29 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className='p-4 flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3'>
-            <Cpu className='w-6 h-6 text-purple-500 shrink-0 self-start sm:self-center' />
+          <CardContent className='p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center sm:items-center justify-center sm:justify-start gap-2 sm:gap-3 text-center sm:text-left'>
+            <Cpu className='w-6 h-6 text-purple-500 shrink-0 self-center sm:self-center' />
             <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden lg:block'>CPU Usage</p>
-              <p className='text-xl font-bold leading-tight'>{serverStatus.Cpu}%</p>
+              <p className='text-lg sm:text-xl font-bold leading-tight'>{serverStatus.Cpu}%</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className='p-4 flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3'>
-            <MemoryStick className='w-6 h-6 text-orange-500 shrink-0 self-start sm:self-center' />
+          <CardContent className='p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center sm:items-center justify-center sm:justify-start gap-2 sm:gap-3 text-center sm:text-left'>
+            <MemoryStick className='w-6 h-6 text-orange-500 shrink-0 self-center sm:self-center' />
             <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden lg:block'>Memory</p>
-              <p className='text-xl font-bold leading-tight'>{serverStatus.Memory}%</p>
+              <p className='text-lg sm:text-xl font-bold leading-tight'>{serverStatus.Memory}%</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className='p-4 flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3'>
-            <Network className='w-6 h-6 text-green-500 shrink-0 self-start sm:self-center' />
+          <CardContent className='p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center sm:items-center justify-center sm:justify-start gap-2 sm:gap-3 text-center sm:text-left'>
+            <Network className='w-6 h-6 text-green-500 shrink-0 self-center sm:self-center' />
             <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden lg:block'>Connections</p>
-              <p className='text-xl font-bold leading-tight'>{serverStatus.Connections}</p>
+              <p className='text-lg sm:text-xl font-bold leading-tight'>{serverStatus.Connections}</p>
             </div>
           </CardContent>
         </Card>
