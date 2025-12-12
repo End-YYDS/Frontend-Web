@@ -181,12 +181,20 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
             <Monitor className='w-8 h-8 text-blue-500 shrink-0 self-start sm:self-center' />
             <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden lg:block'>Status</p>
-              <Badge
-                variant={serverStatus.Status === 'Active' ? 'default' : 'secondary'}
-                className={serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500 text-white'}
-              >
-                {serverStatus.Status === 'Active' ? 'Running' : 'Stopped'}
-              </Badge>
+              <div className='flex items-center gap-2'>
+                <Badge
+                  variant={serverStatus.Status === 'Active' ? 'default' : 'secondary'}
+                  className={`${serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500 text-white'} hidden lg:inline-flex`}
+                >
+                  {serverStatus.Status === 'Active' ? 'Running' : 'Stopped'}
+                </Badge>
+                <span
+                  className={`lg:hidden h-3 w-3 rounded-full ${
+                    serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                  aria-label={serverStatus.Status === 'Active' ? 'Running' : 'Stopped'}
+                ></span>
+              </div>
             </div>
           </CardContent>
         </Card>
