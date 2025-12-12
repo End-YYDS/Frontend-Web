@@ -134,6 +134,22 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
       console.error('Failed to add user or create groups', err);
     }
   };
+  const isEmpty = {
+    Username: newUser.Username.trim() === '',
+    Password: newUser.Password.trim() === '',
+    Cn: newUser.Cn.trim() === '',
+    Sn: newUser.Sn.trim() === '',
+    GivenName: newUser.GivenName.trim() === '',
+    DisplayName: newUser.DisplayName.trim() === '',
+  };
+  const [touched, setTouched] = useState({
+    Username: false,
+    Password: false,
+    Cn: false,
+    Sn: false,
+    GivenName: false,
+    DisplayName: false,
+  });
 
   return (
     <>
@@ -150,10 +166,22 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
               <Input
                 placeholder='enter username'
                 value={newUser.Username}
-                onChange={(e) => setNewUser({ ...newUser, Username: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, Username: e.target.value })
+                }
+                onBlur={() =>
+                  setTouched((prev) => ({ ...prev, Username: true }))
+                }
               />
-              {isDuplicateName && (
-                <p className='text-red-500 text-sm mt-1'>
+
+              {touched.Username && isEmpty.Username && (
+                <p className="text-red-500 text-sm mt-1">
+                  Username is required.
+                </p>
+              )}
+
+              {touched.Username && !isEmpty.Username && isDuplicateName && (
+                <p className="text-red-500 text-sm mt-1">
                   The name already exists, please change it.
                 </p>
               )}
@@ -166,8 +194,19 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                 type='password'
                 placeholder='enter password'
                 value={newUser.Password}
-                onChange={(e) => setNewUser({ ...newUser, Password: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, Password: e.target.value })
+                }
+                onBlur={() =>
+                  setTouched((prev) => ({ ...prev, Password: true }))
+                }
               />
+
+              {touched.Password && isEmpty.Password && (
+                <p className="text-red-500 text-sm mt-1">
+                  Password is required.
+                </p>
+              )}
             </div>
 
             {/* Full name (Cn) */}
@@ -176,8 +215,19 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
               <Input
                 placeholder='enter full name'
                 value={newUser.Cn}
-                onChange={(e) => setNewUser({ ...newUser, Cn: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, Cn: e.target.value })
+                }
+                onBlur={() =>
+                  setTouched((prev) => ({ ...prev, Cn: true }))
+                }
               />
+
+              {touched.Cn && isEmpty.Cn && (
+                <p className="text-red-500 text-sm mt-1">
+                  Full name is required.
+                </p>
+              )}
             </div>
 
             {/* Last name (Sn) */}
@@ -186,8 +236,19 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
               <Input
                 placeholder='enter last name'
                 value={newUser.Sn}
-                onChange={(e) => setNewUser({ ...newUser, Sn: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, Sn: e.target.value })
+                }
+                onBlur={() =>
+                  setTouched((prev) => ({ ...prev, Sn: true }))
+                }
               />
+
+              {touched.Sn && isEmpty.Sn && (
+                <p className="text-red-500 text-sm mt-1">
+                  Full name is required.
+                </p>
+              )}
             </div>
 
             {/* Given name */}
@@ -196,8 +257,19 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
               <Input
                 placeholder='enter given name'
                 value={newUser.GivenName}
-                onChange={(e) => setNewUser({ ...newUser, GivenName: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, GivenName: e.target.value })
+                }
+                onBlur={() =>
+                  setTouched((prev) => ({ ...prev, GivenName: true }))
+                }
               />
+
+              {touched.GivenName && isEmpty.GivenName && (
+                <p className="text-red-500 text-sm mt-1">
+                  Full name is required.
+                </p>
+              )}
             </div>
 
             {/* Display name */}
@@ -206,8 +278,19 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
               <Input
                 placeholder='enter display name'
                 value={newUser.DisplayName}
-                onChange={(e) => setNewUser({ ...newUser, DisplayName: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, DisplayName: e.target.value })
+                }
+                onBlur={() =>
+                  setTouched((prev) => ({ ...prev, DisplayName: true }))
+                }
               />
+
+              {touched.DisplayName && isEmpty.DisplayName && (
+                <p className="text-red-500 text-sm mt-1">
+                  Full name is required.
+                </p>
+              )}
             </div>
 
             {/* Gecos */}
@@ -284,7 +367,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                 onClick={handleAddUser}
                 style={{ backgroundColor: '#7B86AA' }}
                 className='flex-1 hover:opacity-90'
-                disabled={isDuplicateName || !newUser.Username}
+                disabled={isDuplicateName || Object.values(isEmpty).some(Boolean)}
               >
                 Save
               </Button>

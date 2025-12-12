@@ -89,7 +89,7 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
         {currentGroups.map((group) => (
           <Card key={group.gid} className='p-4 border border-gray-300 shadow-sm rounded-md'>
-            <div className='mb-2'>
+            <div>
               <div className='flex items-center justify-between'>
                 <h3 className='font-medium text-lg'>{group.Groupname}</h3>
                 <div className='flex gap-1'>
@@ -133,19 +133,23 @@ export const GroupManagement: React.FC<GroupManagementProps> = ({
                   </AlertDialog>
                 </div>
               </div>
-              <hr className='mt-3.5 border-t border-gray-300 my-1' />
+              <hr className='mt-3.5 border-t border-gray-300' />
             </div>
-            <div className='text-sm text-gray-600'>users</div>
+            <div className='text-sm text-gray-600 leading-none'>users</div>
             <div className='space-y-0.5'>
-              {group.Users?.map((uid) => {
-                const user = users.find((u) => u.uid === uid);
-                return (
-                  <div key={uid} className='flex items-center gap-2 text-sm'>
-                    {/* <input type='checkbox' /> */}
-                    <span>{user ? user.Username : uid}</span>
-                  </div>
-                );
-              })}
+              {group.Users && group.Users.length > 0 ? (
+                group.Users?.map((uid) => {
+                  const user = users.find((u) => u.uid === uid);
+                  return (
+                    <div key={uid} className='flex items-center gap-2 text-sm'>
+                      {/* <input type='checkbox' /> */}
+                      <span>{user ? user.Username : uid}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className='text-sm text-gray-400 italic'>No users</div>
+              )}
             </div>
           </Card>
         ))}
