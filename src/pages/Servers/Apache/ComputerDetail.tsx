@@ -179,8 +179,8 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
         <Card>
           <CardContent className='p-4 flex items-center gap-3'>
             <Monitor className='w-8 h-8 text-blue-500' />
-            <div>
-              <p className='text-sm font-medium text-slate-600'>Status</p>
+            <div className='flex flex-col'>
+              <p className='text-sm font-medium text-slate-600 hidden sm:block'>Status</p>
               <Badge
                 variant={serverStatus.Status === 'Active' ? 'default' : 'secondary'}
                 className={
@@ -195,27 +195,27 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
         <Card>
           <CardContent className='p-4 flex items-center gap-3'>
             <Cpu className='w-8 h-8 text-purple-500' />
-            <div>
-              <p className='text-sm font-medium text-slate-600'>CPU Usage</p>
-              <p className='text-xl font-bold'>{serverStatus.Cpu}%</p>
+            <div className='flex flex-col'>
+              <p className='text-sm font-medium text-slate-600 hidden sm:block'>CPU Usage</p>
+              <p className='text-xl font-bold leading-tight'>{serverStatus.Cpu}%</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className='p-4 flex items-center gap-3'>
             <MemoryStick className='w-8 h-8 text-orange-500' />
-            <div>
-              <p className='text-sm font-medium text-slate-600'>Memory</p>
-              <p className='text-xl font-bold'>{serverStatus.Memory}%</p>
+            <div className='flex flex-col'>
+              <p className='text-sm font-medium text-slate-600 hidden sm:block'>Memory</p>
+              <p className='text-xl font-bold leading-tight'>{serverStatus.Memory}%</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className='p-4 flex items-center gap-3'>
             <Network className='w-8 h-8 text-green-500' />
-            <div>
-              <p className='text-sm font-medium text-slate-600'>Connections</p>
-              <p className='text-xl font-bold'>{serverStatus.Connections}</p>
+            <div className='flex flex-col'>
+              <p className='text-sm font-medium text-slate-600 hidden sm:block'>Connections</p>
+              <p className='text-xl font-bold leading-tight'>{serverStatus.Connections}</p>
             </div>
           </CardContent>
         </Card>
