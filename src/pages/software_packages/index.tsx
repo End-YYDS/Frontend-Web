@@ -355,8 +355,8 @@ const SoftwarePackagesPage: PageComponent = () => {
             <CardDescription>Select the PC to manage software packages</CardDescription>
           </CardHeader>
           <CardContent className='space-y-4'>
-            <div className='flex flex-col md:flex-row gap-4'>
-              <div className='flex-1 max-w-1/3'>
+            <div className='flex flex-wrap md:flex-row gap-4'>
+              <div className='flex-1 max-w-40'>
                 <Label htmlFor='pc-select' className='mb-2'>
                   PC
                 </Label>
@@ -375,7 +375,7 @@ const SoftwarePackagesPage: PageComponent = () => {
               </div>
 
               <div className='flex-1'>
-                <Label htmlFor='search' className='mb-2'>
+                <Label htmlFor='search' className='mb-2 min-w-45'>
                   Search Installed Packages
                 </Label>
                 <div className='relative'>
@@ -420,7 +420,7 @@ const SoftwarePackagesPage: PageComponent = () => {
                       <DialogDescription>Enter the package name to install</DialogDescription>
                     </DialogHeader>
                     <div className='space-y-4'>
-                      <div>
+                      <div className='space-y-2'>
                         <Label htmlFor='package-name'>Package Name</Label>
                         <Input
                           id='package-name'
