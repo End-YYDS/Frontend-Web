@@ -177,15 +177,13 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
 
       <div className='grid grid-cols-4 gap-4 mb-6'>
         <Card>
-          <CardContent className='p-4 flex items-center gap-3'>
-            <Monitor className='w-8 h-8 text-blue-500' />
-            <div className='flex flex-col'>
+          <CardContent className='p-4 flex flex-wrap gap-3 items-start sm:items-center sm:flex-nowrap'>
+            <Monitor className='w-8 h-8 text-blue-500 shrink-0 self-start sm:self-center' />
+            <div className='flex flex-col gap-1 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden sm:block'>Status</p>
               <Badge
                 variant={serverStatus.Status === 'Active' ? 'default' : 'secondary'}
-                className={
-                  serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500 text-white'
-                }
+                className={serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500 text-white'}
               >
                 {serverStatus.Status === 'Active' ? 'Running' : 'Stopped'}
               </Badge>
@@ -193,27 +191,27 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className='p-4 flex items-center gap-3'>
-            <Cpu className='w-8 h-8 text-purple-500' />
-            <div className='flex flex-col'>
+          <CardContent className='p-4 flex flex-wrap gap-3 items-start sm:items-center sm:flex-nowrap'>
+            <Cpu className='w-8 h-8 text-purple-500 shrink-0 self-start sm:self-center' />
+            <div className='flex flex-col gap-1 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden sm:block'>CPU Usage</p>
               <p className='text-xl font-bold leading-tight'>{serverStatus.Cpu}%</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className='p-4 flex items-center gap-3'>
-            <MemoryStick className='w-8 h-8 text-orange-500' />
-            <div className='flex flex-col'>
+          <CardContent className='p-4 flex flex-wrap gap-3 items-start sm:items-center sm:flex-nowrap'>
+            <MemoryStick className='w-8 h-8 text-orange-500 shrink-0 self-start sm:self-center' />
+            <div className='flex flex-col gap-1 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden sm:block'>Memory</p>
               <p className='text-xl font-bold leading-tight'>{serverStatus.Memory}%</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className='p-4 flex items-center gap-3'>
-            <Network className='w-8 h-8 text-green-500' />
-            <div className='flex flex-col'>
+          <CardContent className='p-4 flex flex-wrap gap-3 items-start sm:items-center sm:flex-nowrap'>
+            <Network className='w-8 h-8 text-green-500 shrink-0 self-start sm:self-center' />
+            <div className='flex flex-col gap-1 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden sm:block'>Connections</p>
               <p className='text-xl font-bold leading-tight'>{serverStatus.Connections}</p>
             </div>
