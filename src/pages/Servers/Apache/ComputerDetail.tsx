@@ -178,7 +178,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
       <div className='grid grid-cols-4 gap-4 mb-6'>
         <Card>
           <CardContent className='p-4 flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3'>
-            <Monitor className='w-8 h-8 text-blue-500 shrink-0 self-start sm:self-center' />
+            <Monitor className='w-6 h-6 text-blue-500 shrink-0 self-start sm:self-center' />
             <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden lg:block'>Status</p>
               <div className='flex items-center gap-2'>
@@ -200,7 +200,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
         </Card>
         <Card>
           <CardContent className='p-4 flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3'>
-            <Cpu className='w-8 h-8 text-purple-500 shrink-0 self-start sm:self-center' />
+            <Cpu className='w-6 h-6 text-purple-500 shrink-0 self-start sm:self-center' />
             <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden lg:block'>CPU Usage</p>
               <p className='text-xl font-bold leading-tight'>{serverStatus.Cpu}%</p>
@@ -209,7 +209,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
         </Card>
         <Card>
           <CardContent className='p-4 flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3'>
-            <MemoryStick className='w-8 h-8 text-orange-500 shrink-0 self-start sm:self-center' />
+            <MemoryStick className='w-6 h-6 text-orange-500 shrink-0 self-start sm:self-center' />
             <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden lg:block'>Memory</p>
               <p className='text-xl font-bold leading-tight'>{serverStatus.Memory}%</p>
@@ -218,7 +218,7 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
         </Card>
         <Card>
           <CardContent className='p-4 flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3'>
-            <Network className='w-8 h-8 text-green-500 shrink-0 self-start sm:self-center' />
+            <Network className='w-6 h-6 text-green-500 shrink-0 self-start sm:self-center' />
             <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
               <p className='text-sm font-medium text-slate-600 hidden lg:block'>Connections</p>
               <p className='text-xl font-bold leading-tight'>{serverStatus.Connections}</p>
