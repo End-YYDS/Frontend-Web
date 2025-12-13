@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,38 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const [serverStatus, setServerStatus] = useState<ApacheResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<'' | 'start' | 'stop' | 'restart'>('');
+  const headerRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const backWrapperRef = useRef<HTMLDivElement>(null);
+  const hostnameRef = useRef<HTMLHeadingElement>(null);
+  const uuidMeasureRef = useRef<HTMLParagraphElement>(null);
+  const [showUuid, setShowUuid] = useState(true);
+
+  const updateUuidVisibility = useCallback(() => {
+    if (
+      !headerRef.current ||
+      !actionsRef.current ||
+      !backWrapperRef.current ||
+      !hostnameRef.current ||
+      !uuidMeasureRef.current
+    ) {
+      return;
+    }
+
+    const headerWidth = headerRef.current.clientWidth;
+    const actionsWidth = actionsRef.current.scrollWidth;
+    const backWidth = backWrapperRef.current.clientWidth;
+    const hostnameWidth = hostnameRef.current.offsetWidth;
+    const uuidWidth = uuidMeasureRef.current.scrollWidth;
+
+    const gapBetweenButtonAndText = 16; // gap-4
+    const buffer = 8;
+    const textWidthWithUuid = Math.max(hostnameWidth, uuidWidth);
+    const leftWidthWithUuid = backWidth + gapBetweenButtonAndText + textWidthWithUuid;
+    const canShowUuid = leftWidthWithUuid + actionsWidth + buffer <= headerWidth;
+
+    setShowUuid(canShowUuid);
+  }, []);
 
   /** 取得 Apache 狀態 */
   const fetchServerStatus = useCallback(async () => {
@@ -56,6 +88,17 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   useEffect(() => {
     fetchServerStatus();
   }, [fetchServerStatus]);
+
+  useEffect(() => {
+    updateUuidVisibility();
+    const handleResize = () => updateUuidVisibility();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateUuidVisibility]);
+
+  useEffect(() => {
+    updateUuidVisibility();
+  }, [computerId, serverStatus?.Hostname, updateUuidVisibility]);
 
   /** 執行 Apache 操作 (Start / Stop / Restart) */
   const performAction = async (action: 'start' | 'stop' | 'restart') => {
@@ -126,20 +169,33 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   return (
     <div className="p-6 w-full max-w-[1400px] mx-auto overflow-x-hidden">
       {/* Header */}
-      <div className='flex items-center justify-between mb-6'>
+      <div ref={headerRef} className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-4'>
-          <Button onClick={onBack} variant='ghost'>
-            <ArrowLeft className='w-4 h-4 mr-2' /> Back
-          </Button>
-          <div>
-            <h1 className='text-2xl font-bold text-slate-800'>
+          <div ref={backWrapperRef}>
+            <Button onClick={onBack} variant='ghost'>
+              <ArrowLeft className='w-4 h-4 mr-2' /> Back
+            </Button>
+          </div>
+          <div className='relative'>
+            <h1 ref={hostnameRef} className='text-2xl font-bold text-slate-800'>
               {serverStatus.Hostname}
             </h1>
-            <p className='text-slate-600'>{computerId}</p>
+            {showUuid && (
+              <p className='text-slate-600 whitespace-nowrap text-sm sm:text-base'>
+                {computerId}
+              </p>
+            )}
+            <p
+              ref={uuidMeasureRef}
+              className='absolute opacity-0 pointer-events-none -z-10 whitespace-nowrap text-slate-600 text-sm sm:text-base'
+              aria-hidden='true'
+            >
+              {computerId}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div ref={actionsRef} className="flex items-center gap-2">
           <Button
             onClick={() => performAction('start')}
             disabled={serverStatus.Status === 'Active' || actionLoading !== ''}
