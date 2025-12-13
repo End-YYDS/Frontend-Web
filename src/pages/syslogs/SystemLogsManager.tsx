@@ -353,9 +353,9 @@ export const SystemLogsManager = () => {
       <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <CollapsibleContent className='space-y-4 p-4 border rounded-lg bg-muted/50'>
           <h3 className='font-medium text-sm'>Advanced Filters</h3>
-          <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+          <div className='grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3 sm:gap-4'>
             {/* Month */}
-            <div className='space-y-2'>
+            <div className='space-y-2 min-w-0'>
               <div className='flex items-center space-x-2'>
                 <Checkbox
                   checked={filterEnabled.month}
@@ -373,7 +373,7 @@ export const SystemLogsManager = () => {
                   setFilterEnabled((prev) => ({ ...prev, month: true }));
                 }}
               >
-                <SelectTrigger className='w-40 border rounded-md px-3 py-2 bg-white text-gray-700'>
+                <SelectTrigger className='w-full md:w-40 min-w-0 border rounded-md px-3 py-2 bg-white text-gray-700'>
                   <SelectValue placeholder='Enable first' />
                 </SelectTrigger>
                 <SelectContent>
@@ -387,7 +387,7 @@ export const SystemLogsManager = () => {
             </div>
 
             {/* Date */}
-            <div className='space-y-2'>
+            <div className='space-y-2 min-w-0'>
               <div className='flex items-center space-x-2'>
                 <Checkbox
                   checked={filterEnabled.date}
@@ -403,7 +403,7 @@ export const SystemLogsManager = () => {
                   <Button
                     variant='outline'
                     className={cn(
-                      'w-auto justify-start text-left font-normal',
+                      'w-full md:w-40 justify-start text-left font-normal',
                       !selectedDate && 'text-muted-foreground',
                     )}
                     onClick={() => setFilterEnabled((prev) => ({ ...prev, date: true }))}
@@ -428,7 +428,7 @@ export const SystemLogsManager = () => {
             </div>
 
             {/* Time Range */}
-            <div className='space-y-2'>
+            <div className='space-y-2 min-w-0'>
               <div className='flex items-center space-x-2'>
                 <Checkbox
                   checked={filterEnabled.timeRange}
@@ -446,7 +446,7 @@ export const SystemLogsManager = () => {
                   setFilterEnabled((prev) => ({ ...prev, timeRange: true }));
                 }}
               >
-                <SelectTrigger className='w-40 border rounded-md px-3 py-2 bg-white text-gray-700'>
+                <SelectTrigger className='w-full md:w-40 min-w-0 border rounded-md px-3 py-2 bg-white text-gray-700'>
                   <SelectValue placeholder='Enable first' />
                 </SelectTrigger>
                 <SelectContent>
@@ -459,7 +459,7 @@ export const SystemLogsManager = () => {
             </div>
 
             {/* Direction */}
-            <div className='space-y-2'>
+            <div className='space-y-2 min-w-0'>
               <div className='flex items-center space-x-2'>
                 <Checkbox
                   checked={filterEnabled.direction}
@@ -477,7 +477,7 @@ export const SystemLogsManager = () => {
                   setFilterEnabled((prev) => ({ ...prev, direction: true }));
                 }}
               >
-                <SelectTrigger className='w-40 border rounded-md px-3 py-2 bg-white text-gray-700'>
+                <SelectTrigger className='w-full md:w-40 min-w-0 border rounded-md px-3 py-2 bg-white text-gray-700'>
                   <SelectValue placeholder='Enable first' />
                 </SelectTrigger>
                 <SelectContent>
@@ -486,37 +486,36 @@ export const SystemLogsManager = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          {/* Type */}
-          <div className='space-y-2'>
-            <div className='flex items-center space-x-2'>
-              <Checkbox
-                checked={filterEnabled.type}
-                onCheckedChange={(checked) => {
-                  setFilterEnabled((prev) => ({ ...prev, type: checked === true }));
-                  if (checked !== true) applyFilter('type', '');
+            {/* Type */}
+            <div className='space-y-2 min-w-0'>
+              <div className='flex items-center space-x-2'>
+                <Checkbox
+                  checked={filterEnabled.type}
+                  onCheckedChange={(checked) => {
+                    setFilterEnabled((prev) => ({ ...prev, type: checked === true }));
+                    if (checked !== true) applyFilter('type', '');
+                  }}
+                />
+                <label className='text-sm'>Type</label>
+              </div>
+              <Select
+                value={filterValues.type}
+                onValueChange={(value) => {
+                  applyFilter('type', value);
+                  setFilterEnabled((prev) => ({ ...prev, type: true }));
                 }}
-              />
-              <label className='text-sm'>Type</label>
+              >
+                <SelectTrigger className='w-full md:w-40 min-w-0 border rounded-md px-3 py-2 bg-white text-gray-700'>
+                  <SelectValue placeholder='Enable first' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='SYSTEM'>SYSTEM</SelectItem>
+                  <SelectItem value='WARNING'>WARNING</SelectItem>
+                  <SelectItem value='ERROR'>ERROR</SelectItem>
+                  <SelectItem value='INFO'>INFO</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select
-              value={filterValues.type}
-              onValueChange={(value) => {
-                applyFilter('type', value);
-                setFilterEnabled((prev) => ({ ...prev, type: true }));
-              }}
-            >
-              <SelectTrigger className='w-40 border rounded-md px-3 py-2 bg-white text-gray-700'>
-                <SelectValue placeholder='Enable first' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='SYSTEM'>SYSTEM</SelectItem>
-                <SelectItem value='WARNING'>WARNING</SelectItem>
-                <SelectItem value='ERROR'>ERROR</SelectItem>
-                <SelectItem value='INFO'>INFO</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CollapsibleContent>
       </Collapsible>
