@@ -353,9 +353,9 @@ export const SystemLogsManager = () => {
       <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <CollapsibleContent className='space-y-4 p-4 border rounded-lg bg-muted/50'>
           <h3 className='font-medium text-sm'>Advanced Filters</h3>
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4'>
+          <div className='grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3 sm:gap-4'>
             {/* Month */}
-            <div className='space-y-2'>
+            <div className='space-y-2 min-w-0'>
               <div className='flex items-center space-x-2'>
                 <Checkbox
                   checked={filterEnabled.month}
@@ -387,7 +387,7 @@ export const SystemLogsManager = () => {
             </div>
 
             {/* Date */}
-            <div className='space-y-2'>
+            <div className='space-y-2 min-w-0'>
               <div className='flex items-center space-x-2'>
                 <Checkbox
                   checked={filterEnabled.date}
@@ -428,7 +428,7 @@ export const SystemLogsManager = () => {
             </div>
 
             {/* Time Range */}
-            <div className='space-y-2'>
+            <div className='space-y-2 min-w-0'>
               <div className='flex items-center space-x-2'>
                 <Checkbox
                   checked={filterEnabled.timeRange}
@@ -459,7 +459,7 @@ export const SystemLogsManager = () => {
             </div>
 
             {/* Direction */}
-            <div className='space-y-2'>
+            <div className='space-y-2 min-w-0'>
               <div className='flex items-center space-x-2'>
                 <Checkbox
                   checked={filterEnabled.direction}
@@ -487,7 +487,7 @@ export const SystemLogsManager = () => {
               </Select>
             </div>
             {/* Type */}
-            <div className='space-y-2'>
+            <div className='space-y-2 min-w-0'>
               <div className='flex items-center space-x-2'>
                 <Checkbox
                   checked={filterEnabled.type}
