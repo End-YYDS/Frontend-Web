@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,48 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   const [serverStatus, setServerStatus] = useState<ApacheResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<'' | 'start' | 'stop' | 'restart'>('');
+  const headerRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const backWrapperRef = useRef<HTMLDivElement>(null);
+  const hostnameRef = useRef<HTMLHeadingElement>(null);
+  const uuidMeasureRef = useRef<HTMLParagraphElement>(null);
+  const [showUuid, setShowUuid] = useState(true);
+
+  const updateUuidVisibility = useCallback(() => {
+    if (
+      !headerRef.current ||
+      !actionsRef.current ||
+      !backWrapperRef.current ||
+      !hostnameRef.current ||
+      !uuidMeasureRef.current
+    ) {
+      return;
+    }
+
+    const isButtonLabelVisible = window.matchMedia('(min-width: 1024px)').matches;
+    if (!isButtonLabelVisible) {
+      setShowUuid(false);
+      return;
+    }
+
+    const headerWidth = headerRef.current.clientWidth;
+    const actionsScrollWidth = actionsRef.current.scrollWidth;
+    const actionsClientWidth = actionsRef.current.clientWidth;
+    const actionsOverflowing = actionsScrollWidth > actionsClientWidth + 0.5;
+    const backWidth = backWrapperRef.current.clientWidth;
+    const hostnameWidth = hostnameRef.current.offsetWidth;
+    const uuidWidth = uuidMeasureRef.current.scrollWidth;
+
+    const gapBetweenButtonAndText = 16; // gap-4
+    const buffer = 8;
+    const textWidthWithUuid = Math.max(hostnameWidth, uuidWidth);
+    const leftWidthWithUuid = backWidth + gapBetweenButtonAndText + textWidthWithUuid;
+    const canShowUuid =
+      !actionsOverflowing &&
+      leftWidthWithUuid + actionsScrollWidth + buffer <= headerWidth;
+
+    setShowUuid(canShowUuid);
+  }, []);
 
   /** 取得 Apache 狀態 */
   const fetchServerStatus = useCallback(async () => {
@@ -56,6 +98,17 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   useEffect(() => {
     fetchServerStatus();
   }, [fetchServerStatus]);
+
+  useEffect(() => {
+    updateUuidVisibility();
+    const handleResize = () => updateUuidVisibility();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateUuidVisibility]);
+
+  useEffect(() => {
+    updateUuidVisibility();
+  }, [computerId, serverStatus?.Hostname, updateUuidVisibility]);
 
   /** 執行 Apache 操作 (Start / Stop / Restart) */
   const performAction = async (action: 'start' | 'stop' | 'restart') => {
@@ -126,20 +179,33 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
   return (
     <div className="p-6 w-full max-w-[1400px] mx-auto overflow-x-hidden">
       {/* Header */}
-      <div className='flex items-center justify-between mb-6'>
+      <div ref={headerRef} className='flex items-center justify-between mb-6'>
         <div className='flex items-center gap-4'>
-          <Button onClick={onBack} variant='ghost'>
-            <ArrowLeft className='w-4 h-4 mr-2' /> Back
-          </Button>
-          <div>
-            <h1 className='text-2xl font-bold text-slate-800'>
+          <div ref={backWrapperRef}>
+            <Button onClick={onBack} variant='ghost'>
+              <ArrowLeft className='w-4 h-4 mr-2' /> Back
+            </Button>
+          </div>
+          <div className='relative'>
+            <h1 ref={hostnameRef} className='text-2xl font-bold text-slate-800'>
               {serverStatus.Hostname}
             </h1>
-            <p className='text-slate-600'>{computerId}</p>
+            {showUuid && (
+              <p className='text-slate-600 whitespace-nowrap text-sm sm:text-base'>
+                {computerId}
+              </p>
+            )}
+            <p
+              ref={uuidMeasureRef}
+              className='absolute opacity-0 pointer-events-none -z-10 whitespace-nowrap text-slate-600 text-sm sm:text-base'
+              aria-hidden='true'
+            >
+              {computerId}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div ref={actionsRef} className="flex items-center gap-2">
           <Button
             onClick={() => performAction('start')}
             disabled={serverStatus.Status === 'Active' || actionLoading !== ''}
@@ -177,45 +243,51 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
 
       <div className='grid grid-cols-4 gap-4 mb-6'>
         <Card>
-          <CardContent className='p-4 flex items-center gap-3'>
-            <Monitor className='w-8 h-8 text-blue-500' />
-            <div>
-              <p className='text-sm font-medium text-slate-600'>Status</p>
-              <Badge
-                variant={serverStatus.Status === 'Active' ? 'default' : 'secondary'}
-                className={
-                  serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500 text-white'
-                }
-              >
-                {serverStatus.Status === 'Active' ? 'Running' : 'Stopped'}
-              </Badge>
+          <CardContent className='p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center sm:items-center justify-center sm:justify-start gap-4 sm:gap-5 text-center sm:text-left'>
+            <Monitor className='w-6 h-6 text-blue-500 shrink-0 self-center sm:self-center' />
+            <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
+              <p className='text-sm font-medium text-slate-600 hidden lg:block'>Status</p>
+              <div className='flex items-center gap-2 justify-center lg:justify-start'>
+                <Badge
+                  variant={serverStatus.Status === 'Active' ? 'default' : 'secondary'}
+                  className={`${serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500 text-white'} hidden lg:inline-flex`}
+                >
+                  {serverStatus.Status === 'Active' ? 'Running' : 'Stopped'}
+                </Badge>
+                <span
+                  className={`lg:hidden h-3 w-3 rounded-full ${
+                    serverStatus.Status === 'Active' ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                  aria-label={serverStatus.Status === 'Active' ? 'Running' : 'Stopped'}
+                ></span>
+              </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className='p-4 flex items-center gap-3'>
-            <Cpu className='w-8 h-8 text-purple-500' />
-            <div>
-              <p className='text-sm font-medium text-slate-600'>CPU Usage</p>
-              <p className='text-xl font-bold'>{serverStatus.Cpu}%</p>
+          <CardContent className='p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center sm:items-center justify-center sm:justify-start gap-2 sm:gap-3 text-center sm:text-left'>
+            <Cpu className='w-6 h-6 text-purple-500 shrink-0 self-center sm:self-center' />
+            <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
+              <p className='text-sm font-medium text-slate-600 hidden lg:block'>CPU Usage</p>
+              <p className='text-lg sm:text-xl font-bold leading-tight'>{serverStatus.Cpu}%</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className='p-4 flex items-center gap-3'>
-            <MemoryStick className='w-8 h-8 text-orange-500' />
-            <div>
-              <p className='text-sm font-medium text-slate-600'>Memory</p>
-              <p className='text-xl font-bold'>{serverStatus.Memory}%</p>
+          <CardContent className='p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center sm:items-center justify-center sm:justify-start gap-2 sm:gap-3 text-center sm:text-left'>
+            <MemoryStick className='w-6 h-6 text-orange-500 shrink-0 self-center sm:self-center' />
+            <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
+              <p className='text-sm font-medium text-slate-600 hidden lg:block'>Memory</p>
+              <p className='text-lg sm:text-xl font-bold leading-tight'>{serverStatus.Memory}%</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className='p-4 flex items-center gap-3'>
-            <Network className='w-8 h-8 text-green-500' />
-            <div>
-              <p className='text-sm font-medium text-slate-600'>Connections</p>
-              <p className='text-xl font-bold'>{serverStatus.Connections}</p>
+          <CardContent className='p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center sm:items-center justify-center sm:justify-start gap-2 sm:gap-3 text-center sm:text-left'>
+            <Network className='w-6 h-6 text-green-500 shrink-0 self-center sm:self-center' />
+            <div className='flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:flex-1'>
+              <p className='text-sm font-medium text-slate-600 hidden lg:block'>Connections</p>
+              <p className='text-lg sm:text-xl font-bold leading-tight'>{serverStatus.Connections}</p>
             </div>
           </CardContent>
         </Card>
