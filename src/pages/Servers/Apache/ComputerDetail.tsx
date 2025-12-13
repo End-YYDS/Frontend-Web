@@ -52,8 +52,16 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
       return;
     }
 
+    const isButtonLabelVisible = window.matchMedia('(min-width: 1024px)').matches;
+    if (!isButtonLabelVisible) {
+      setShowUuid(false);
+      return;
+    }
+
     const headerWidth = headerRef.current.clientWidth;
-    const actionsWidth = actionsRef.current.scrollWidth;
+    const actionsScrollWidth = actionsRef.current.scrollWidth;
+    const actionsClientWidth = actionsRef.current.clientWidth;
+    const actionsOverflowing = actionsScrollWidth > actionsClientWidth + 0.5;
     const backWidth = backWrapperRef.current.clientWidth;
     const hostnameWidth = hostnameRef.current.offsetWidth;
     const uuidWidth = uuidMeasureRef.current.scrollWidth;
@@ -62,7 +70,9 @@ export function ComputerDetail({ computerId, onBack }: ComputerDetailProps) {
     const buffer = 8;
     const textWidthWithUuid = Math.max(hostnameWidth, uuidWidth);
     const leftWidthWithUuid = backWidth + gapBetweenButtonAndText + textWidthWithUuid;
-    const canShowUuid = leftWidthWithUuid + actionsWidth + buffer <= headerWidth;
+    const canShowUuid =
+      !actionsOverflowing &&
+      leftWidthWithUuid + actionsScrollWidth + buffer <= headerWidth;
 
     setShowUuid(canShowUuid);
   }, []);
