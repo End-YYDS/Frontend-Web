@@ -14,5 +14,6 @@ const Bind: PageComponent = () => {
 Bind.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Bind;

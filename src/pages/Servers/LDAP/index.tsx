@@ -14,5 +14,6 @@ const Ldap: PageComponent = () => {
 Ldap.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Ldap;

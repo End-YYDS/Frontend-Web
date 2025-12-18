@@ -934,6 +934,7 @@ const CronManagement: PageComponent = () => {
 CronManagement.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 
 export default CronManagement;

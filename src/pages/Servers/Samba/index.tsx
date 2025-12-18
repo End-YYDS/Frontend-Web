@@ -15,5 +15,6 @@ const Samba: PageComponent = () => {
 Samba.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Samba;

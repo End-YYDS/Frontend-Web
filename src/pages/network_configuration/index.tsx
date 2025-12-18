@@ -1283,6 +1283,7 @@ const RouteDialog = ({ route, interfaces, onSave, isLoading, onClose }: any) => 
 NetworkConfigurationPage.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 
 export default NetworkConfigurationPage;

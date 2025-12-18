@@ -13,5 +13,6 @@ const Dhcp: PageComponent = () => {
 Dhcp.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Dhcp;

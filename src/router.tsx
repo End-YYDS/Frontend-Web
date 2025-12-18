@@ -1,62 +1,19 @@
-import { Suspense, type JSX } from 'react';
+import { Suspense } from 'react';
 import { useRoutes, Navigate, type RouteObject } from 'react-router-dom';
 import Layout from '@/components/Layout';
-import { type PageComponent, type PageMeta } from './types';
 import { RequireAuth } from './auth/RequireAuth';
-
-const rawModules = import.meta.glob(
-  [
-    './pages/**/index.tsx',
-    './pages/*.tsx',
-    '!./pages/**/_*.tsx',
-    '!./pages/**/App.tsx',
-    '!./pages/**/types.ts',
-    '!./pages/**/types.tsx',
-  ],
-  {
-    eager: true,
-    import: 'default',
-  },
-) as Record<string, PageComponent | undefined>;
-const entries = Object.entries(rawModules).filter(([file, Comp]) => {
-  const ok = !!Comp && !/\/App\.tsx$/i.test(file);
-  if (!ok) console.warn(`[router] skip ${file}: no default export or excluded`);
-  return ok;
-});
-
-type SimpleRoute = {
-  path: string;
-  index: boolean;
-  relPath: string | null;
-  element: JSX.Element;
-  meta?: PageMeta;
-};
+import { simpleRoutes, type SimpleRoute } from './routeRegistry';
 
 export default function Router() {
-  const simple: SimpleRoute[] = entries.map(([filePath, mod]) => {
-    const Component = mod as PageComponent;
-    let path = filePath
-      .replace(/^\.\/pages/, '')
-      .replace(/\/index\.tsx$/, '')
-      .replace(/\.tsx$/, '')
-      .toLowerCase();
-    if (path === '') path = '/';
-    const isIndex = path === '/';
-    const relPath = isIndex ? null : path.replace(/^\//, '');
-    const meta: PageMeta | undefined = Component.meta;
-    return { path, index: isIndex, relPath, element: <Component />, meta };
-  });
-
-  simple.sort((a, b) => (a.path === '/' ? -1 : b.path === '/' ? 1 : 0));
-  const inLayout = simple.filter(
+  const inLayoutAll = simpleRoutes.filter(
     (r) => (r.meta?.layout ?? true) && r.path !== '/login' && r.path !== '/unauthorized',
   );
-  const bare = simple.filter((r) => !inLayout.includes(r));
-  const publicInLayout = inLayout.filter((r) => r.meta?.requiresAuth === false);
-  const protectedNoRole = inLayout.filter(
+  const bare = simpleRoutes.filter((r) => !inLayoutAll.includes(r));
+  const publicInLayout = inLayoutAll.filter((r) => r.meta?.requiresAuth === false);
+  const protectedNoRole = inLayoutAll.filter(
     (r) => (r.meta?.requiresAuth ?? true) && !r.meta?.allowedRoles?.length,
   );
-  const protectedWithRoles = inLayout.filter(
+  const protectedWithRoles = inLayoutAll.filter(
     (r) => (r.meta?.requiresAuth ?? true) && r.meta?.allowedRoles?.length,
   );
   const roleGroups = new Map<string, SimpleRoute[]>();

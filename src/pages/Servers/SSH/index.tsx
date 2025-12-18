@@ -13,5 +13,6 @@ const Ssh: PageComponent = () => {
 Ssh.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Ssh;

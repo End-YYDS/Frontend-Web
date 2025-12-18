@@ -4,6 +4,7 @@ export type PageMeta = {
   requiresAuth?: boolean;
   allowedRoles?: string[];
   layout?: boolean;
+  disable?: boolean;
 };
 
 export type PageComponent = React.ComponentType & {

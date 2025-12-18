@@ -15,5 +15,6 @@ const Roles: PageComponent = () => {
 Roles.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Roles;

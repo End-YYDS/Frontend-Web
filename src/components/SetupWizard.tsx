@@ -21,13 +21,38 @@ interface ServerOption {
 const serverOptions: ServerOption[] = [
   { id: 'apache', name: 'Apache', description: '穩定可靠的網頁伺服器', enabled: true },
   { id: 'nginx', name: 'Nginx', description: '高效能反向代理與負載平衡器', enabled: false },
-  { id: 'bind_dns', name: 'BIND DNS', description: '權威與遞迴的 DNS 名稱解析服務', enabled: false },
-  { id: 'dhcp', name: 'DHCP', description: '自動分配 IP、網關與 DNS 的網路設定服務', enabled: false },
+  {
+    id: 'bind_dns',
+    name: 'BIND DNS',
+    description: '權威與遞迴的 DNS 名稱解析服務',
+    enabled: false,
+  },
+  {
+    id: 'dhcp',
+    name: 'DHCP',
+    description: '自動分配 IP、網關與 DNS 的網路設定服務',
+    enabled: false,
+  },
   { id: 'ldap', name: 'LDAP', description: '集中式的目錄與身份驗證服務', enabled: false },
-  { id: 'mysql', name: 'MySQL Database', description: '主流的關聯式資料庫管理系統', enabled: false },
-  { id: 'proftpd', name: 'ProFTPD', description: '可客製化且安全的 FTP 檔案伺服器', enabled: false },
+  {
+    id: 'mysql',
+    name: 'MySQL Database',
+    description: '主流的關聯式資料庫管理系統',
+    enabled: false,
+  },
+  {
+    id: 'proftpd',
+    name: 'ProFTPD',
+    description: '可客製化且安全的 FTP 檔案伺服器',
+    enabled: false,
+  },
   { id: 'samba', name: 'Samba', description: '提供 Windows 相容的檔案與列印分享', enabled: false },
-  { id: 'squid_proxy', name: 'Squid proxy', description: 'HTTP/HTTPS 的快取與代理伺服器', enabled: false },
+  {
+    id: 'squid_proxy',
+    name: 'Squid proxy',
+    description: 'HTTP/HTTPS 的快取與代理伺服器',
+    enabled: false,
+  },
   { id: 'ssh', name: 'SSH', description: '安全的遠端登入與指令執行服務', enabled: false },
 ];
 
@@ -138,7 +163,9 @@ export default function SetupWizard({ isOpen, onClose }: SetupWizardProps) {
           .filter((server): server is string => Boolean(server));
 
         const installResults = await Promise.all(
-          serversToInstall.map((server) => postInstall({ body: { Server: server, Uuids: [newUuid] } })),
+          serversToInstall.map((server) =>
+            postInstall({ body: { Server: server, Uuids: [newUuid] } }),
+          ),
         );
 
         const failed = installResults.find((res) => res.data?.Type !== 'Ok');
@@ -153,7 +180,9 @@ export default function SetupWizard({ isOpen, onClose }: SetupWizardProps) {
               .join(', ')
           : '';
 
-      toast.success(installedNames ? `Agent 新增並安裝完成：${installedNames}` : 'Agent 已成功新增');
+      toast.success(
+        installedNames ? `Agent 新增並安裝完成：${installedNames}` : 'Agent 已成功新增',
+      );
 
       setCurrentPage(0);
       setIpAddress('');
@@ -230,7 +259,7 @@ export default function SetupWizard({ isOpen, onClose }: SetupWizardProps) {
           </p>
         </div>
 
-        <div className='min-h-[320px] px-6 py-6'>
+        <div className='min-h-80 px-6 py-6'>
           {currentPage === 0 && (
             <div className='space-y-4 animate-in fade-in slide-in-from-right-4 duration-300'>
               <div className='flex justify-center'>
@@ -273,7 +302,9 @@ export default function SetupWizard({ isOpen, onClose }: SetupWizardProps) {
                   />
                 </div>
                 <div>
-                  <label className='mb-2 block text-sm font-medium text-foreground'>OTP 驗證碼</label>
+                  <label className='mb-2 block text-sm font-medium text-foreground'>
+                    OTP 驗證碼
+                  </label>
                   <Input
                     type='text'
                     placeholder='請輸入 6 位數驗證碼'
@@ -369,7 +400,12 @@ export default function SetupWizard({ isOpen, onClose }: SetupWizardProps) {
         </div>
 
         <div className='flex items-center justify-between border-t border-border bg-muted/40 px-6 py-4'>
-          <Button variant='outline' onClick={handlePrev} disabled={currentPage === 0} className='gap-1'>
+          <Button
+            variant='outline'
+            onClick={handlePrev}
+            disabled={currentPage === 0}
+            className='gap-1'
+          >
             <ChevronLeft className='h-4 w-4' />
             上一頁
           </Button>

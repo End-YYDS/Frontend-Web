@@ -28,5 +28,6 @@ const Syslogs: PageComponent = () => {
 Syslogs.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Syslogs;

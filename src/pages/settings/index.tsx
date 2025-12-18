@@ -54,6 +54,7 @@ const SettingsPage: PageComponent = () => {
 SettingsPage.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 
 export default SettingsPage;
