@@ -31,5 +31,6 @@ const File_manager: PageComponent = () => {
 File_manager.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default File_manager;

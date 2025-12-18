@@ -12,7 +12,8 @@ const Proftp: PageComponent = () => {
 };
 
 Proftp.meta = {
-  requiresAuth: true, 
+  requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Proftp;

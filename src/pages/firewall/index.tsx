@@ -13,5 +13,6 @@ const Firewall: PageComponent = () => {
 Firewall.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Firewall;

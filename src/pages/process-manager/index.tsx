@@ -14,5 +14,6 @@ const Process_manager: PageComponent = () => {
 Process_manager.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Process_manager;

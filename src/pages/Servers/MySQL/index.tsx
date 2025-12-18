@@ -15,5 +15,6 @@ const Mysql: PageComponent = () => {
 Mysql.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Mysql;

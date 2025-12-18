@@ -6,5 +6,6 @@ const Backup: PageComponent = () => <BackupContent />;
 Backup.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Backup;

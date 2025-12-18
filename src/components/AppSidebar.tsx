@@ -44,6 +44,7 @@ import {
 
 import Logo from '@/assets/CHM.png';
 import { useEffect, useState } from 'react';
+import { isPathDisabled } from '@/routeRegistry';
 
 const servers = [
   { id: 'apache', name: 'Apache', installed: true },
@@ -133,6 +134,7 @@ export function AppSidebar() {
   const [showServers, setShowServers] = useState(false);
   const dashboard = sidebarItems[0] as SidebarLeaf;
   const DashboardIcon = dashboard.icon;
+  const dashboardDisabled = isPathDisabled(dashboard.path);
   const isActive = (url: string) =>
     url === '/'
       ? location.pathname === '/'
@@ -142,16 +144,27 @@ export function AppSidebar() {
       setShowServers(true);
     }
   }, [location.pathname]);
-  const handleServersClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
-    e.preventDefault();
-    setShowServers((prev) => !prev);
-  };
+  const preventNavigationIfDisabled =
+    (disabled: boolean): React.MouseEventHandler<HTMLAnchorElement> =>
+    (e) => {
+      if (!disabled) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
   const renderLeaf = (leaf: SidebarLeaf) => {
     const Icon = leaf.icon;
+    const disabled = isPathDisabled(leaf.path);
     return (
       <SidebarMenuItem key={leaf.path}>
         <SidebarMenuButton asChild isActive={isActive(leaf.path)}>
-          <Link to={leaf.path}>
+          <Link
+            to={leaf.path}
+            aria-disabled={disabled || undefined}
+            tabIndex={disabled ? -1 : undefined}
+            onClick={preventNavigationIfDisabled(disabled)}
+            className={disabled ? 'cursor-not-allowed' : undefined}
+          >
             <Icon className='size-4' />
             <span>{leaf.name}</span>
           </Link>
@@ -163,11 +176,27 @@ export function AppSidebar() {
   const renderServers = (leaf: SidebarLeaf) => {
     const Icon = leaf.icon;
     const isServersActive = isActive('/servers');
+    const disabled = isPathDisabled('/servers');
+    const handleServersClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
+      if (disabled) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      e.preventDefault();
+      setShowServers((prev) => !prev);
+    };
 
     return (
       <SidebarMenuItem key='__servers__'>
         <SidebarMenuButton asChild isActive={isServersActive}>
-          <Link to='/servers' onClick={handleServersClick}>
+          <Link
+            to='/servers'
+            onClick={handleServersClick}
+            aria-disabled={disabled || undefined}
+            tabIndex={disabled ? -1 : undefined}
+            className={disabled ? 'cursor-not-allowed' : undefined}
+          >
             <Icon className='size-4' />
             <span>{leaf.name}</span>
             <div className='ml-auto flex items-center'>
@@ -184,10 +213,17 @@ export function AppSidebar() {
           <SidebarMenuSub>
             {servers.map((s) => {
               const to = `/servers/${s.id}`;
+              const subDisabled = isPathDisabled(to);
               return (
                 <SidebarMenuSubItem key={s.id}>
                   <SidebarMenuSubButton asChild isActive={isActive(to)}>
-                    <Link to={to}>
+                    <Link
+                      to={to}
+                      aria-disabled={subDisabled || undefined}
+                      tabIndex={subDisabled ? -1 : undefined}
+                      onClick={preventNavigationIfDisabled(subDisabled)}
+                      className={subDisabled ? 'cursor-not-allowed' : undefined}
+                    >
                       <span className='truncate'>{serverIcons[s.id]}</span>
                       <span className='truncate'>{s.name}</span>
                     </Link>
@@ -218,7 +254,13 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isActive(dashboard.path)}>
-                  <Link to={dashboard.path}>
+                  <Link
+                    to={dashboard.path}
+                    aria-disabled={dashboardDisabled || undefined}
+                    tabIndex={dashboardDisabled ? -1 : undefined}
+                    onClick={preventNavigationIfDisabled(dashboardDisabled)}
+                    className={dashboardDisabled ? 'cursor-not-allowed' : undefined}
+                  >
                     <DashboardIcon className='size-4' />
                     <span>{dashboard.name}</span>
                   </Link>

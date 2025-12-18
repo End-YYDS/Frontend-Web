@@ -13,5 +13,6 @@ const Nginx: PageComponent = () => {
 Nginx.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Nginx;

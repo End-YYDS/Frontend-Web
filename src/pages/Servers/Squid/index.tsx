@@ -13,5 +13,6 @@ const Squid: PageComponent = () => {
 Squid.meta = {
   requiresAuth: true,
   layout: true,
+  disable: true,
 };
 export default Squid;
